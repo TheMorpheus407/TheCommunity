@@ -29,12 +29,6 @@ main {
   backdrop-filter: blur(18px);
   box-shadow: 0 30px 80px rgba(15, 23, 42, 0.65);
 }
-h1 {
-  margin: 0;
-  font-size: clamp(1.8rem, 2.5vw, 2.6rem);
-  text-align: center;
-  letter-spacing: 0.05em;
-}
 section {
   background: rgba(15, 18, 31, 0.6);
   padding: 1.5rem;
@@ -225,6 +219,29 @@ section.collapsed {
 section.collapsed header {
   margin-bottom: 0;
 }
+/* Floating Chat Styles */
+#floating-chat {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: min(420px, calc(100vw - 3rem));
+  max-height: calc(100vh - 3rem);
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+#floating-chat #chat {
+  margin: 0;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.8);
+}
+#floating-chat.minimized #chat {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.6);
+}
+#floating-chat .chat-content {
+  display: grid;
+  gap: 1.2rem;
+  animation: slideDown 0.3s ease-out;
+}
+
 @media (max-width: 768px) {
   body {
     padding: 1rem;
@@ -241,5 +258,11 @@ section.collapsed header {
   .chat-input input,
   .chat-input button {
     width: 100%;
+  }
+  #floating-chat {
+    bottom: 1rem;
+    right: 1rem;
+    width: calc(100vw - 2rem);
+    max-height: 50vh;
   }
 }

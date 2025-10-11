@@ -17,6 +17,7 @@
     const [isCreatingOffer, setIsCreatingOffer] = useState(false);
     const [isCreatingAnswer, setIsCreatingAnswer] = useState(false);
     const [isSignalingCollapsed, setIsSignalingCollapsed] = useState(false);
+    const [isChatMinimized, setIsChatMinimized] = useState(false);
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -261,9 +262,9 @@
     };
 
     return (
-      React.createElement('main', null,
-        React.createElement('h1', null, 'Peer-to-Peer WebRTC Chat'),
-        React.createElement('section', { id: 'signaling', className: isSignalingCollapsed ? 'collapsed' : '' },
+      React.createElement(React.Fragment, null,
+        React.createElement('main', null,
+          React.createElement('section', { id: 'signaling', className: isSignalingCollapsed ? 'collapsed' : '' },
           React.createElement('header', null,
             React.createElement('h2', null, 'Manual Signaling'),
             React.createElement('div', { className: 'header-right' },
@@ -321,46 +322,60 @@
             )
           )
         ),
-        React.createElement('section', { id: 'chat' },
-          React.createElement('header', null,
-            React.createElement('h2', null, 'Chat'),
-            React.createElement('p', { className: 'status', id: 'channel-status' }, channelStatus)
-          ),
-          React.createElement('div', {
-            id: 'messages',
-            'aria-live': 'polite',
-            ref: messagesContainerRef
-          }, messages.map((message) => (
-            React.createElement('div', {
-              key: message.id,
-              className: 'chat-line',
-              'data-role': message.role
-            },
-            React.createElement('strong', null, roleLabels[message.role] || 'Notice'),
-            React.createElement('span', null, message.text))
-          ))),
-          React.createElement('div', { className: 'chat-input' },
-            React.createElement('input', {
-              id: 'outgoing',
-              type: 'text',
-              placeholder: 'Type a message...',
-              autoComplete: 'off',
-              disabled: !channelReady,
-              value: inputText,
-              onChange: (event) => setInputText(event.target.value),
-              onKeyDown: (event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  handleSend();
-                }
-              },
-              maxLength: MAX_MESSAGE_LENGTH
-            }),
-            React.createElement('button', {
-              id: 'send',
-              onClick: handleSend,
-              disabled: !channelReady || !inputText.trim()
-            }, 'Send')
+        React.createElement('div', {
+          id: 'floating-chat',
+          className: isChatMinimized ? 'minimized' : ''
+        },
+          React.createElement('section', { id: 'chat' },
+            React.createElement('header', null,
+              React.createElement('h2', null, 'Chat'),
+              React.createElement('div', { className: 'header-right' },
+                React.createElement('p', { className: 'status', id: 'channel-status' }, channelStatus),
+                React.createElement('button', {
+                  className: 'toggle-collapse',
+                  onClick: () => setIsChatMinimized(!isChatMinimized),
+                  'aria-label': isChatMinimized ? 'Expand chat' : 'Minimize chat'
+                }, isChatMinimized ? '▲' : '▼')
+              )
+            ),
+            !isChatMinimized && React.createElement('div', { className: 'chat-content' },
+              React.createElement('div', {
+                id: 'messages',
+                'aria-live': 'polite',
+                ref: messagesContainerRef
+              }, messages.map((message) => (
+                React.createElement('div', {
+                  key: message.id,
+                  className: 'chat-line',
+                  'data-role': message.role
+                },
+                React.createElement('strong', null, roleLabels[message.role] || 'Notice'),
+                React.createElement('span', null, message.text))
+              ))),
+              React.createElement('div', { className: 'chat-input' },
+                React.createElement('input', {
+                  id: 'outgoing',
+                  type: 'text',
+                  placeholder: 'Type a message...',
+                  autoComplete: 'off',
+                  disabled: !channelReady,
+                  value: inputText,
+                  onChange: (event) => setInputText(event.target.value),
+                  onKeyDown: (event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      handleSend();
+                    }
+                  },
+                  maxLength: MAX_MESSAGE_LENGTH
+                }),
+                React.createElement('button', {
+                  id: 'send',
+                  onClick: handleSend,
+                  disabled: !channelReady || !inputText.trim()
+                }, 'Send')
+              )
+            )
           )
         )
       )
