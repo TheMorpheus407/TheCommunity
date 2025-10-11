@@ -272,8 +272,9 @@
               React.createElement('button', {
                 className: 'toggle-collapse',
                 onClick: () => setIsSignalingCollapsed(!isSignalingCollapsed),
-                'aria-label': isSignalingCollapsed ? 'Expand signaling panel' : 'Collapse signaling panel'
-              }, isSignalingCollapsed ? '▼' : '▲')
+                'aria-label': isSignalingCollapsed ? 'Expand signaling panel' : 'Collapse signaling panel',
+                'aria-expanded': !isSignalingCollapsed
+              }, React.createElement('span', { 'aria-hidden': 'true' }, isSignalingCollapsed ? '▼' : '▲'))
             )
           ),
           !isSignalingCollapsed && React.createElement('div', { className: 'collapsible-content' },
@@ -334,8 +335,9 @@
                 React.createElement('button', {
                   className: 'toggle-collapse',
                   onClick: () => setIsChatMinimized(!isChatMinimized),
-                  'aria-label': isChatMinimized ? 'Expand chat' : 'Minimize chat'
-                }, isChatMinimized ? '▲' : '▼')
+                  'aria-label': isChatMinimized ? 'Expand chat' : 'Minimize chat',
+                  'aria-expanded': !isChatMinimized
+                }, React.createElement('span', { 'aria-hidden': 'true' }, isChatMinimized ? '▲' : '▼'))
               )
             ),
             !isChatMinimized && React.createElement('div', { className: 'chat-content' },

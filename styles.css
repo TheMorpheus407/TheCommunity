@@ -1,3 +1,11 @@
+/*
+ * Z-Index Scale:
+ * 1-9:     Base layer (default elements)
+ * 10-99:   Content layer (panels, sections)
+ * 100-999: Overlay layer (modals, dialogs)
+ * 1000+:   Floating widgets (chat, notifications)
+ */
+
 :root {
   color-scheme: light dark;
   font-family: system-ui, sans-serif;
@@ -9,8 +17,10 @@ body {
   color: #f8fafc;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   padding: 1.5rem;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
   box-sizing: border-box;
 }
 #root {
@@ -263,6 +273,6 @@ section.collapsed header {
     bottom: 1rem;
     right: 1rem;
     width: calc(100vw - 2rem);
-    max-height: 50vh;
+    max-height: 60vh;
   }
 }
