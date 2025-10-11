@@ -49,6 +49,13 @@ section header {
   align-items: center;
   gap: 1rem;
 }
+section header .section-title-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
 section header h2 {
   margin: 0;
   font-size: 1.1rem;
@@ -180,6 +187,44 @@ textarea[readonly] {
   font-size: 0.85rem;
   color: rgba(226, 232, 240, 0.7);
   line-height: 1.4;
+}
+.toggle-collapse-btn {
+  min-width: auto;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.9rem;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  box-shadow: none;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  transition: all 0.2s ease;
+}
+.toggle-collapse-btn:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.25);
+  transform: none;
+}
+.toggle-collapse-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+#signaling.collapsed {
+  padding: 1rem 1.5rem;
+}
+#signaling.collapsed header {
+  margin: 0;
+}
+.signaling-content {
+  display: grid;
+  gap: 1.2rem;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 @media (max-width: 768px) {
   body {
