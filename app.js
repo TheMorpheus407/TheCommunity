@@ -279,7 +279,7 @@
           ),
           !isSignalingCollapsed && React.createElement('div', { className: 'collapsible-content' },
             React.createElement('p', { className: 'warning' },
-              React.createElement('strong', null, 'Security notice:'),
+              React.createElement('strong', null, 'Security notice: '),
               'Sharing WebRTC signals reveals your network addresses. Only exchange offers with peers you trust.'
             ),
             React.createElement('p', { className: 'hint' },
