@@ -3,7 +3,14 @@
   "version": "1.0.0",
   "description": "WebRTC P2P Chat Application",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint app.js",
+    "lint:fix": "eslint app.js --fix",
+    "validate": "npm run lint",
+    "precommit": "npm run validate"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0"
   },
   "private": true
 }

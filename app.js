@@ -1,10 +1,74 @@
 (function () {
-  const { useState, useRef, useCallback, useEffect } = React;
+  const { useState, useRef, useCallback, useEffect, Component } = React;
 
   const EXPECTED_CHANNEL_LABEL = 'chat';
   const MAX_MESSAGE_LENGTH = 2000;
   const MAX_MESSAGES_PER_INTERVAL = 30;
   const MESSAGE_INTERVAL_MS = 5000;
+
+  class ErrorBoundary extends Component {
+    constructor(props) {
+      super(props);
+      this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error) {
+      return { hasError: true, error };
+    }
+
+    componentDidCatch(error, errorInfo) {
+      console.error('Error caught by boundary:', error, errorInfo);
+    }
+
+    render() {
+      if (this.state.hasError) {
+        return React.createElement('div', {
+          style: {
+            padding: '2rem',
+            textAlign: 'center',
+            color: '#f87171',
+            background: 'rgba(15, 23, 42, 0.95)',
+            borderRadius: '16px',
+            border: '1px solid rgba(248, 113, 113, 0.4)',
+            maxWidth: '600px',
+            margin: '2rem auto'
+          }
+        },
+          React.createElement('h2', null, '⚠️ Something went wrong'),
+          React.createElement('p', null, 'The application encountered an error. Please refresh the page to try again.'),
+          React.createElement('details', { style: { marginTop: '1rem', textAlign: 'left' } },
+            React.createElement('summary', { style: { cursor: 'pointer', marginBottom: '0.5rem' } }, 'Error details'),
+            React.createElement('pre', {
+              style: {
+                background: 'rgba(0,0,0,0.3)',
+                padding: '1rem',
+                borderRadius: '8px',
+                overflow: 'auto',
+                fontSize: '0.85rem'
+              }
+            }, this.state.error ? this.state.error.toString() : 'Unknown error')
+          ),
+          React.createElement('button', {
+            onClick: () => window.location.reload(),
+            style: {
+              marginTop: '1rem',
+              padding: '0.8rem 1.6rem',
+              background: 'linear-gradient(135deg, #0ea5e9, #8b5cf6)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '999px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em'
+            }
+          }, 'Reload Page')
+        );
+      }
+
+      return this.props.children;
+    }
+  }
 
   function App() {
     const [status, setStatus] = useState('Waiting to connect...');
@@ -386,5 +450,9 @@
 
   const rootElement = document.getElementById('root');
   const root = ReactDOM.createRoot(rootElement);
-  root.render(React.createElement(App));
+  root.render(
+    React.createElement(ErrorBoundary, null,
+      React.createElement(App)
+    )
+  );
 })();
