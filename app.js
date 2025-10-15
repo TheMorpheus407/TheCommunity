@@ -22,6 +22,7 @@
     const [channelReady, setChannelReady] = useState(false);
     const [isCreatingOffer, setIsCreatingOffer] = useState(false);
     const [isCreatingAnswer, setIsCreatingAnswer] = useState(false);
+    const [isSignalingCollapsed, setIsSignalingCollapsed] = useState(false);
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -43,11 +44,13 @@
       channel.onopen = () => {
         setChannelStatus('Channel open');
         setChannelReady(true);
+        setIsSignalingCollapsed(true);
         incomingTimestampsRef.current = [];
       };
       channel.onclose = () => {
         setChannelStatus('Channel closed');
         setChannelReady(false);
+        setIsSignalingCollapsed(false);
         incomingTimestampsRef.current = [];
         channelRef.current = null;
       };
@@ -235,6 +238,10 @@
       setInputText('');
     }, [appendMessage, appendSystemMessage, inputText]);
 
+    const toggleSignalingCollapse = useCallback(() => {
+      setIsSignalingCollapsed((prev) => !prev);
+    }, []);
+
     useEffect(() => {
       const container = messagesContainerRef.current;
       if (container) {
@@ -256,53 +263,63 @@
     return (
       React.createElement('main', null,
         React.createElement('h1', null, 'Peer-to-Peer WebRTC Chat'),
-        React.createElement('section', { id: 'signaling' },
+        React.createElement('section', { id: 'signaling', className: isSignalingCollapsed ? 'collapsed' : '' },
           React.createElement('header', null,
-            React.createElement('h2', null, 'Manual Signaling'),
-            React.createElement('p', { className: 'status', id: 'status' }, status)
-          ),
-          React.createElement('p', { className: 'warning' },
-            React.createElement('strong', null, 'Security notice:'),
-            'Sharing WebRTC signals reveals your network addresses. Only exchange offers with peers you trust.'
-          ),
-          React.createElement('p', { className: 'hint' },
-            'Step 1: One user clicks "Create Offer" and shares the generated signal below.', React.createElement('br'),
-            'Step 2: The other user pastes it in "Remote Signal", clicks "Apply Remote", then "Create Answer" and shares their response.', React.createElement('br'),
-            'Step 3: The first user pastes the answer into "Remote Signal" and applies it. Chat starts when the status says connected.'
-          ),
-          React.createElement('div', { className: 'controls' },
+            React.createElement('div', { className: 'header-content' },
+              React.createElement('h2', null, 'Manual Signaling'),
+              React.createElement('p', { className: 'status', id: 'status' }, status)
+            ),
             React.createElement('button', {
-              id: 'create-offer',
-              onClick: handleCreateOffer,
-              disabled: isCreatingOffer
-            }, isCreatingOffer ? 'Working...' : 'Create Offer'),
-            React.createElement('button', {
-              id: 'create-answer',
-              onClick: handleCreateAnswer,
-              disabled: isCreatingAnswer
-            }, isCreatingAnswer ? 'Working...' : 'Create Answer'),
-            React.createElement('button', {
-              id: 'apply-remote',
-              onClick: handleApplyRemote
-            }, 'Apply Remote')
+              className: 'collapse-toggle',
+              onClick: toggleSignalingCollapse,
+              'aria-label': isSignalingCollapsed ? 'Expand signaling' : 'Collapse signaling',
+              'aria-expanded': !isSignalingCollapsed
+            }, isSignalingCollapsed ? '▼' : '▲')
           ),
-          React.createElement('label', null,
-            React.createElement('strong', null, 'Local Signal (share this)'),
-            React.createElement('textarea', {
-              id: 'local-signal',
-              readOnly: true,
-              value: localSignal,
-              placeholder: 'Local SDP will appear here once ready.'
-            })
-          ),
-          React.createElement('label', null,
-            React.createElement('strong', null, 'Remote Signal (paste received JSON here)'),
-            React.createElement('textarea', {
-              id: 'remote-signal',
-              value: remoteSignal,
-              onChange: (event) => setRemoteSignal(event.target.value),
-              placeholder: 'Paste the JSON you received and click Apply Remote.'
-            })
+          !isSignalingCollapsed && React.createElement('div', { className: 'signaling-content' },
+            React.createElement('p', { className: 'warning' },
+              React.createElement('strong', null, 'Security notice:'),
+              'Sharing WebRTC signals reveals your network addresses. Only exchange offers with peers you trust.'
+            ),
+            React.createElement('p', { className: 'hint' },
+              'Step 1: One user clicks "Create Offer" and shares the generated signal below.', React.createElement('br'),
+              'Step 2: The other user pastes it in "Remote Signal", clicks "Apply Remote", then "Create Answer" and shares their response.', React.createElement('br'),
+              'Step 3: The first user pastes the answer into "Remote Signal" and applies it. Chat starts when the status says connected.'
+            ),
+            React.createElement('div', { className: 'controls' },
+              React.createElement('button', {
+                id: 'create-offer',
+                onClick: handleCreateOffer,
+                disabled: isCreatingOffer
+              }, isCreatingOffer ? 'Working...' : 'Create Offer'),
+              React.createElement('button', {
+                id: 'create-answer',
+                onClick: handleCreateAnswer,
+                disabled: isCreatingAnswer
+              }, isCreatingAnswer ? 'Working...' : 'Create Answer'),
+              React.createElement('button', {
+                id: 'apply-remote',
+                onClick: handleApplyRemote
+              }, 'Apply Remote')
+            ),
+            React.createElement('label', null,
+              React.createElement('strong', null, 'Local Signal (share this)'),
+              React.createElement('textarea', {
+                id: 'local-signal',
+                readOnly: true,
+                value: localSignal,
+                placeholder: 'Local SDP will appear here once ready.'
+              })
+            ),
+            React.createElement('label', null,
+              React.createElement('strong', null, 'Remote Signal (paste received JSON here)'),
+              React.createElement('textarea', {
+                id: 'remote-signal',
+                value: remoteSignal,
+                onChange: (event) => setRemoteSignal(event.target.value),
+                placeholder: 'Paste the JSON you received and click Apply Remote.'
+              })
+            )
           )
         ),
         React.createElement('section', { id: 'chat' },

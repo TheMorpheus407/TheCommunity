@@ -49,12 +49,46 @@ section header {
   align-items: center;
   gap: 1rem;
 }
+section header .header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
 section header h2 {
   margin: 0;
   font-size: 1.1rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #38bdf8;
+}
+.collapse-toggle {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  min-width: unset;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(56, 189, 248, 0.15);
+  box-shadow: none;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+.collapse-toggle:not(:disabled):hover {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: rgba(56, 189, 248, 0.5);
+}
+.signaling-content {
+  display: grid;
+  gap: 1.2rem;
+}
+#signaling.collapsed {
+  cursor: pointer;
+}
+#signaling.collapsed header {
+  margin-bottom: 0;
 }
 button {
   appearance: none;
