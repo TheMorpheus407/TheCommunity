@@ -400,14 +400,21 @@
             ref: aboutButtonRef
           }, 'About')
         ),
-        isAboutOpen && React.createElement('div', { className: 'modal-overlay', role: 'presentation', onClick: toggleAbout },
+        isAboutOpen && React.createElement('div', {
+          className: 'modal-overlay',
+          role: 'presentation',
+          onClick: (e) => {
+            if (e.target === e.currentTarget) {
+              toggleAbout();
+            }
+          }
+        },
           React.createElement('div', {
             className: 'modal-content',
             role: 'dialog',
             id: 'about-dialog',
             'aria-modal': 'true',
-            'aria-labelledby': 'about-dialog-title',
-            onClick: (e) => e.stopPropagation()
+            'aria-labelledby': 'about-dialog-title'
           },
             React.createElement('div', { className: 'modal-header' },
               React.createElement('h2', { id: 'about-dialog-title' }, 'About TheCommunity'),
