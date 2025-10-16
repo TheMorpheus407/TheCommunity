@@ -7,14 +7,14 @@
   const MESSAGE_INTERVAL_MS = 5000;
 
   const ROLE_LABELS = {
-    local: 'You',
-    remote: 'Peer',
-    system: 'Notice'
+    local: 'You 😊',
+    remote: 'Peer 🌸',
+    system: 'Notice ✨'
   };
 
   function App() {
-    const [status, setStatus] = useState('Waiting to connect...');
-    const [channelStatus, setChannelStatus] = useState('Channel closed');
+    const [status, setStatus] = useState('Waiting to connect... 🔌');
+    const [channelStatus, setChannelStatus] = useState('Channel closed 🔒');
     const [localSignal, setLocalSignal] = useState('');
     const [remoteSignal, setRemoteSignal] = useState('');
     const [messages, setMessages] = useState([]);
@@ -42,13 +42,13 @@
 
     const setupChannelHandlers = useCallback((channel) => {
       channel.onopen = () => {
-        setChannelStatus('Channel open');
+        setChannelStatus('Channel open 🔓');
         setChannelReady(true);
         setIsSignalingCollapsed(true);
         incomingTimestampsRef.current = [];
       };
       channel.onclose = () => {
-        setChannelStatus('Channel closed');
+        setChannelStatus('Channel closed 🔒');
         setChannelReady(false);
         setIsSignalingCollapsed(false);
         incomingTimestampsRef.current = [];
@@ -56,12 +56,12 @@
       };
       channel.onmessage = (event) => {
         if (typeof event.data !== 'string') {
-          appendSystemMessage('Blocked non-text message from peer.');
+          appendSystemMessage('Blocked non-text message from peer. 🚫');
           return;
         }
         const payload = event.data;
         if (payload.length > MAX_MESSAGE_LENGTH) {
-          appendSystemMessage('Blocked oversized message from peer.');
+          appendSystemMessage('Blocked oversized message from peer. 📏');
           return;
         }
         const now = Date.now();
@@ -70,7 +70,7 @@
         );
         incomingTimestampsRef.current.push(now);
         if (incomingTimestampsRef.current.length > MAX_MESSAGES_PER_INTERVAL) {
-          appendSystemMessage('Peer is sending messages too quickly; message ignored.');
+          appendSystemMessage('Peer is sending messages too quickly; message ignored. ⚠️');
           return;
         }
         appendMessage(payload, 'remote');
@@ -88,24 +88,24 @@
         if (!event.candidate && pc.localDescription) {
           iceDoneRef.current = true;
           setLocalSignal(JSON.stringify(pc.localDescription));
-          setStatus('Signal ready to share');
+          setStatus('Signal ready to share ✅');
         }
       };
 
       pc.oniceconnectionstatechange = () => {
         if (!pcRef.current) return;
-        setStatus(`ICE: ${pc.iceConnectionState}`);
+        setStatus(`ICE: ${pc.iceConnectionState} 🧊`);
       };
 
       pc.onconnectionstatechange = () => {
         if (!pcRef.current) return;
-        setStatus(`Connection: ${pc.connectionState}`);
+        setStatus(`Connection: ${pc.connectionState} 🔗`);
       };
 
       pc.ondatachannel = (event) => {
         const incomingChannel = event.channel;
         if (incomingChannel.label !== EXPECTED_CHANNEL_LABEL) {
-          appendSystemMessage(`Blocked unexpected data channel "${incomingChannel.label || 'unnamed'}".`);
+          appendSystemMessage(`Blocked unexpected data channel "${incomingChannel.label || 'unnamed'}". 🚫`);
           incomingChannel.close();
           return;
         }
@@ -135,16 +135,16 @@
     const parseRemoteDescription = useCallback(() => {
       const raw = remoteSignal.trim();
       if (!raw) {
-        throw new Error('Remote signal is empty.');
+        throw new Error('Remote signal is empty. 📭');
       }
       let desc;
       try {
         desc = JSON.parse(raw);
       } catch (err) {
-        throw new Error('Signal must be the exact JSON from the other peer.');
+        throw new Error('Signal must be the exact JSON from the other peer. 📝');
       }
       if (!desc.type || !desc.sdp || !['offer', 'answer'].includes(desc.type)) {
-        throw new Error('Unsupported remote description.');
+        throw new Error('Unsupported remote description. ❌');
       }
       return desc;
     }, [remoteSignal]);
@@ -164,7 +164,7 @@
       setLocalSignal('');
       setRemoteSignal('');
       setChannelReady(false);
-      setStatus('Creating offer...');
+      setStatus('Creating offer... 🔨');
       setIsCreatingOffer(true);
 
       try {
@@ -173,8 +173,8 @@
         await waitForIce();
       } catch (err) {
         console.error(err);
-        setStatus('Failed to create offer');
-        appendSystemMessage('Unable to create offer. Check console for details.');
+        setStatus('Failed to create offer ❌');
+        appendSystemMessage('Unable to create offer. Check console for details. 🔍');
       } finally {
         setIsCreatingOffer(false);
       }
@@ -185,9 +185,9 @@
       try {
         const desc = parseRemoteDescription();
         await pc.setRemoteDescription(desc);
-        setStatus(`Remote ${desc.type} applied`);
+        setStatus(`Remote ${desc.type} applied ✅`);
         if (desc.type === 'answer') {
-          setChannelStatus('Answer applied, waiting for channel...');
+          setChannelStatus('Answer applied, waiting for channel... ⏳');
         }
       } catch (err) {
         console.error(err);
@@ -200,14 +200,14 @@
       iceDoneRef.current = false;
       setLocalSignal('');
       setChannelReady(false);
-      setStatus('Creating answer...');
+      setStatus('Creating answer... 🔨');
       setIsCreatingAnswer(true);
 
       try {
         if (!pc.currentRemoteDescription) {
           const desc = parseRemoteDescription();
           if (desc.type !== 'offer') {
-            throw new Error('Need a remote offer before creating an answer.');
+            throw new Error('Need a remote offer before creating an answer. 📥');
           }
           await pc.setRemoteDescription(desc);
         }
@@ -216,8 +216,8 @@
         await waitForIce();
       } catch (err) {
         console.error(err);
-        setStatus(err.message || 'Failed to create answer');
-        appendSystemMessage('Unable to create answer. Check console for details.');
+        setStatus(err.message || 'Failed to create answer ❌');
+        appendSystemMessage('Unable to create answer. Check console for details. 🔍');
       } finally {
         setIsCreatingAnswer(false);
       }
@@ -230,7 +230,7 @@
         return;
       }
       if (trimmed.length > MAX_MESSAGE_LENGTH) {
-        appendSystemMessage(`Message too long. Limit is ${MAX_MESSAGE_LENGTH} characters.`);
+        appendSystemMessage(`Message too long. Limit is ${MAX_MESSAGE_LENGTH} characters. 📏`);
         return;
       }
       channel.send(trimmed);
@@ -262,11 +262,11 @@
 
     return (
       React.createElement('main', null,
-        React.createElement('h1', null, 'Peer-to-Peer WebRTC Chat'),
+        React.createElement('h1', null, 'Peer-to-Peer WebRTC Chat 💬'),
         React.createElement('section', { id: 'signaling', className: isSignalingCollapsed ? 'collapsed' : '' },
           React.createElement('header', null,
             React.createElement('div', { className: 'header-content' },
-              React.createElement('h2', null, 'Manual Signaling'),
+              React.createElement('h2', null, 'Manual Signaling 📡'),
               React.createElement('p', { className: 'status', id: 'status' }, status)
             ),
             React.createElement('button', {
@@ -278,53 +278,53 @@
           ),
           !isSignalingCollapsed && React.createElement('div', { className: 'signaling-content' },
             React.createElement('p', { className: 'warning' },
-              React.createElement('strong', null, 'Security notice:'),
-              'Sharing WebRTC signals reveals your network addresses. Only exchange offers with peers you trust.'
+              React.createElement('strong', null, 'Security notice: 🔒'),
+              'Sharing WebRTC signals reveals your network addresses. Only exchange offers with peers you trust. 🤝'
             ),
             React.createElement('p', { className: 'hint' },
-              'Step 1: One user clicks "Create Offer" and shares the generated signal below.', React.createElement('br'),
-              'Step 2: The other user pastes it in "Remote Signal", clicks "Apply Remote", then "Create Answer" and shares their response.', React.createElement('br'),
-              'Step 3: The first user pastes the answer into "Remote Signal" and applies it. Chat starts when the status says connected.'
+              'Step 1: One user clicks "Create Offer" and shares the generated signal below. 📤', React.createElement('br'),
+              'Step 2: The other user pastes it in "Remote Signal", clicks "Apply Remote", then "Create Answer" and shares their response. 📥', React.createElement('br'),
+              'Step 3: The first user pastes the answer into "Remote Signal" and applies it. Chat starts when the status says connected. 🎉'
             ),
             React.createElement('div', { className: 'controls' },
               React.createElement('button', {
                 id: 'create-offer',
                 onClick: handleCreateOffer,
                 disabled: isCreatingOffer
-              }, isCreatingOffer ? 'Working...' : 'Create Offer'),
+              }, isCreatingOffer ? 'Working... ⏳' : 'Create Offer 📤'),
               React.createElement('button', {
                 id: 'create-answer',
                 onClick: handleCreateAnswer,
                 disabled: isCreatingAnswer
-              }, isCreatingAnswer ? 'Working...' : 'Create Answer'),
+              }, isCreatingAnswer ? 'Working... ⏳' : 'Create Answer 📥'),
               React.createElement('button', {
                 id: 'apply-remote',
                 onClick: handleApplyRemote
-              }, 'Apply Remote')
+              }, 'Apply Remote ✅')
             ),
             React.createElement('label', null,
-              React.createElement('strong', null, 'Local Signal (share this)'),
+              React.createElement('strong', null, 'Local Signal (share this) 📋'),
               React.createElement('textarea', {
                 id: 'local-signal',
                 readOnly: true,
                 value: localSignal,
-                placeholder: 'Local SDP will appear here once ready.'
+                placeholder: 'Local SDP will appear here once ready. ⏳'
               })
             ),
             React.createElement('label', null,
-              React.createElement('strong', null, 'Remote Signal (paste received JSON here)'),
+              React.createElement('strong', null, 'Remote Signal (paste received JSON here) 📝'),
               React.createElement('textarea', {
                 id: 'remote-signal',
                 value: remoteSignal,
                 onChange: (event) => setRemoteSignal(event.target.value),
-                placeholder: 'Paste the JSON you received and click Apply Remote.'
+                placeholder: 'Paste the JSON you received and click Apply Remote. 📥'
               })
             )
           )
         ),
         React.createElement('section', { id: 'chat' },
           React.createElement('header', null,
-            React.createElement('h2', null, 'Chat'),
+            React.createElement('h2', null, 'Chat 💬'),
             React.createElement('p', { className: 'status', id: 'channel-status' }, channelStatus)
           ),
           React.createElement('div', {
@@ -344,7 +344,7 @@
             React.createElement('input', {
               id: 'outgoing',
               type: 'text',
-              placeholder: 'Type a message...',
+              placeholder: 'Type a message... ✍️',
               autoComplete: 'off',
               disabled: !channelReady,
               value: inputText,
@@ -361,7 +361,7 @@
               id: 'send',
               onClick: handleSend,
               disabled: !channelReady || !inputText.trim()
-            }, 'Send')
+            }, 'Send 📨')
           )
         )
       )

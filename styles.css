@@ -1,12 +1,12 @@
 :root {
-  color-scheme: light dark;
-  font-family: system-ui, sans-serif;
+  color-scheme: light;
+  font-family: "Comic Sans MS", "Comic Sans", cursive;
 }
 body {
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(180deg, #0f172a, #1f2937);
-  color: #f8fafc;
+  background: #FFC2BA;
+  color: #FFFFFF;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -72,13 +72,13 @@ section header h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(56, 189, 248, 0.15);
+  background: #FF8DA1;
   box-shadow: none;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  border: 1px solid rgba(255, 141, 161, 0.3);
 }
 .collapse-toggle:not(:disabled):hover {
-  background: rgba(56, 189, 248, 0.25);
-  border-color: rgba(56, 189, 248, 0.5);
+  background: rgba(255, 141, 161, 0.85);
+  border-color: rgba(255, 141, 161, 0.5);
 }
 .signaling-content {
   display: grid;
@@ -99,10 +99,10 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   cursor: pointer;
-  background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
-  color: #f0f9ff;
+  background: #FF8DA1;
+  color: #FFFFFF;
   transition: transform 0.15s ease, filter 0.15s ease;
-  box-shadow: 0 18px 30px rgba(14, 165, 233, 0.3);
+  box-shadow: 0 18px 30px rgba(255, 141, 161, 0.3);
 }
 button:disabled {
   background: rgba(148, 163, 184, 0.3);
