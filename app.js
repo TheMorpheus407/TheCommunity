@@ -1,21 +1,15 @@
 /**
- * Peer-to-Peer WebRTC Chat Application
- * Enables direct communication between two peers without a central server.
- * Uses WebRTC DataChannel for secure P2P messaging.
+ * Peer-to-peer WebRTC chat application bootstrap.
+ * Allows two browsers to exchange messages without a signaling server.
  */
 (function () {
   const { useState, useRef, useCallback, useEffect } = React;
 
-  /** @const {string} Expected label for the data channel */
   const EXPECTED_CHANNEL_LABEL = 'chat';
-  /** @const {number} Maximum allowed message length in characters */
   const MAX_MESSAGE_LENGTH = 2000;
-  /** @const {number} Maximum messages allowed per interval for rate limiting */
   const MAX_MESSAGES_PER_INTERVAL = 30;
-  /** @const {number} Time window for rate limiting in milliseconds */
   const MESSAGE_INTERVAL_MS = 5000;
 
-  /** @const {Object.<string, string>} Display labels for message roles */
   const ROLE_LABELS = {
     local: 'You',
     remote: 'Peer',
@@ -23,8 +17,8 @@
   };
 
   /**
-   * Main application component for P2P WebRTC chat
-   * @returns {React.Element} The chat application UI
+   * Root React component that coordinates WebRTC setup and the user interface.
+   * @returns {React.ReactElement}
    */
   function App() {
     const [status, setStatus] = useState('Waiting to connect...');
@@ -37,6 +31,10 @@
     const [isCreatingOffer, setIsCreatingOffer] = useState(false);
     const [isCreatingAnswer, setIsCreatingAnswer] = useState(false);
     const [isSignalingCollapsed, setIsSignalingCollapsed] = useState(false);
+    const [isAboutOpen, setIsAboutOpen] = useState(false);
+    const [contributors, setContributors] = useState([]);
+    const [contributorsError, setContributorsError] = useState('');
+    const [isLoadingContributors, setIsLoadingContributors] = useState(false);
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -44,11 +42,14 @@
     const incomingTimestampsRef = useRef([]);
     const messageIdRef = useRef(0);
     const messagesContainerRef = useRef(null);
+    const aboutButtonRef = useRef(null);
+    const closeAboutButtonRef = useRef(null);
+    const contributorsLoadedRef = useRef(false);
 
     /**
-     * Appends a new message to the chat
-     * @param {string} text - The message text
-     * @param {'local'|'remote'|'system'} role - The sender role
+     * Queues a chat message for rendering.
+     * @param {string} text - Message body
+     * @param {'local'|'remote'|'system'} role - Message origin
      */
     const appendMessage = useCallback((text, role) => {
       const id = messageIdRef.current++;
@@ -56,17 +57,17 @@
     }, []);
 
     /**
-     * Appends a system notification message
-     * @param {string} text - The notification text
+     * Adds a system notification to the message list.
+     * @param {string} text - Notification text
      */
     const appendSystemMessage = useCallback((text) => {
       appendMessage(text, 'system');
     }, [appendMessage]);
 
     /**
-     * Sets up event handlers for a WebRTC data channel
-     * Includes security checks and rate limiting for incoming messages
-     * @param {RTCDataChannel} channel - The data channel to configure
+     * Configures event handlers on the reliable data channel.
+     * Applies defensive checks and rate limiting to inbound traffic.
+     * @param {RTCDataChannel} channel - Active data channel
      */
     const setupChannelHandlers = useCallback((channel) => {
       channel.onopen = () => {
@@ -84,12 +85,12 @@
       };
       channel.onmessage = (event) => {
         if (typeof event.data !== 'string') {
-          appendSystemMessage('Blocked non-text message from peer.');
+          appendSystemMessage('Security notice: blocked a message that was not plain text.');
           return;
         }
         const payload = event.data;
         if (payload.length > MAX_MESSAGE_LENGTH) {
-          appendSystemMessage('Blocked oversized message from peer.');
+          appendSystemMessage(`Message blocked: exceeded the ${MAX_MESSAGE_LENGTH} character limit.`);
           return;
         }
         const now = Date.now();
@@ -98,7 +99,7 @@
         );
         incomingTimestampsRef.current.push(now);
         if (incomingTimestampsRef.current.length > MAX_MESSAGES_PER_INTERVAL) {
-          appendSystemMessage('Peer is sending messages too quickly; message ignored.');
+          appendSystemMessage('Rate limit applied: peer is sending messages too quickly.');
           return;
         }
         appendMessage(payload, 'remote');
@@ -106,9 +107,8 @@
     }, [appendMessage, appendSystemMessage]);
 
     /**
-     * Creates or returns existing RTCPeerConnection
-     * Configures connection event handlers for ICE and connection state changes
-     * @returns {RTCPeerConnection} The peer connection instance
+     * Lazily creates (or returns) the RTCPeerConnection instance.
+     * @returns {RTCPeerConnection}
      */
     const ensurePeerConnection = useCallback(() => {
       if (pcRef.current) {
@@ -138,7 +138,7 @@
       pc.ondatachannel = (event) => {
         const incomingChannel = event.channel;
         if (incomingChannel.label !== EXPECTED_CHANNEL_LABEL) {
-          appendSystemMessage(`Blocked unexpected data channel "${incomingChannel.label || 'unnamed'}".`);
+          appendSystemMessage(`Security notice: blocked unexpected data channel "${incomingChannel.label || 'unnamed'}".`);
           incomingChannel.close();
           return;
         }
@@ -150,8 +150,8 @@
     }, [appendSystemMessage, setupChannelHandlers]);
 
     /**
-     * Waits for ICE candidate gathering to complete
-     * @returns {Promise<void>} Resolves when ICE gathering is done
+     * Resolves once ICE gathering finishes for the current connection.
+     * @returns {Promise<void>}
      */
     const waitForIce = useCallback(async () => {
       if (iceDoneRef.current) {
@@ -170,30 +170,30 @@
     }, []);
 
     /**
-     * Parses and validates remote WebRTC signal (SDP)
-     * @returns {RTCSessionDescription} The parsed session description
-     * @throws {Error} If signal is invalid or malformed
+     * Validates and parses the remote offer/answer JSON pasted by the user.
+     * @returns {RTCSessionDescriptionInit}
+     * @throws {Error} When the payload is empty or malformed
      */
     const parseRemoteDescription = useCallback(() => {
       const raw = remoteSignal.trim();
       if (!raw) {
-        throw new Error('Remote signal is empty.');
+        throw new Error('Remote signal is empty. Paste the JSON you received from your peer.');
       }
       let desc;
       try {
         desc = JSON.parse(raw);
       } catch (err) {
-        throw new Error('Signal must be the exact JSON from the other peer.');
+        throw new Error('Remote signal is not valid JSON. Copy the complete signal again and retry.');
       }
       if (!desc.type || !desc.sdp || !['offer', 'answer'].includes(desc.type)) {
-        throw new Error('Unsupported remote description.');
+        throw new Error('Remote signal is missing required data. Ensure you pasted the offer or answer exactly as provided.');
       }
       return desc;
     }, [remoteSignal]);
 
     /**
-     * Creates a new WebRTC offer to initiate connection
-     * The generated offer should be shared with the remote peer
+     * Generates a WebRTC offer and prepares it for manual sharing.
+     * @returns {Promise<void>}
      */
     const handleCreateOffer = useCallback(async () => {
       const pc = ensurePeerConnection();
@@ -220,15 +220,15 @@
       } catch (err) {
         console.error(err);
         setStatus('Failed to create offer');
-        appendSystemMessage('Unable to create offer. Check console for details.');
+        appendSystemMessage('Unable to create offer. WebRTC may be unsupported or browser permissions were denied.');
       } finally {
         setIsCreatingOffer(false);
       }
     }, [appendSystemMessage, ensurePeerConnection, setupChannelHandlers, waitForIce]);
 
     /**
-     * Applies a remote signal (offer or answer) from peer
-     * Must be called before creating an answer or completing connection
+     * Applies the pasted remote offer or answer to the peer connection.
+     * @returns {Promise<void>}
      */
     const handleApplyRemote = useCallback(async () => {
       const pc = ensurePeerConnection();
@@ -246,8 +246,8 @@
     }, [ensurePeerConnection, parseRemoteDescription]);
 
     /**
-     * Creates an answer to a received offer
-     * The generated answer should be sent back to the peer who created the offer
+     * Produces an answer for an applied offer and shares it with the peer.
+     * @returns {Promise<void>}
      */
     const handleCreateAnswer = useCallback(async () => {
       const pc = ensurePeerConnection();
@@ -271,15 +271,14 @@
       } catch (err) {
         console.error(err);
         setStatus(err.message || 'Failed to create answer');
-        appendSystemMessage('Unable to create answer. Check console for details.');
+        appendSystemMessage('Unable to create answer. Apply a valid remote offer first and ensure WebRTC is available.');
       } finally {
         setIsCreatingAnswer(false);
       }
     }, [appendSystemMessage, ensurePeerConnection, parseRemoteDescription, waitForIce]);
 
     /**
-     * Sends a chat message to the connected peer
-     * Validates message length before sending
+     * Sends the typed message across the data channel after validation.
      */
     const handleSend = useCallback(() => {
       const channel = channelRef.current;
@@ -288,7 +287,7 @@
         return;
       }
       if (trimmed.length > MAX_MESSAGE_LENGTH) {
-        appendSystemMessage(`Message too long. Limit is ${MAX_MESSAGE_LENGTH} characters.`);
+        appendSystemMessage(`Message too long: limit is ${MAX_MESSAGE_LENGTH} characters (you typed ${trimmed.length}).`);
         return;
       }
       channel.send(trimmed);
@@ -296,12 +295,129 @@
       setInputText('');
     }, [appendMessage, appendSystemMessage, inputText]);
 
-    /**
-     * Toggles the signaling section collapsed state
-     */
     const toggleSignalingCollapse = useCallback(() => {
       setIsSignalingCollapsed((prev) => !prev);
     }, []);
+
+    const toggleAbout = useCallback(() => {
+      setIsAboutOpen((prev) => !prev);
+    }, []);
+
+    useEffect(() => {
+      if (isAboutOpen) {
+        if (closeAboutButtonRef.current) {
+          closeAboutButtonRef.current.focus();
+        }
+      } else if (aboutButtonRef.current) {
+        aboutButtonRef.current.focus();
+      }
+    }, [isAboutOpen]);
+
+    useEffect(() => {
+      if (!isAboutOpen) {
+        return;
+      }
+      const handleKeyDown = (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          setIsAboutOpen(false);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }, [isAboutOpen]);
+
+    useEffect(() => {
+      if (!isAboutOpen || contributorsLoadedRef.current) {
+        return;
+      }
+
+      const controller = new AbortController();
+      let didSucceed = false;
+
+      const loadContributors = async () => {
+        setIsLoadingContributors(true);
+        setContributorsError('');
+        try {
+          const response = await fetch(
+            'https://api.github.com/repos/TheMorpheus407/TheCommunity/issues?state=all&per_page=100',
+            {
+              signal: controller.signal,
+              headers: {
+                Accept: 'application/vnd.github+json'
+              }
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`Request failed with status ${response.status}`);
+          }
+
+          const payload = await response.json();
+          if (controller.signal.aborted) {
+            return;
+          }
+
+          const map = new Map();
+          if (Array.isArray(payload)) {
+            payload.forEach((item) => {
+              if (!item || item.pull_request) {
+                return;
+              }
+              const user = item.user;
+              const login = user && user.login;
+              if (!login) {
+                return;
+              }
+              const sanitizedLogin = String(login).trim();
+              if (!sanitizedLogin) {
+                return;
+              }
+              const existing = map.get(sanitizedLogin);
+              if (existing) {
+                existing.issueCount += 1;
+              } else {
+                map.set(sanitizedLogin, {
+                  login: sanitizedLogin,
+                  htmlUrl: user && user.html_url
+                    ? user.html_url
+                    : `https://github.com/${encodeURIComponent(sanitizedLogin)}`,
+                  issueCount: 1
+                });
+              }
+            });
+          }
+
+          const sortedContributors = Array.from(map.values()).sort((a, b) =>
+            a.login.localeCompare(b.login)
+          );
+
+          setContributors(sortedContributors);
+          didSucceed = true;
+        } catch (error) {
+          if (controller.signal.aborted) {
+            return;
+          }
+          console.error('Failed to load contributors', error);
+          setContributorsError('Unable to load contributor list. Please try again later.');
+        } finally {
+          if (!controller.signal.aborted) {
+            setIsLoadingContributors(false);
+            if (didSucceed) {
+              contributorsLoadedRef.current = true;
+            }
+          }
+        }
+      };
+
+      loadContributors();
+
+      return () => {
+        controller.abort();
+      };
+    }, [isAboutOpen]);
 
     useEffect(() => {
       const container = messagesContainerRef.current;
@@ -323,7 +439,65 @@
 
     return (
       React.createElement('main', null,
-        React.createElement('h1', null, 'Peer-to-Peer WebRTC Chat'),
+        React.createElement('div', { className: 'header-with-about' },
+          React.createElement('h1', { className: 'app-title' },
+            React.createElement('span', {
+              className: 'app-title-icon',
+              'aria-hidden': 'true'
+            }, '🐬'),
+            React.createElement('span', { className: 'app-title-text' }, 'PodTalk')
+          ),
+          React.createElement('button', {
+            className: 'about-button',
+            onClick: toggleAbout,
+            'aria-label': 'About this project',
+            'aria-expanded': isAboutOpen,
+            'aria-controls': 'about-dialog',
+            ref: aboutButtonRef
+          }, 'About')
+        ),
+        isAboutOpen && React.createElement('div', { className: 'modal-overlay', role: 'presentation', onClick: toggleAbout },
+          React.createElement('div', {
+            className: 'modal-content',
+            role: 'dialog',
+            id: 'about-dialog',
+            'aria-modal': 'true',
+            'aria-labelledby': 'about-dialog-title',
+            onClick: (e) => e.stopPropagation()
+          },
+            React.createElement('div', { className: 'modal-header' },
+              React.createElement('h2', { id: 'about-dialog-title' }, 'About TheCommunity'),
+              React.createElement('button', {
+                className: 'modal-close',
+                onClick: toggleAbout,
+                'aria-label': 'Close about dialog',
+                ref: closeAboutButtonRef
+              }, 'Close')
+            ),
+            React.createElement('div', { className: 'modal-body' },
+              React.createElement('p', null, 'This is a peer-to-peer WebRTC chat application with no backend. The community steers where this project goes through GitHub Issues.'),
+              React.createElement('h3', null, 'Contributors'),
+              React.createElement('p', { className: 'contributors-intro' }, 'Thank you to everyone who contributed by creating issues:'),
+              isLoadingContributors && React.createElement('p', { className: 'contributors-status' }, 'Loading contributors...'),
+              contributorsError && React.createElement('p', { className: 'contributors-status contributors-error' }, contributorsError),
+              !isLoadingContributors && !contributorsError && contributors.length === 0 &&
+                React.createElement('p', { className: 'contributors-status' }, 'No issues yet. Open one to join the credits.'),
+              contributors.length > 0 && React.createElement('ul', { className: 'contributors-list' },
+                contributors.map((contributor) => {
+                  const issueLabel = contributor.issueCount === 1 ? '1 issue' : `${contributor.issueCount} issues`;
+                  return React.createElement('li', { key: contributor.login },
+                    React.createElement('a', {
+                      href: contributor.htmlUrl,
+                      target: '_blank',
+                      rel: 'noopener noreferrer'
+                    }, `@${contributor.login}`),
+                    React.createElement('span', { className: 'contribution-note' }, ` - ${issueLabel}`)
+                  );
+                })
+              )
+            )
+          )
+        ),
         React.createElement('section', { id: 'signaling', className: isSignalingCollapsed ? 'collapsed' : '' },
           React.createElement('header', null,
             React.createElement('div', { className: 'header-content' },
@@ -416,12 +590,16 @@
                   handleSend();
                 }
               },
-              maxLength: MAX_MESSAGE_LENGTH
+              maxLength: MAX_MESSAGE_LENGTH,
+              'aria-label': 'Message input',
+              'aria-describedby': 'channel-status'
             }),
             React.createElement('button', {
               id: 'send',
               onClick: handleSend,
-              disabled: !channelReady || !inputText.trim()
+              disabled: !channelReady || !inputText.trim(),
+              'aria-label': 'Send message',
+              title: 'Send message'
             }, 'Send')
           )
         )
