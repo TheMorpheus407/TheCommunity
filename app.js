@@ -1,17 +1,31 @@
+/**
+ * Peer-to-Peer WebRTC Chat Application
+ * Enables direct communication between two peers without a central server.
+ * Uses WebRTC DataChannel for secure P2P messaging.
+ */
 (function () {
   const { useState, useRef, useCallback, useEffect } = React;
 
+  /** @const {string} Expected label for the data channel */
   const EXPECTED_CHANNEL_LABEL = 'chat';
+  /** @const {number} Maximum allowed message length in characters */
   const MAX_MESSAGE_LENGTH = 2000;
+  /** @const {number} Maximum messages allowed per interval for rate limiting */
   const MAX_MESSAGES_PER_INTERVAL = 30;
+  /** @const {number} Time window for rate limiting in milliseconds */
   const MESSAGE_INTERVAL_MS = 5000;
 
+  /** @const {Object.<string, string>} Display labels for message roles */
   const ROLE_LABELS = {
     local: 'You',
     remote: 'Peer',
     system: 'Notice'
   };
 
+  /**
+   * Main application component for P2P WebRTC chat
+   * @returns {React.Element} The chat application UI
+   */
   function App() {
     const [status, setStatus] = useState('Waiting to connect...');
     const [channelStatus, setChannelStatus] = useState('Channel closed');
@@ -31,15 +45,29 @@
     const messageIdRef = useRef(0);
     const messagesContainerRef = useRef(null);
 
+    /**
+     * Appends a new message to the chat
+     * @param {string} text - The message text
+     * @param {'local'|'remote'|'system'} role - The sender role
+     */
     const appendMessage = useCallback((text, role) => {
       const id = messageIdRef.current++;
       setMessages((prev) => [...prev, { id, text, role }]);
     }, []);
 
+    /**
+     * Appends a system notification message
+     * @param {string} text - The notification text
+     */
     const appendSystemMessage = useCallback((text) => {
       appendMessage(text, 'system');
     }, [appendMessage]);
 
+    /**
+     * Sets up event handlers for a WebRTC data channel
+     * Includes security checks and rate limiting for incoming messages
+     * @param {RTCDataChannel} channel - The data channel to configure
+     */
     const setupChannelHandlers = useCallback((channel) => {
       channel.onopen = () => {
         setChannelStatus('Channel open');
@@ -77,6 +105,11 @@
       };
     }, [appendMessage, appendSystemMessage]);
 
+    /**
+     * Creates or returns existing RTCPeerConnection
+     * Configures connection event handlers for ICE and connection state changes
+     * @returns {RTCPeerConnection} The peer connection instance
+     */
     const ensurePeerConnection = useCallback(() => {
       if (pcRef.current) {
         return pcRef.current;
@@ -116,6 +149,10 @@
       return pc;
     }, [appendSystemMessage, setupChannelHandlers]);
 
+    /**
+     * Waits for ICE candidate gathering to complete
+     * @returns {Promise<void>} Resolves when ICE gathering is done
+     */
     const waitForIce = useCallback(async () => {
       if (iceDoneRef.current) {
         return;
@@ -132,6 +169,11 @@
       });
     }, []);
 
+    /**
+     * Parses and validates remote WebRTC signal (SDP)
+     * @returns {RTCSessionDescription} The parsed session description
+     * @throws {Error} If signal is invalid or malformed
+     */
     const parseRemoteDescription = useCallback(() => {
       const raw = remoteSignal.trim();
       if (!raw) {
@@ -149,6 +191,10 @@
       return desc;
     }, [remoteSignal]);
 
+    /**
+     * Creates a new WebRTC offer to initiate connection
+     * The generated offer should be shared with the remote peer
+     */
     const handleCreateOffer = useCallback(async () => {
       const pc = ensurePeerConnection();
       if (channelRef.current) {
@@ -180,6 +226,10 @@
       }
     }, [appendSystemMessage, ensurePeerConnection, setupChannelHandlers, waitForIce]);
 
+    /**
+     * Applies a remote signal (offer or answer) from peer
+     * Must be called before creating an answer or completing connection
+     */
     const handleApplyRemote = useCallback(async () => {
       const pc = ensurePeerConnection();
       try {
@@ -195,6 +245,10 @@
       }
     }, [ensurePeerConnection, parseRemoteDescription]);
 
+    /**
+     * Creates an answer to a received offer
+     * The generated answer should be sent back to the peer who created the offer
+     */
     const handleCreateAnswer = useCallback(async () => {
       const pc = ensurePeerConnection();
       iceDoneRef.current = false;
@@ -223,6 +277,10 @@
       }
     }, [appendSystemMessage, ensurePeerConnection, parseRemoteDescription, waitForIce]);
 
+    /**
+     * Sends a chat message to the connected peer
+     * Validates message length before sending
+     */
     const handleSend = useCallback(() => {
       const channel = channelRef.current;
       const trimmed = inputText.trim();
@@ -238,6 +296,9 @@
       setInputText('');
     }, [appendMessage, appendSystemMessage, inputText]);
 
+    /**
+     * Toggles the signaling section collapsed state
+     */
     const toggleSignalingCollapse = useCallback(() => {
       setIsSignalingCollapsed((prev) => !prev);
     }, []);
