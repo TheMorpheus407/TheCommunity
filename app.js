@@ -23,6 +23,7 @@
     const [isCreatingOffer, setIsCreatingOffer] = useState(false);
     const [isCreatingAnswer, setIsCreatingAnswer] = useState(false);
     const [isSignalingCollapsed, setIsSignalingCollapsed] = useState(false);
+    const [shareableUrl, setShareableUrl] = useState('');
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -39,6 +40,64 @@
     const appendSystemMessage = useCallback((text) => {
       appendMessage(text, 'system');
     }, [appendMessage]);
+
+    const generateShareableUrl = useCallback((signal, type) => {
+      if (!signal || !['offer', 'answer'].includes(type)) return '';
+      try {
+        const encodedSignal = btoa(signal);
+        const baseUrl = window.location.origin + window.location.pathname;
+        return `${baseUrl}#signal=${encodeURIComponent(encodedSignal)}&type=${encodeURIComponent(type)}`;
+      } catch (err) {
+        console.error('Failed to generate shareable URL:', err);
+        return '';
+      }
+    }, []);
+
+    const parseUrlSignal = useCallback(() => {
+      try {
+        const hash = window.location.hash.substring(1);
+        if (!hash) return null;
+
+        const params = new URLSearchParams(hash);
+        const encodedSignal = params.get('signal');
+        const type = params.get('type');
+
+        if (!encodedSignal || !type) return null;
+
+        if (!['offer', 'answer'].includes(type)) {
+          console.error('Invalid signal type in URL');
+          return null;
+        }
+
+        const signal = atob(decodeURIComponent(encodedSignal));
+
+        try {
+          const parsed = JSON.parse(signal);
+          if (!parsed.type || !parsed.sdp || parsed.type !== type) {
+            console.error('Signal validation failed');
+            return null;
+          }
+        } catch (e) {
+          console.error('Invalid signal format');
+          return null;
+        }
+
+        return { signal, type };
+      } catch (err) {
+        console.error('Failed to parse URL signal:', err);
+        return null;
+      }
+    }, []);
+
+    const copyToClipboard = useCallback(async (text) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        appendSystemMessage('Link copied to clipboard!');
+      } catch (err) {
+        console.error('Failed to copy to clipboard:', err);
+        appendSystemMessage('Failed to copy link. Please copy manually.');
+      }
+    }, [appendSystemMessage]);
 
     const setupChannelHandlers = useCallback((channel) => {
       channel.onopen = () => {
@@ -87,7 +146,10 @@
       pc.onicecandidate = (event) => {
         if (!event.candidate && pc.localDescription) {
           iceDoneRef.current = true;
-          setLocalSignal(JSON.stringify(pc.localDescription));
+          const signal = JSON.stringify(pc.localDescription);
+          setLocalSignal(signal);
+          const url = generateShareableUrl(signal, pc.localDescription.type);
+          setShareableUrl(url);
           setStatus('Signal ready to share');
         }
       };
@@ -114,7 +176,7 @@
       };
 
       return pc;
-    }, [appendSystemMessage, setupChannelHandlers]);
+    }, [appendSystemMessage, setupChannelHandlers, generateShareableUrl]);
 
     const waitForIce = useCallback(async () => {
       if (iceDoneRef.current) {
@@ -250,6 +312,28 @@
     }, [messages]);
 
     useEffect(() => {
+      const urlSignal = parseUrlSignal();
+      if (urlSignal) {
+        setRemoteSignal(urlSignal.signal);
+
+        if (urlSignal.type === 'offer') {
+          appendSystemMessage('Offer signal loaded from URL. Click "Create Answer" to respond.');
+          setTimeout(() => {
+            handleCreateAnswer();
+          }, 500);
+        } else if (urlSignal.type === 'answer') {
+          appendSystemMessage('Answer signal loaded from URL. Click "Apply Remote" to connect.');
+          setTimeout(() => {
+            handleApplyRemote();
+          }, 500);
+        }
+
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
       return () => {
         if (channelRef.current) {
           channelRef.current.close();
@@ -310,6 +394,36 @@
                 value: localSignal,
                 placeholder: 'Local SDP will appear here once ready.'
               })
+            ),
+            shareableUrl && React.createElement('div', { className: 'shareable-url-container' },
+              React.createElement('label', null,
+                React.createElement('strong', null, 'Shareable Link (easier to share)'),
+                React.createElement('div', { style: { display: 'flex', gap: '0.5rem', alignItems: 'flex-start' } },
+                  React.createElement('input', {
+                    type: 'text',
+                    readOnly: true,
+                    value: shareableUrl,
+                    style: {
+                      flex: 1,
+                      padding: '0.8rem 1rem',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(148, 163, 184, 0.35)',
+                      background: 'rgba(15, 23, 42, 0.5)',
+                      color: 'inherit',
+                      fontFamily: 'ui-monospace, monospace',
+                      fontSize: '0.85rem'
+                    }
+                  }),
+                  React.createElement('button', {
+                    onClick: () => copyToClipboard(shareableUrl),
+                    style: {
+                      padding: '0.8rem 1.2rem',
+                      minWidth: 'unset',
+                      whiteSpace: 'nowrap'
+                    }
+                  }, 'Copy Link')
+                )
+              )
             ),
             React.createElement('label', null,
               React.createElement('strong', null, 'Remote Signal (paste received JSON here)'),
