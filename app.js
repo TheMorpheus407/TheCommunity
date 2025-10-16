@@ -510,15 +510,20 @@
             id: 'messages',
             'aria-live': 'polite',
             ref: messagesContainerRef
-          }, messages.map((message) => (
-            React.createElement('div', {
-              key: message.id,
-              className: 'chat-line',
-              'data-role': message.role
-            },
-            React.createElement('strong', null, ROLE_LABELS[message.role] || 'Notice'),
-            React.createElement('span', null, message.text))
-          ))),
+          },
+            messages.length === 0
+              ? React.createElement('div', { className: 'empty-state' },
+                  '💬 No messages yet. Connect with a peer to start chatting!')
+              : messages.map((message) => (
+                  React.createElement('div', {
+                    key: message.id,
+                    className: 'chat-line',
+                    'data-role': message.role
+                  },
+                  React.createElement('strong', null, ROLE_LABELS[message.role] || 'Notice'),
+                  React.createElement('span', null, message.text))
+                ))
+          ),
           React.createElement('div', { className: 'chat-input' },
             React.createElement('input', {
               id: 'outgoing',

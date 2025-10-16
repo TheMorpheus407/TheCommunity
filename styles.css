@@ -199,6 +199,17 @@ textarea[readonly] {
   overflow-y: auto;
   padding-right: 0.5rem;
 }
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  text-align: center;
+  color: #ffffff;
+  opacity: 0.5;
+  font-style: italic;
+  padding: 2rem 1rem;
+}
 .chat-line {
   display: flex;
   flex-direction: column;
