@@ -1,3 +1,7 @@
+/**
+ * Peer-to-peer WebRTC chat application bootstrap.
+ * Allows two browsers to exchange messages without a signaling server.
+ */
 (function () {
   const { useState, useRef, useCallback, useEffect } = React;
 
@@ -12,6 +16,10 @@
     system: 'Notice'
   };
 
+  /**
+   * Root React component that coordinates WebRTC setup and the user interface.
+   * @returns {React.ReactElement}
+   */
   function App() {
     const [status, setStatus] = useState('Waiting to connect...');
     const [channelStatus, setChannelStatus] = useState('Channel closed');
@@ -38,15 +46,29 @@
     const closeAboutButtonRef = useRef(null);
     const contributorsLoadedRef = useRef(false);
 
+    /**
+     * Queues a chat message for rendering.
+     * @param {string} text - Message body
+     * @param {'local'|'remote'|'system'} role - Message origin
+     */
     const appendMessage = useCallback((text, role) => {
       const id = messageIdRef.current++;
       setMessages((prev) => [...prev, { id, text, role }]);
     }, []);
 
+    /**
+     * Adds a system notification to the message list.
+     * @param {string} text - Notification text
+     */
     const appendSystemMessage = useCallback((text) => {
       appendMessage(text, 'system');
     }, [appendMessage]);
 
+    /**
+     * Configures event handlers on the reliable data channel.
+     * Applies defensive checks and rate limiting to inbound traffic.
+     * @param {RTCDataChannel} channel - Active data channel
+     */
     const setupChannelHandlers = useCallback((channel) => {
       channel.onopen = () => {
         setChannelStatus('Channel open');
@@ -63,12 +85,12 @@
       };
       channel.onmessage = (event) => {
         if (typeof event.data !== 'string') {
-          appendSystemMessage('Blocked non-text message from peer.');
+          appendSystemMessage('Security notice: blocked a message that was not plain text.');
           return;
         }
         const payload = event.data;
         if (payload.length > MAX_MESSAGE_LENGTH) {
-          appendSystemMessage('Blocked oversized message from peer.');
+          appendSystemMessage(`Message blocked: exceeded the ${MAX_MESSAGE_LENGTH} character limit.`);
           return;
         }
         const now = Date.now();
@@ -77,13 +99,17 @@
         );
         incomingTimestampsRef.current.push(now);
         if (incomingTimestampsRef.current.length > MAX_MESSAGES_PER_INTERVAL) {
-          appendSystemMessage('Peer is sending messages too quickly; message ignored.');
+          appendSystemMessage('Rate limit applied: peer is sending messages too quickly.');
           return;
         }
         appendMessage(payload, 'remote');
       };
     }, [appendMessage, appendSystemMessage]);
 
+    /**
+     * Lazily creates (or returns) the RTCPeerConnection instance.
+     * @returns {RTCPeerConnection}
+     */
     const ensurePeerConnection = useCallback(() => {
       if (pcRef.current) {
         return pcRef.current;
@@ -112,7 +138,7 @@
       pc.ondatachannel = (event) => {
         const incomingChannel = event.channel;
         if (incomingChannel.label !== EXPECTED_CHANNEL_LABEL) {
-          appendSystemMessage(`Blocked unexpected data channel "${incomingChannel.label || 'unnamed'}".`);
+          appendSystemMessage(`Security notice: blocked unexpected data channel "${incomingChannel.label || 'unnamed'}".`);
           incomingChannel.close();
           return;
         }
@@ -123,6 +149,10 @@
       return pc;
     }, [appendSystemMessage, setupChannelHandlers]);
 
+    /**
+     * Resolves once ICE gathering finishes for the current connection.
+     * @returns {Promise<void>}
+     */
     const waitForIce = useCallback(async () => {
       if (iceDoneRef.current) {
         return;
@@ -139,23 +169,32 @@
       });
     }, []);
 
+    /**
+     * Validates and parses the remote offer/answer JSON pasted by the user.
+     * @returns {RTCSessionDescriptionInit}
+     * @throws {Error} When the payload is empty or malformed
+     */
     const parseRemoteDescription = useCallback(() => {
       const raw = remoteSignal.trim();
       if (!raw) {
-        throw new Error('Remote signal is empty.');
+        throw new Error('Remote signal is empty. Paste the JSON you received from your peer.');
       }
       let desc;
       try {
         desc = JSON.parse(raw);
       } catch (err) {
-        throw new Error('Signal must be the exact JSON from the other peer.');
+        throw new Error('Remote signal is not valid JSON. Copy the complete signal again and retry.');
       }
       if (!desc.type || !desc.sdp || !['offer', 'answer'].includes(desc.type)) {
-        throw new Error('Unsupported remote description.');
+        throw new Error('Remote signal is missing required data. Ensure you pasted the offer or answer exactly as provided.');
       }
       return desc;
     }, [remoteSignal]);
 
+    /**
+     * Generates a WebRTC offer and prepares it for manual sharing.
+     * @returns {Promise<void>}
+     */
     const handleCreateOffer = useCallback(async () => {
       const pc = ensurePeerConnection();
       if (channelRef.current) {
@@ -181,12 +220,16 @@
       } catch (err) {
         console.error(err);
         setStatus('Failed to create offer');
-        appendSystemMessage('Unable to create offer. Check console for details.');
+        appendSystemMessage('Unable to create offer. WebRTC may be unsupported or browser permissions were denied.');
       } finally {
         setIsCreatingOffer(false);
       }
     }, [appendSystemMessage, ensurePeerConnection, setupChannelHandlers, waitForIce]);
 
+    /**
+     * Applies the pasted remote offer or answer to the peer connection.
+     * @returns {Promise<void>}
+     */
     const handleApplyRemote = useCallback(async () => {
       const pc = ensurePeerConnection();
       try {
@@ -202,6 +245,10 @@
       }
     }, [ensurePeerConnection, parseRemoteDescription]);
 
+    /**
+     * Produces an answer for an applied offer and shares it with the peer.
+     * @returns {Promise<void>}
+     */
     const handleCreateAnswer = useCallback(async () => {
       const pc = ensurePeerConnection();
       iceDoneRef.current = false;
@@ -224,12 +271,15 @@
       } catch (err) {
         console.error(err);
         setStatus(err.message || 'Failed to create answer');
-        appendSystemMessage('Unable to create answer. Check console for details.');
+        appendSystemMessage('Unable to create answer. Apply a valid remote offer first and ensure WebRTC is available.');
       } finally {
         setIsCreatingAnswer(false);
       }
     }, [appendSystemMessage, ensurePeerConnection, parseRemoteDescription, waitForIce]);
 
+    /**
+     * Sends the typed message across the data channel after validation.
+     */
     const handleSend = useCallback(() => {
       const channel = channelRef.current;
       const trimmed = inputText.trim();
@@ -237,7 +287,7 @@
         return;
       }
       if (trimmed.length > MAX_MESSAGE_LENGTH) {
-        appendSystemMessage(`Message too long. Limit is ${MAX_MESSAGE_LENGTH} characters.`);
+        appendSystemMessage(`Message too long: limit is ${MAX_MESSAGE_LENGTH} characters (you typed ${trimmed.length}).`);
         return;
       }
       channel.send(trimmed);
@@ -390,7 +440,13 @@
     return (
       React.createElement('main', null,
         React.createElement('div', { className: 'header-with-about' },
-          React.createElement('h1', null, 'Peer-to-Peer WebRTC Chat'),
+          React.createElement('h1', { className: 'app-title' },
+            React.createElement('span', {
+              className: 'app-title-icon',
+              'aria-hidden': 'true'
+            }, '🐬'),
+            React.createElement('span', { className: 'app-title-text' }, 'PodTalk')
+          ),
           React.createElement('button', {
             className: 'about-button',
             onClick: toggleAbout,
@@ -502,7 +558,7 @@
                     handleApplyRemote();
                   }
                 },
-                placeholder: 'Paste the JSON you received and press Ctrl+Enter (Cmd+Enter on Mac) to apply, or click Apply Remote.'
+                placeholder: 'Paste the JSON from your peer. Press Ctrl+Enter (Cmd+Enter on Mac) or click Apply Remote.'
               })
             )
           )
@@ -516,15 +572,22 @@
             id: 'messages',
             'aria-live': 'polite',
             ref: messagesContainerRef
-          }, messages.map((message) => (
-            React.createElement('div', {
-              key: message.id,
-              className: 'chat-line',
-              'data-role': message.role
-            },
-            React.createElement('strong', null, ROLE_LABELS[message.role] || 'Notice'),
-            React.createElement('span', null, message.text))
-          ))),
+          },
+            messages.length === 0
+              ? React.createElement('div', {
+                  className: 'empty-state',
+                  role: 'note'
+                }, 'No messages yet. Connect with a peer to start chatting.')
+              : messages.map((message) => (
+                  React.createElement('div', {
+                    key: message.id,
+                    className: 'chat-line',
+                    'data-role': message.role
+                  },
+                  React.createElement('strong', null, ROLE_LABELS[message.role] || 'Notice'),
+                  React.createElement('span', null, message.text))
+                ))
+          ),
           React.createElement('div', { className: 'chat-input' },
             React.createElement('input', {
               id: 'outgoing',
@@ -540,12 +603,16 @@
                   handleSend();
                 }
               },
-              maxLength: MAX_MESSAGE_LENGTH
+              maxLength: MAX_MESSAGE_LENGTH,
+              'aria-label': 'Message input',
+              'aria-describedby': 'channel-status'
             }),
             React.createElement('button', {
               id: 'send',
               onClick: handleSend,
-              disabled: !channelReady || !inputText.trim()
+              disabled: !channelReady || !inputText.trim(),
+              'aria-label': 'Send message',
+              title: 'Send message'
             }, 'Send')
           )
         )
