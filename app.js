@@ -295,6 +295,29 @@
       setInputText('');
     }, [appendMessage, appendSystemMessage, inputText]);
 
+    /**
+     * Closes the data channel and peer connection, resetting to initial state.
+     */
+    const handleDisconnect = useCallback(() => {
+      if (channelRef.current) {
+        channelRef.current.close();
+        channelRef.current = null;
+      }
+      if (pcRef.current) {
+        pcRef.current.close();
+        pcRef.current = null;
+      }
+      iceDoneRef.current = false;
+      incomingTimestampsRef.current = [];
+      setChannelReady(false);
+      setChannelStatus('Channel closed');
+      setStatus('Disconnected');
+      setLocalSignal('');
+      setRemoteSignal('');
+      setIsSignalingCollapsed(false);
+      appendSystemMessage('Connection closed. Create a new offer to reconnect.');
+    }, [appendSystemMessage]);
+
     const toggleSignalingCollapse = useCallback(() => {
       setIsSignalingCollapsed((prev) => !prev);
     }, []);
@@ -535,7 +558,13 @@
               React.createElement('button', {
                 id: 'apply-remote',
                 onClick: handleApplyRemote
-              }, 'Apply Remote')
+              }, 'Apply Remote'),
+              React.createElement('button', {
+                id: 'disconnect',
+                onClick: handleDisconnect,
+                disabled: !channelReady,
+                'aria-label': 'Disconnect from peer'
+              }, 'Disconnect')
             ),
             React.createElement('label', null,
               React.createElement('strong', null, 'Local Signal (share this)'),
