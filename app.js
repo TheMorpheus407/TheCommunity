@@ -35,6 +35,7 @@
     const [contributors, setContributors] = useState([]);
     const [contributorsError, setContributorsError] = useState('');
     const [isLoadingContributors, setIsLoadingContributors] = useState(false);
+    const [copyButtonText, setCopyButtonText] = useState('Copy');
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -303,6 +304,22 @@
       setIsAboutOpen((prev) => !prev);
     }, []);
 
+    /**
+     * Copies the local signal to clipboard for easy sharing.
+     */
+    const handleCopySignal = useCallback(async () => {
+      if (!localSignal) return;
+      try {
+        await navigator.clipboard.writeText(localSignal);
+        setCopyButtonText('Copied!');
+        setTimeout(() => setCopyButtonText('Copy'), 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+        setCopyButtonText('Failed');
+        setTimeout(() => setCopyButtonText('Copy'), 2000);
+      }
+    }, [localSignal]);
+
     useEffect(() => {
       if (isAboutOpen) {
         if (closeAboutButtonRef.current) {
@@ -537,8 +554,16 @@
                 onClick: handleApplyRemote
               }, 'Apply Remote')
             ),
-            React.createElement('label', null,
-              React.createElement('strong', null, 'Local Signal (share this)'),
+            React.createElement('div', null,
+              React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' } },
+                React.createElement('strong', null, 'Local Signal (share this)'),
+                React.createElement('button', {
+                  onClick: handleCopySignal,
+                  disabled: !localSignal,
+                  style: { padding: '0.4rem 0.8rem', fontSize: '0.85rem', minWidth: '80px' },
+                  'aria-label': 'Copy local signal to clipboard'
+                }, copyButtonText)
+              ),
               React.createElement('textarea', {
                 id: 'local-signal',
                 readOnly: true,
