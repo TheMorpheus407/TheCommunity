@@ -1,0 +1,6 @@
+# CODEOWNERS file for TheCommunity
+# These users will be automatically requested for review when PRs are opened
+# For more information: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global code owners for the entire repository
+* @TheMorpheus407 @themorpheustuts @thomas-ej-worm
