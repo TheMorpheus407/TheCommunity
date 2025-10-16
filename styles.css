@@ -35,6 +35,21 @@ h1 {
   text-align: center;
   letter-spacing: 0.05em;
 }
+.header-with-about {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+}
+.about-button {
+  position: absolute;
+  right: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  min-width: unset;
+  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.2);
+}
 section {
   background: rgba(15, 18, 31, 0.6);
   padding: 1.5rem;
@@ -215,7 +230,115 @@ textarea[readonly] {
   color: rgba(226, 232, 240, 0.7);
   line-height: 1.4;
 }
-
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+.modal-content {
+  background: rgba(15, 23, 42, 0.95);
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
+  color: #38bdf8;
+}
+.modal-close {
+  padding: 0.4rem 1rem;
+  min-width: unset;
+  height: auto;
+  font-size: 0.9rem;
+  line-height: 1;
+  background: rgba(148, 163, 184, 0.15);
+  box-shadow: none;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 999px;
+}
+.modal-close:not(:disabled):hover {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: rgba(248, 113, 113, 0.4);
+}
+.modal-body {
+  padding: 2rem;
+  line-height: 1.6;
+}
+.modal-body h3 {
+  margin: 1.5rem 0 0.75rem 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #38bdf8;
+}
+.modal-body p {
+  margin: 0 0 1rem 0;
+  color: rgba(248, 250, 252, 0.85);
+}
+.contributors-intro {
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem !important;
+}
+.contributors-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.contributors-list li {
+  padding: 0.75rem 1rem;
+  background: rgba(56, 189, 248, 0.1);
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+.contributors-list a {
+  color: #38bdf8;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+.contributors-list a:hover {
+  color: #7dd3fc;
+  text-decoration: underline;
+}
+.contribution-note {
+  color: rgba(248, 250, 252, 0.6);
+  font-size: 0.9rem;
+}
+.contributors-status {
+  margin: 0.5rem 0;
+  color: rgba(248, 250, 252, 0.7);
+  font-size: 0.95rem;
+}
+.contributors-status.contributors-error {
+  color: rgba(248, 113, 113, 0.85);
+}
 /* ===== Mobile Responsive Design ===== */
 
 /* Small phones and narrow screens (< 400px) */
@@ -226,6 +349,14 @@ textarea[readonly] {
   main {
     padding: 1.25rem;
     gap: 1.25rem;
+  }
+  .header-with-about {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .about-button {
+    position: static;
+    width: 100%;
   }
   h1 {
     font-size: clamp(1.5rem, 5vw, 1.8rem);
@@ -293,6 +424,12 @@ textarea[readonly] {
     padding: 0.9rem 1.1rem;
     font-size: 0.85rem;
   }
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+  }
+  .modal-body {
+    padding: 1.5rem;
+  }
 }
 
 /* Phones (400px - 599px) */
@@ -303,6 +440,14 @@ textarea[readonly] {
   main {
     padding: 1.5rem;
     gap: 1.25rem;
+  }
+  .header-with-about {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .about-button {
+    position: static;
+    width: 100%;
   }
   section {
     padding: 1.25rem;
@@ -329,6 +474,12 @@ textarea[readonly] {
     width: 100%;
     min-height: 44px;
   }
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+  }
+  .modal-body {
+    padding: 1.5rem;
+  }
 }
 
 /* Tablets and larger phones (600px - 768px) */
@@ -338,6 +489,14 @@ textarea[readonly] {
   }
   main {
     padding: 1.75rem;
+  }
+  .header-with-about {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .about-button {
+    position: static;
+    width: 100%;
   }
   .controls button {
     flex: 1 1 calc(50% - 0.5rem);
@@ -353,6 +512,12 @@ textarea[readonly] {
     flex: 0 0 auto;
     min-width: 100px;
   }
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+  }
+  .modal-body {
+    padding: 1.5rem;
+  }
 }
 
 /* Standard tablets and small desktops (769px - 920px) */
@@ -365,5 +530,19 @@ textarea[readonly] {
   }
   .controls button {
     min-width: 160px; /* Slightly smaller than desktop */
+  }
+  .header-with-about {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .about-button {
+    position: static;
+    width: 100%;
+  }
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+  }
+  .modal-body {
+    padding: 1.5rem;
   }
 }
