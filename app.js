@@ -262,7 +262,7 @@
 
     return (
       React.createElement('main', null,
-        React.createElement('h1', null, 'Peer-to-Peer WebRTC Chat'),
+        React.createElement('h1', null, '🐬 PodTalk'),
         React.createElement('section', { id: 'signaling', className: isSignalingCollapsed ? 'collapsed' : '' },
           React.createElement('header', null,
             React.createElement('div', { className: 'header-content' },
