@@ -215,21 +215,155 @@ textarea[readonly] {
   color: rgba(226, 232, 240, 0.7);
   line-height: 1.4;
 }
-@media (max-width: 768px) {
+
+/* ===== Mobile Responsive Design ===== */
+
+/* Small phones and narrow screens (< 400px) */
+@media (max-width: 399px) {
+  body {
+    padding: 0.75rem;
+  }
+  main {
+    padding: 1.25rem;
+    gap: 1.25rem;
+  }
+  h1 {
+    font-size: clamp(1.5rem, 5vw, 1.8rem);
+    letter-spacing: 0.03em;
+  }
+  section {
+    padding: 1rem;
+    gap: 1rem;
+  }
+  section header h2 {
+    font-size: 0.95rem;
+  }
+  .status {
+    font-size: 0.85rem;
+  }
+  button {
+    padding: 0.75rem 1.4rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.06em;
+    min-height: 44px; /* Ensure touch-friendly targets */
+  }
+  .controls button {
+    flex: 1 1 100%;
+    min-width: unset; /* Remove desktop min-width constraint */
+  }
+  textarea {
+    min-height: 90px;
+    font-size: 0.9rem;
+    padding: 0.9rem 1rem;
+  }
+  .collapse-toggle {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+  #messages {
+    max-height: 220px;
+  }
+  .chat-line {
+    padding: 0.65rem 0.9rem;
+  }
+  .chat-line strong {
+    font-size: 0.75rem;
+  }
+  .chat-line span {
+    font-size: 0.95rem;
+  }
+  .chat-input {
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .chat-input input,
+  .chat-input button {
+    width: 100%;
+    min-height: 44px; /* Touch-friendly input */
+  }
+  .chat-input input {
+    padding: 0.85rem 1.1rem;
+    font-size: 0.95rem;
+  }
+  .hint {
+    font-size: 0.8rem;
+  }
+  .warning {
+    padding: 0.9rem 1.1rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Phones (400px - 599px) */
+@media (min-width: 400px) and (max-width: 599px) {
   body {
     padding: 1rem;
   }
   main {
     padding: 1.5rem;
+    gap: 1.25rem;
+  }
+  section {
+    padding: 1.25rem;
+  }
+  button {
+    min-height: 44px; /* Touch-friendly targets */
   }
   .controls button {
     flex: 1 1 100%;
+    min-width: unset; /* Remove desktop min-width constraint */
+  }
+  textarea {
+    min-height: 95px;
+  }
+  #messages {
+    max-height: 240px;
   }
   .chat-input {
     flex-direction: column;
+    gap: 0.7rem;
   }
   .chat-input input,
   .chat-input button {
     width: 100%;
+    min-height: 44px;
+  }
+}
+
+/* Tablets and larger phones (600px - 768px) */
+@media (min-width: 600px) and (max-width: 768px) {
+  body {
+    padding: 1.25rem;
+  }
+  main {
+    padding: 1.75rem;
+  }
+  .controls button {
+    flex: 1 1 calc(50% - 0.5rem);
+    min-width: 140px; /* Smaller than desktop but still reasonable */
+  }
+  .chat-input {
+    flex-direction: row;
+  }
+  .chat-input input {
+    flex: 1;
+  }
+  .chat-input button {
+    flex: 0 0 auto;
+    min-width: 100px;
+  }
+}
+
+/* Standard tablets and small desktops (769px - 920px) */
+@media (min-width: 769px) and (max-width: 920px) {
+  body {
+    padding: 1.5rem;
+  }
+  main {
+    padding: 1.75rem;
+  }
+  .controls button {
+    min-width: 160px; /* Slightly smaller than desktop */
   }
 }
