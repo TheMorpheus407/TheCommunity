@@ -6,7 +6,7 @@ body {
   margin: 0;
   min-height: 100vh;
   background: #171717;
-  color: #fff;
+  color: #ffffff;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -34,6 +34,21 @@ h1 {
   text-align: center;
   letter-spacing: 0.05em;
 }
+.header-with-about {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+}
+.about-button {
+  position: absolute;
+  right: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  min-width: unset;
+  box-shadow: 0 8px 20px rgba(14, 165, 233, 0.2);
+}
 section {
   background: #252629;
   padding: 1.5rem;
@@ -60,7 +75,7 @@ section header h2 {
   font-size: 1.1rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #fff;
+  color: #ffffff;
 }
 .collapse-toggle {
   flex-shrink: 0;
@@ -79,7 +94,7 @@ section header h2 {
 }
 .collapse-toggle:not(:disabled):hover {
   background: #1d1e24;
-  border-color: #fff;
+  border-color: #ffffff;
 }
 .signaling-content {
   display: grid;
@@ -101,7 +116,7 @@ button {
   letter-spacing: 0.08em;
   cursor: pointer;
   background: #17191e;
-  color: #fff;
+  color: #ffffff;
   transition: background-color 200ms ease, border-color 200ms ease, transform 200ms ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
@@ -112,9 +127,12 @@ button:disabled {
   box-shadow: none;
   border-color: #5f6368;
 }
+.about-button {
+  box-shadow: none;
+}
 button:not(:disabled):hover {
   background: #1d1e24;
-  border-color: #fff;
+  border-color: #ffffff;
 }
 button:not(:disabled):active,
 button:not(:disabled):focus-visible {
@@ -136,7 +154,7 @@ textarea {
   transition: border-color 200ms ease, background-color 200ms ease;
 }
 textarea:focus {
-  border-color: #fff;
+  border-color: #ffffff;
   outline: none;
 }
 textarea[readonly] {
@@ -153,7 +171,7 @@ textarea[readonly] {
 }
 .status {
   font-size: 0.95rem;
-  color: #fff;
+  color: #ffffff;
   font-weight: 500;
   opacity: 0.8;
 }
@@ -164,7 +182,7 @@ textarea[readonly] {
   background: #1d1e24;
   font-size: 0.9rem;
   line-height: 1.5;
-  color: #fff;
+  color: #ffffff;
 }
 .warning strong {
   display: block;
@@ -172,7 +190,7 @@ textarea[readonly] {
   font-size: 0.85rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #fff;
+  color: #ffffff;
 }
 #messages {
   display: grid;
@@ -203,7 +221,7 @@ textarea[readonly] {
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #fff;
+  color: #ffffff;
   opacity: 0.8;
 }
 .chat-line[data-role="system"] strong {
@@ -227,30 +245,328 @@ textarea[readonly] {
   transition: border-color 200ms ease, background-color 200ms ease;
 }
 .chat-input input:focus {
-  border-color: #fff;
+  border-color: #ffffff;
   outline: none;
 }
 .hint {
   font-size: 0.85rem;
-  color: #fff;
+  color: #ffffff;
   opacity: 0.7;
   line-height: 1.4;
 }
-@media (max-width: 768px) {
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+.modal-content {
+  background: #1d1e24;
+  border-radius: 18px;
+  border: 1px solid #5f6368;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #5f6368;
+}
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
+  color: #e0e3e7;
+}
+.modal-close {
+  padding: 0.4rem 1rem;
+  min-width: unset;
+  height: auto;
+  font-size: 0.9rem;
+  line-height: 1;
+  background: #252629;
+  box-shadow: none;
+  border: 1px solid #5f6368;
+  border-radius: 999px;
+}
+.modal-close:not(:disabled):hover {
+  background: #2f3036;
+  border-color: #ffffff;
+}
+.modal-body {
+  padding: 2rem;
+  line-height: 1.6;
+}
+.modal-body h3 {
+  margin: 1.5rem 0 0.75rem 0;
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #e0e3e7;
+}
+.modal-body p {
+  margin: 0 0 1rem 0;
+  color: rgba(255, 255, 255, 0.85);
+}
+.contributors-intro {
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem !important;
+}
+.contributors-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.contributors-list li {
+  padding: 0.75rem 1rem;
+  background: #1b1c21;
+  border-radius: 10px;
+  border: 1px solid #5f6368;
+}
+.contributors-list a {
+  color: #8ab4f8;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+.contributors-list a:hover {
+  color: #c3ddff;
+  text-decoration: underline;
+}
+.contribution-note {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+.contributors-status {
+  margin: 0.5rem 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.95rem;
+}
+.contributors-status.contributors-error {
+  color: #f28b82;
+}
+/* ===== Mobile Responsive Design ===== */
+
+/* Small phones and narrow screens (< 400px) */
+@media (max-width: 399px) {
+  body {
+    padding: 0.75rem;
+  }
+  main {
+    padding: 1.25rem;
+    gap: 1.25rem;
+  }
+  .header-with-about {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .about-button {
+    position: static;
+    width: 100%;
+  }
+  h1 {
+    font-size: clamp(1.5rem, 5vw, 1.8rem);
+    letter-spacing: 0.03em;
+  }
+  section {
+    padding: 1rem;
+    gap: 1rem;
+  }
+  section header h2 {
+    font-size: 0.95rem;
+  }
+  .status {
+    font-size: 0.85rem;
+  }
+  button {
+    padding: 0.75rem 1.4rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.06em;
+    min-height: 44px; /* Ensure touch-friendly targets */
+  }
+  .controls button {
+    flex: 1 1 100%;
+    min-width: unset; /* Remove desktop min-width constraint */
+  }
+  textarea {
+    min-height: 90px;
+    font-size: 0.9rem;
+    padding: 0.9rem 1rem;
+  }
+  .collapse-toggle {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+  #messages {
+    max-height: 220px;
+  }
+  .chat-line {
+    padding: 0.65rem 0.9rem;
+  }
+  .chat-line strong {
+    font-size: 0.75rem;
+  }
+  .chat-line span {
+    font-size: 0.95rem;
+  }
+  .chat-input {
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .chat-input input,
+  .chat-input button {
+    width: 100%;
+    min-height: 44px; /* Touch-friendly input */
+  }
+  .chat-input input {
+    padding: 0.85rem 1.1rem;
+    font-size: 0.95rem;
+  }
+  .hint {
+    font-size: 0.8rem;
+  }
+  .warning {
+    padding: 0.9rem 1.1rem;
+    font-size: 0.85rem;
+  }
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+  }
+  .modal-body {
+    padding: 1.5rem;
+  }
+}
+
+/* Phones (400px - 599px) */
+@media (min-width: 400px) and (max-width: 599px) {
   body {
     padding: 1rem;
   }
   main {
     padding: 1.5rem;
+    gap: 1.25rem;
+  }
+  .header-with-about {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .about-button {
+    position: static;
+    width: 100%;
+  }
+  section {
+    padding: 1.25rem;
+  }
+  button {
+    min-height: 44px; /* Touch-friendly targets */
   }
   .controls button {
     flex: 1 1 100%;
+    min-width: unset; /* Remove desktop min-width constraint */
+  }
+  textarea {
+    min-height: 95px;
+  }
+  #messages {
+    max-height: 240px;
   }
   .chat-input {
     flex-direction: column;
+    gap: 0.7rem;
   }
   .chat-input input,
   .chat-input button {
     width: 100%;
+    min-height: 44px;
+  }
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+  }
+  .modal-body {
+    padding: 1.5rem;
+  }
+}
+
+/* Tablets and larger phones (600px - 768px) */
+@media (min-width: 600px) and (max-width: 768px) {
+  body {
+    padding: 1.25rem;
+  }
+  main {
+    padding: 1.75rem;
+  }
+  .header-with-about {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .about-button {
+    position: static;
+    width: 100%;
+  }
+  .controls button {
+    flex: 1 1 calc(50% - 0.5rem);
+    min-width: 140px; /* Smaller than desktop but still reasonable */
+  }
+  .chat-input {
+    flex-direction: row;
+  }
+  .chat-input input {
+    flex: 1;
+  }
+  .chat-input button {
+    flex: 0 0 auto;
+    min-width: 100px;
+  }
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+  }
+  .modal-body {
+    padding: 1.5rem;
+  }
+}
+
+/* Standard tablets and small desktops (769px - 920px) */
+@media (min-width: 769px) and (max-width: 920px) {
+  body {
+    padding: 1.5rem;
+  }
+  main {
+    padding: 1.75rem;
+  }
+  .controls button {
+    min-width: 160px; /* Slightly smaller than desktop */
+  }
+  .header-with-about {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .about-button {
+    position: static;
+    width: 100%;
+  }
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+  }
+  .modal-body {
+    padding: 1.5rem;
   }
 }
