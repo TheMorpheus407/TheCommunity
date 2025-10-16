@@ -23,6 +23,10 @@
     const [isCreatingOffer, setIsCreatingOffer] = useState(false);
     const [isCreatingAnswer, setIsCreatingAnswer] = useState(false);
     const [isSignalingCollapsed, setIsSignalingCollapsed] = useState(false);
+    const [isAboutOpen, setIsAboutOpen] = useState(false);
+    const [contributors, setContributors] = useState([]);
+    const [contributorsError, setContributorsError] = useState('');
+    const [isLoadingContributors, setIsLoadingContributors] = useState(false);
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -30,6 +34,9 @@
     const incomingTimestampsRef = useRef([]);
     const messageIdRef = useRef(0);
     const messagesContainerRef = useRef(null);
+    const aboutButtonRef = useRef(null);
+    const closeAboutButtonRef = useRef(null);
+    const contributorsLoadedRef = useRef(false);
 
     const appendMessage = useCallback((text, role) => {
       const id = messageIdRef.current++;
@@ -56,12 +63,12 @@
       };
       channel.onmessage = (event) => {
         if (typeof event.data !== 'string') {
-          appendSystemMessage('⚠️ Security: Blocked invalid message type from peer.');
+          appendSystemMessage('Security notice: blocked a message that was not plain text.');
           return;
         }
         const payload = event.data;
         if (payload.length > MAX_MESSAGE_LENGTH) {
-          appendSystemMessage(`⚠️ Blocked message: Too long (max ${MAX_MESSAGE_LENGTH} characters).`);
+          appendSystemMessage(`Message blocked: exceeded the ${MAX_MESSAGE_LENGTH} character limit.`);
           return;
         }
         const now = Date.now();
@@ -70,7 +77,7 @@
         );
         incomingTimestampsRef.current.push(now);
         if (incomingTimestampsRef.current.length > MAX_MESSAGES_PER_INTERVAL) {
-          appendSystemMessage('⚠️ Rate limit: Peer is sending too many messages too quickly.');
+          appendSystemMessage('Rate limit applied: peer is sending messages too quickly.');
           return;
         }
         appendMessage(payload, 'remote');
@@ -105,7 +112,7 @@
       pc.ondatachannel = (event) => {
         const incomingChannel = event.channel;
         if (incomingChannel.label !== EXPECTED_CHANNEL_LABEL) {
-          appendSystemMessage(`⚠️ Security: Blocked unexpected connection channel "${incomingChannel.label || 'unnamed'}".`);
+          appendSystemMessage(`Security notice: blocked unexpected data channel "${incomingChannel.label || 'unnamed'}".`);
           incomingChannel.close();
           return;
         }
@@ -135,16 +142,16 @@
     const parseRemoteDescription = useCallback(() => {
       const raw = remoteSignal.trim();
       if (!raw) {
-        throw new Error('❌ Remote signal is empty. Please paste the signal from your peer.');
+        throw new Error('Remote signal is empty. Paste the JSON you received from your peer.');
       }
       let desc;
       try {
         desc = JSON.parse(raw);
       } catch (err) {
-        throw new Error('❌ Invalid signal format. Make sure you copied the complete JSON from your peer.');
+        throw new Error('Remote signal is not valid JSON. Copy the complete signal again and retry.');
       }
       if (!desc.type || !desc.sdp || !['offer', 'answer'].includes(desc.type)) {
-        throw new Error('❌ Invalid signal content. Please check the signal and try again.');
+        throw new Error('Remote signal is missing required data. Ensure you pasted the offer or answer exactly as provided.');
       }
       return desc;
     }, [remoteSignal]);
@@ -173,8 +180,8 @@
         await waitForIce();
       } catch (err) {
         console.error(err);
-        setStatus('❌ Failed to create offer');
-        appendSystemMessage('❌ Unable to create connection offer. Your browser may not support WebRTC or you may need to grant permissions.');
+        setStatus('Failed to create offer');
+        appendSystemMessage('Unable to create offer. WebRTC may be unsupported or browser permissions were denied.');
       } finally {
         setIsCreatingOffer(false);
       }
@@ -216,8 +223,8 @@
         await waitForIce();
       } catch (err) {
         console.error(err);
-        setStatus(err.message || '❌ Failed to create answer');
-        appendSystemMessage('❌ Unable to create answer. Make sure you applied a valid offer first.');
+        setStatus(err.message || 'Failed to create answer');
+        appendSystemMessage('Unable to create answer. Apply a valid remote offer first and ensure WebRTC is available.');
       } finally {
         setIsCreatingAnswer(false);
       }
@@ -230,7 +237,7 @@
         return;
       }
       if (trimmed.length > MAX_MESSAGE_LENGTH) {
-        appendSystemMessage(`❌ Message too long! Please keep it under ${MAX_MESSAGE_LENGTH} characters (currently ${trimmed.length}).`);
+        appendSystemMessage(`Message too long: limit is ${MAX_MESSAGE_LENGTH} characters (you typed ${trimmed.length}).`);
         return;
       }
       channel.send(trimmed);
@@ -241,6 +248,126 @@
     const toggleSignalingCollapse = useCallback(() => {
       setIsSignalingCollapsed((prev) => !prev);
     }, []);
+
+    const toggleAbout = useCallback(() => {
+      setIsAboutOpen((prev) => !prev);
+    }, []);
+
+    useEffect(() => {
+      if (isAboutOpen) {
+        if (closeAboutButtonRef.current) {
+          closeAboutButtonRef.current.focus();
+        }
+      } else if (aboutButtonRef.current) {
+        aboutButtonRef.current.focus();
+      }
+    }, [isAboutOpen]);
+
+    useEffect(() => {
+      if (!isAboutOpen) {
+        return;
+      }
+      const handleKeyDown = (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          setIsAboutOpen(false);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }, [isAboutOpen]);
+
+    useEffect(() => {
+      if (!isAboutOpen || contributorsLoadedRef.current) {
+        return;
+      }
+
+      const controller = new AbortController();
+      let didSucceed = false;
+
+      const loadContributors = async () => {
+        setIsLoadingContributors(true);
+        setContributorsError('');
+        try {
+          const response = await fetch(
+            'https://api.github.com/repos/TheMorpheus407/TheCommunity/issues?state=all&per_page=100',
+            {
+              signal: controller.signal,
+              headers: {
+                Accept: 'application/vnd.github+json'
+              }
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`Request failed with status ${response.status}`);
+          }
+
+          const payload = await response.json();
+          if (controller.signal.aborted) {
+            return;
+          }
+
+          const map = new Map();
+          if (Array.isArray(payload)) {
+            payload.forEach((item) => {
+              if (!item || item.pull_request) {
+                return;
+              }
+              const user = item.user;
+              const login = user && user.login;
+              if (!login) {
+                return;
+              }
+              const sanitizedLogin = String(login).trim();
+              if (!sanitizedLogin) {
+                return;
+              }
+              const existing = map.get(sanitizedLogin);
+              if (existing) {
+                existing.issueCount += 1;
+              } else {
+                map.set(sanitizedLogin, {
+                  login: sanitizedLogin,
+                  htmlUrl: user && user.html_url
+                    ? user.html_url
+                    : `https://github.com/${encodeURIComponent(sanitizedLogin)}`,
+                  issueCount: 1
+                });
+              }
+            });
+          }
+
+          const sortedContributors = Array.from(map.values()).sort((a, b) =>
+            a.login.localeCompare(b.login)
+          );
+
+          setContributors(sortedContributors);
+          didSucceed = true;
+        } catch (error) {
+          if (controller.signal.aborted) {
+            return;
+          }
+          console.error('Failed to load contributors', error);
+          setContributorsError('Unable to load contributor list. Please try again later.');
+        } finally {
+          if (!controller.signal.aborted) {
+            setIsLoadingContributors(false);
+            if (didSucceed) {
+              contributorsLoadedRef.current = true;
+            }
+          }
+        }
+      };
+
+      loadContributors();
+
+      return () => {
+        controller.abort();
+      };
+    }, [isAboutOpen]);
 
     useEffect(() => {
       const container = messagesContainerRef.current;
@@ -262,7 +389,65 @@
 
     return (
       React.createElement('main', null,
-        React.createElement('h1', null, 'Peer-to-Peer WebRTC Chat'),
+        React.createElement('div', { className: 'header-with-about' },
+          React.createElement('h1', { className: 'app-title' },
+            React.createElement('span', {
+              className: 'app-title-icon',
+              'aria-hidden': 'true'
+            }, '🐬'),
+            React.createElement('span', { className: 'app-title-text' }, 'PodTalk')
+          ),
+          React.createElement('button', {
+            className: 'about-button',
+            onClick: toggleAbout,
+            'aria-label': 'About this project',
+            'aria-expanded': isAboutOpen,
+            'aria-controls': 'about-dialog',
+            ref: aboutButtonRef
+          }, 'About')
+        ),
+        isAboutOpen && React.createElement('div', { className: 'modal-overlay', role: 'presentation', onClick: toggleAbout },
+          React.createElement('div', {
+            className: 'modal-content',
+            role: 'dialog',
+            id: 'about-dialog',
+            'aria-modal': 'true',
+            'aria-labelledby': 'about-dialog-title',
+            onClick: (e) => e.stopPropagation()
+          },
+            React.createElement('div', { className: 'modal-header' },
+              React.createElement('h2', { id: 'about-dialog-title' }, 'About TheCommunity'),
+              React.createElement('button', {
+                className: 'modal-close',
+                onClick: toggleAbout,
+                'aria-label': 'Close about dialog',
+                ref: closeAboutButtonRef
+              }, 'Close')
+            ),
+            React.createElement('div', { className: 'modal-body' },
+              React.createElement('p', null, 'This is a peer-to-peer WebRTC chat application with no backend. The community steers where this project goes through GitHub Issues.'),
+              React.createElement('h3', null, 'Contributors'),
+              React.createElement('p', { className: 'contributors-intro' }, 'Thank you to everyone who contributed by creating issues:'),
+              isLoadingContributors && React.createElement('p', { className: 'contributors-status' }, 'Loading contributors...'),
+              contributorsError && React.createElement('p', { className: 'contributors-status contributors-error' }, contributorsError),
+              !isLoadingContributors && !contributorsError && contributors.length === 0 &&
+                React.createElement('p', { className: 'contributors-status' }, 'No issues yet. Open one to join the credits.'),
+              contributors.length > 0 && React.createElement('ul', { className: 'contributors-list' },
+                contributors.map((contributor) => {
+                  const issueLabel = contributor.issueCount === 1 ? '1 issue' : `${contributor.issueCount} issues`;
+                  return React.createElement('li', { key: contributor.login },
+                    React.createElement('a', {
+                      href: contributor.htmlUrl,
+                      target: '_blank',
+                      rel: 'noopener noreferrer'
+                    }, `@${contributor.login}`),
+                    React.createElement('span', { className: 'contribution-note' }, ` - ${issueLabel}`)
+                  );
+                })
+              )
+            )
+          )
+        ),
         React.createElement('section', { id: 'signaling', className: isSignalingCollapsed ? 'collapsed' : '' },
           React.createElement('header', null,
             React.createElement('div', { className: 'header-content' },
@@ -355,12 +540,16 @@
                   handleSend();
                 }
               },
-              maxLength: MAX_MESSAGE_LENGTH
+              maxLength: MAX_MESSAGE_LENGTH,
+              'aria-label': 'Message input',
+              'aria-describedby': 'channel-status'
             }),
             React.createElement('button', {
               id: 'send',
               onClick: handleSend,
-              disabled: !channelReady || !inputText.trim()
+              disabled: !channelReady || !inputText.trim(),
+              'aria-label': 'Send message',
+              title: 'Send message'
             }, 'Send')
           )
         )
