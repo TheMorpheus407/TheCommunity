@@ -271,15 +271,15 @@ textarea[readonly] {
   color: #38bdf8;
 }
 .modal-close {
-  width: 36px;
-  height: 36px;
-  padding: 0;
+  padding: 0.4rem 1rem;
   min-width: unset;
-  font-size: 1.8rem;
+  height: auto;
+  font-size: 0.9rem;
   line-height: 1;
   background: rgba(148, 163, 184, 0.15);
   box-shadow: none;
   border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 999px;
 }
 .modal-close:not(:disabled):hover {
   background: rgba(248, 113, 113, 0.2);
@@ -330,6 +330,14 @@ textarea[readonly] {
 .contribution-note {
   color: rgba(248, 250, 252, 0.6);
   font-size: 0.9rem;
+}
+.contributors-status {
+  margin: 0.5rem 0;
+  color: rgba(248, 250, 252, 0.7);
+  font-size: 0.95rem;
+}
+.contributors-status.contributors-error {
+  color: rgba(248, 113, 113, 0.85);
 }
 @media (max-width: 768px) {
   body {
