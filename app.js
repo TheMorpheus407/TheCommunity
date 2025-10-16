@@ -496,7 +496,13 @@
                 id: 'remote-signal',
                 value: remoteSignal,
                 onChange: (event) => setRemoteSignal(event.target.value),
-                placeholder: 'Paste the JSON you received and click Apply Remote.'
+                onKeyDown: (event) => {
+                  if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                    event.preventDefault();
+                    handleApplyRemote();
+                  }
+                },
+                placeholder: 'Paste the JSON you received and press Ctrl+Enter (Cmd+Enter on Mac) to apply, or click Apply Remote.'
               })
             )
           )
