@@ -355,12 +355,16 @@
                   handleSend();
                 }
               },
-              maxLength: MAX_MESSAGE_LENGTH
+              maxLength: MAX_MESSAGE_LENGTH,
+              'aria-label': 'Chat message input',
+              'aria-describedby': 'channel-status'
             }),
             React.createElement('button', {
               id: 'send',
               onClick: handleSend,
-              disabled: !channelReady || !inputText.trim()
+              disabled: !channelReady || !inputText.trim(),
+              'aria-label': 'Send message',
+              title: 'Send message to peer'
             }, 'Send')
           )
         )
