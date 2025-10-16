@@ -601,7 +601,11 @@
               'aria-label': 'Send message',
               title: 'Send message'
             }, 'Send')
-          )
+          ),
+          React.createElement('div', {
+            className: 'hint',
+            style: { textAlign: 'right', marginTop: '0.25rem' }
+          }, `${inputText.length} / ${MAX_MESSAGE_LENGTH}`)
         )
       )
     );
