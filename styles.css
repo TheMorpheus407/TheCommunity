@@ -41,6 +41,20 @@ h1 {
   gap: 1rem;
   position: relative;
 }
+.app-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+.app-title-icon {
+  font-size: clamp(2rem, 3vw, 2.6rem);
+}
+.app-title-text {
+  white-space: nowrap;
+}
 .about-button {
   position: absolute;
   right: 0;
@@ -134,10 +148,14 @@ button:not(:disabled):hover {
   background: #1d1e24;
   border-color: #ffffff;
 }
-button:not(:disabled):active,
-button:not(:disabled):focus-visible {
+button:not(:disabled):active {
   transform: translateY(1px);
   background: #1d1d1d;
+}
+button:focus-visible {
+  outline: 2px solid #8ab4f8;
+  outline-offset: 2px;
+  background: #1d1e24;
 }
 textarea {
   width: 100%;
@@ -154,8 +172,9 @@ textarea {
   transition: border-color 200ms ease, background-color 200ms ease;
 }
 textarea:focus {
-  border-color: #ffffff;
-  outline: none;
+  border-color: #8ab4f8;
+  outline: 2px solid #8ab4f8;
+  outline-offset: 2px;
 }
 textarea[readonly] {
   background: #1d1d1d;
@@ -205,8 +224,7 @@ textarea[readonly] {
   justify-content: center;
   min-height: 200px;
   text-align: center;
-  color: #ffffff;
-  opacity: 0.5;
+  color: rgba(255, 255, 255, 0.65);
   font-style: italic;
   padding: 2rem 1rem;
 }
@@ -256,8 +274,13 @@ textarea[readonly] {
   transition: border-color 200ms ease, background-color 200ms ease;
 }
 .chat-input input:focus {
-  border-color: #ffffff;
-  outline: none;
+  border-color: #8ab4f8;
+  outline: 2px solid #8ab4f8;
+  outline-offset: 2px;
+}
+.chat-input input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .hint {
   font-size: 0.85rem;
