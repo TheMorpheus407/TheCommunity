@@ -303,6 +303,14 @@
       setIsAboutOpen((prev) => !prev);
     }, []);
 
+    /**
+     * Clears all messages from the chat.
+     */
+    const handleClearMessages = useCallback(() => {
+      setMessages([]);
+      appendSystemMessage('Chat history cleared.');
+    }, [appendSystemMessage]);
+
     useEffect(() => {
       if (isAboutOpen) {
         if (closeAboutButtonRef.current) {
@@ -559,8 +567,15 @@
         ),
         React.createElement('section', { id: 'chat' },
           React.createElement('header', null,
-            React.createElement('h2', null, 'Chat'),
-            React.createElement('p', { className: 'status', id: 'channel-status' }, channelStatus)
+            React.createElement('div', { className: 'header-content' },
+              React.createElement('h2', null, 'Chat'),
+              React.createElement('p', { className: 'status', id: 'channel-status' }, channelStatus)
+            ),
+            messages.length > 0 && React.createElement('button', {
+              onClick: handleClearMessages,
+              style: { padding: '0.4rem 0.8rem', fontSize: '0.85rem', minWidth: 'unset' },
+              'aria-label': 'Clear all messages'
+            }, 'Clear')
           ),
           React.createElement('div', {
             id: 'messages',
