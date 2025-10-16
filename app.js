@@ -23,6 +23,7 @@
     const [isCreatingOffer, setIsCreatingOffer] = useState(false);
     const [isCreatingAnswer, setIsCreatingAnswer] = useState(false);
     const [isSignalingCollapsed, setIsSignalingCollapsed] = useState(false);
+    const [isAboutOpen, setIsAboutOpen] = useState(false);
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -242,6 +243,10 @@
       setIsSignalingCollapsed((prev) => !prev);
     }, []);
 
+    const toggleAbout = useCallback(() => {
+      setIsAboutOpen((prev) => !prev);
+    }, []);
+
     useEffect(() => {
       const container = messagesContainerRef.current;
       if (container) {
@@ -262,7 +267,48 @@
 
     return (
       React.createElement('main', null,
-        React.createElement('h1', null, 'Peer-to-Peer WebRTC Chat'),
+        React.createElement('div', { className: 'header-with-about' },
+          React.createElement('h1', null, 'Peer-to-Peer WebRTC Chat'),
+          React.createElement('button', {
+            className: 'about-button',
+            onClick: toggleAbout,
+            'aria-label': 'About this project'
+          }, 'About')
+        ),
+        isAboutOpen && React.createElement('div', { className: 'modal-overlay', onClick: toggleAbout },
+          React.createElement('div', {
+            className: 'modal-content',
+            onClick: (e) => e.stopPropagation()
+          },
+            React.createElement('div', { className: 'modal-header' },
+              React.createElement('h2', null, 'About TheCommunity'),
+              React.createElement('button', {
+                className: 'modal-close',
+                onClick: toggleAbout,
+                'aria-label': 'Close'
+              }, '×')
+            ),
+            React.createElement('div', { className: 'modal-body' },
+              React.createElement('p', null, 'This is a peer-to-peer WebRTC chat application with no backend. The community steers where this project goes through GitHub Issues.'),
+              React.createElement('h3', null, 'Contributors'),
+              React.createElement('p', { className: 'contributors-intro' }, 'Thank you to everyone who contributed by creating issues:'),
+              React.createElement('ul', { className: 'contributors-list' },
+                (window.CONTRIBUTORS || []).map((contributor, index) => {
+                  const safeUsername = String(contributor.username || '').replace(/[^a-zA-Z0-9-]/g, '');
+                  if (!safeUsername) return null;
+                  return React.createElement('li', { key: index },
+                    React.createElement('a', {
+                      href: `https://github.com/${encodeURIComponent(safeUsername)}`,
+                      target: '_blank',
+                      rel: 'noopener noreferrer'
+                    }, `@${safeUsername}`),
+                    contributor.contributions && React.createElement('span', { className: 'contribution-note' }, ` - ${String(contributor.contributions).substring(0, 100)}`)
+                  );
+                })
+              )
+            )
+          )
+        ),
         React.createElement('section', { id: 'signaling', className: isSignalingCollapsed ? 'collapsed' : '' },
           React.createElement('header', null,
             React.createElement('div', { className: 'header-content' },
