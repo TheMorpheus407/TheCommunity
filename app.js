@@ -23,6 +23,10 @@
     const [isCreatingOffer, setIsCreatingOffer] = useState(false);
     const [isCreatingAnswer, setIsCreatingAnswer] = useState(false);
     const [isSignalingCollapsed, setIsSignalingCollapsed] = useState(false);
+    const [isAboutOpen, setIsAboutOpen] = useState(false);
+    const [contributors, setContributors] = useState([]);
+    const [contributorsError, setContributorsError] = useState('');
+    const [isLoadingContributors, setIsLoadingContributors] = useState(false);
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -30,6 +34,9 @@
     const incomingTimestampsRef = useRef([]);
     const messageIdRef = useRef(0);
     const messagesContainerRef = useRef(null);
+    const aboutButtonRef = useRef(null);
+    const closeAboutButtonRef = useRef(null);
+    const contributorsLoadedRef = useRef(false);
 
     const appendMessage = useCallback((text, role) => {
       const id = messageIdRef.current++;
@@ -242,6 +249,126 @@
       setIsSignalingCollapsed((prev) => !prev);
     }, []);
 
+    const toggleAbout = useCallback(() => {
+      setIsAboutOpen((prev) => !prev);
+    }, []);
+
+    useEffect(() => {
+      if (isAboutOpen) {
+        if (closeAboutButtonRef.current) {
+          closeAboutButtonRef.current.focus();
+        }
+      } else if (aboutButtonRef.current) {
+        aboutButtonRef.current.focus();
+      }
+    }, [isAboutOpen]);
+
+    useEffect(() => {
+      if (!isAboutOpen) {
+        return;
+      }
+      const handleKeyDown = (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          setIsAboutOpen(false);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }, [isAboutOpen]);
+
+    useEffect(() => {
+      if (!isAboutOpen || contributorsLoadedRef.current) {
+        return;
+      }
+
+      const controller = new AbortController();
+      let didSucceed = false;
+
+      const loadContributors = async () => {
+        setIsLoadingContributors(true);
+        setContributorsError('');
+        try {
+          const response = await fetch(
+            'https://api.github.com/repos/TheMorpheus407/TheCommunity/issues?state=all&per_page=100',
+            {
+              signal: controller.signal,
+              headers: {
+                Accept: 'application/vnd.github+json'
+              }
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`Request failed with status ${response.status}`);
+          }
+
+          const payload = await response.json();
+          if (controller.signal.aborted) {
+            return;
+          }
+
+          const map = new Map();
+          if (Array.isArray(payload)) {
+            payload.forEach((item) => {
+              if (!item || item.pull_request) {
+                return;
+              }
+              const user = item.user;
+              const login = user && user.login;
+              if (!login) {
+                return;
+              }
+              const sanitizedLogin = String(login).trim();
+              if (!sanitizedLogin) {
+                return;
+              }
+              const existing = map.get(sanitizedLogin);
+              if (existing) {
+                existing.issueCount += 1;
+              } else {
+                map.set(sanitizedLogin, {
+                  login: sanitizedLogin,
+                  htmlUrl: user && user.html_url
+                    ? user.html_url
+                    : `https://github.com/${encodeURIComponent(sanitizedLogin)}`,
+                  issueCount: 1
+                });
+              }
+            });
+          }
+
+          const sortedContributors = Array.from(map.values()).sort((a, b) =>
+            a.login.localeCompare(b.login)
+          );
+
+          setContributors(sortedContributors);
+          didSucceed = true;
+        } catch (error) {
+          if (controller.signal.aborted) {
+            return;
+          }
+          console.error('Failed to load contributors', error);
+          setContributorsError('Unable to load contributor list. Please try again later.');
+        } finally {
+          if (!controller.signal.aborted) {
+            setIsLoadingContributors(false);
+            if (didSucceed) {
+              contributorsLoadedRef.current = true;
+            }
+          }
+        }
+      };
+
+      loadContributors();
+
+      return () => {
+        controller.abort();
+      };
+    }, [isAboutOpen]);
+
     useEffect(() => {
       const container = messagesContainerRef.current;
       if (container) {
@@ -262,7 +389,59 @@
 
     return (
       React.createElement('main', null,
-        React.createElement('h1', null, 'Peer-to-Peer WebRTC Chat'),
+        React.createElement('div', { className: 'header-with-about' },
+          React.createElement('h1', null, 'Peer-to-Peer WebRTC Chat'),
+          React.createElement('button', {
+            className: 'about-button',
+            onClick: toggleAbout,
+            'aria-label': 'About this project',
+            'aria-expanded': isAboutOpen,
+            'aria-controls': 'about-dialog',
+            ref: aboutButtonRef
+          }, 'About')
+        ),
+        isAboutOpen && React.createElement('div', { className: 'modal-overlay', role: 'presentation', onClick: toggleAbout },
+          React.createElement('div', {
+            className: 'modal-content',
+            role: 'dialog',
+            id: 'about-dialog',
+            'aria-modal': 'true',
+            'aria-labelledby': 'about-dialog-title',
+            onClick: (e) => e.stopPropagation()
+          },
+            React.createElement('div', { className: 'modal-header' },
+              React.createElement('h2', { id: 'about-dialog-title' }, 'About TheCommunity'),
+              React.createElement('button', {
+                className: 'modal-close',
+                onClick: toggleAbout,
+                'aria-label': 'Close about dialog',
+                ref: closeAboutButtonRef
+              }, 'Close')
+            ),
+            React.createElement('div', { className: 'modal-body' },
+              React.createElement('p', null, 'This is a peer-to-peer WebRTC chat application with no backend. The community steers where this project goes through GitHub Issues.'),
+              React.createElement('h3', null, 'Contributors'),
+              React.createElement('p', { className: 'contributors-intro' }, 'Thank you to everyone who contributed by creating issues:'),
+              isLoadingContributors && React.createElement('p', { className: 'contributors-status' }, 'Loading contributors...'),
+              contributorsError && React.createElement('p', { className: 'contributors-status contributors-error' }, contributorsError),
+              !isLoadingContributors && !contributorsError && contributors.length === 0 &&
+                React.createElement('p', { className: 'contributors-status' }, 'No issues yet. Open one to join the credits.'),
+              contributors.length > 0 && React.createElement('ul', { className: 'contributors-list' },
+                contributors.map((contributor) => {
+                  const issueLabel = contributor.issueCount === 1 ? '1 issue' : `${contributor.issueCount} issues`;
+                  return React.createElement('li', { key: contributor.login },
+                    React.createElement('a', {
+                      href: contributor.htmlUrl,
+                      target: '_blank',
+                      rel: 'noopener noreferrer'
+                    }, `@${contributor.login}`),
+                    React.createElement('span', { className: 'contribution-note' }, ` - ${issueLabel}`)
+                  );
+                })
+              )
+            )
+          )
+        ),
         React.createElement('section', { id: 'signaling', className: isSignalingCollapsed ? 'collapsed' : '' },
           React.createElement('header', null,
             React.createElement('div', { className: 'header-content' },
