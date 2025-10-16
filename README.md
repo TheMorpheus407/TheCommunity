@@ -25,6 +25,10 @@ TheCommunity is a community-driven project that demonstrates true peer-to-peer c
 - **Input Validation** - Client-side validation for message length and format
 - **AI Draft Assistance** - Optional OpenAI-powered rewrite button that refines your text locally using your own API key
 
+### 🖥️ Screen Collaboration
+- **Screen Sharing** - Stream your screen peer-to-peer with zero servers involved
+- **Permissioned Remote Control** - Allow your peer to drive your mouse and keyboard within the app, with explicit opt-in and instant revocation
+
 ### 🎨 User Interface
 - **Collapsible Signaling Window** - Hide the technical signaling UI once connected
 - **Responsive Design** - Works seamlessly on desktop and mobile devices
