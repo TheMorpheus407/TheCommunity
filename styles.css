@@ -119,6 +119,9 @@ h1 {
   align-items: center;
   gap: 1rem;
   position: relative;
+  width: 100%;
+  min-height: clamp(88px, 12vw, 128px);
+  padding: 0 clamp(3.5rem, 8vw, 4.75rem);
 }
 .app-title {
   display: inline-flex;
@@ -133,6 +136,193 @@ h1 {
 }
 .app-title-text {
   white-space: nowrap;
+}
+.tux-mascot {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  --tux-rest-transform: translateY(-50%);
+  --tux-hover-transform: translateY(-50%) scale(1.06);
+  transform: var(--tux-rest-transform);
+  width: clamp(64px, 8vw, 82px);
+  height: clamp(64px, 8vw, 82px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 200ms ease;
+  z-index: 1;
+}
+.tux-mascot:hover {
+  transform: var(--tux-hover-transform);
+}
+.tux-svg {
+  width: 100%;
+  height: 100%;
+}
+.tux-shadow {
+  fill: rgba(0, 0, 0, 0.32);
+  transition: opacity 150ms ease;
+}
+.tux-mascot:hover .tux-shadow {
+  opacity: 0.55;
+}
+.tux-body,
+.tux-head {
+  fill: #1d2132;
+}
+.tux-face,
+.tux-belly {
+  fill: #f5f7ff;
+}
+.tux-wing {
+  fill: #181b27;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 120ms ease;
+}
+.tux-wing.wing-left {
+  transform: rotate(-18deg);
+}
+.tux-wing.wing-right {
+  transform: rotate(18deg);
+}
+.tux-foot {
+  fill: #f7a531;
+  stroke: #d87f1a;
+  stroke-width: 2;
+}
+.tux-beak-upper {
+  fill: #f9b13a;
+}
+.tux-beak-lower {
+  fill: #d7801a;
+}
+.tux-eye {
+  fill: #ffffff;
+  transition: fill 150ms ease;
+}
+.tux-pupil {
+  fill: #10131c;
+  transition: transform 150ms ease, fill 150ms ease;
+}
+.tux-eye-glow {
+  fill: #ff5050;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+.tux-brow {
+  fill: #1a1e2c;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 150ms ease;
+}
+.tux-steam {
+  fill: none;
+  stroke: #ff8a8a;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: bottom center;
+}
+.tux-mascot:hover .wing-left {
+  animation: tux-wing-left 360ms ease-in-out infinite;
+}
+.tux-mascot:hover .wing-right {
+  animation: tux-wing-right 360ms ease-in-out infinite;
+}
+.tux-mascot:hover .tux-body,
+.tux-mascot:hover .tux-head,
+.tux-mascot:hover .tux-face,
+.tux-mascot:hover .tux-belly {
+  animation: tux-body-shake 140ms ease-in-out infinite;
+}
+.tux-mascot:hover .tux-eye {
+  fill: #ffe5e5;
+}
+.tux-mascot:hover .tux-eye-glow {
+  opacity: 0.85;
+}
+.tux-mascot:hover .tux-pupil {
+  transform: translateY(2px) scale(0.82);
+  fill: #05070c;
+}
+.tux-mascot:hover .brow-left {
+  transform: rotate(-42deg) translate(-4px, 2px);
+}
+.tux-mascot:hover .brow-right {
+  transform: rotate(42deg) translate(4px, 2px);
+}
+.tux-mascot:hover .steam-left {
+  animation: tux-steam-rise 620ms ease-out infinite;
+  animation-delay: 80ms;
+}
+.tux-mascot:hover .steam-right {
+  animation: tux-steam-rise 620ms ease-out infinite;
+  animation-delay: 160ms;
+}
+
+@keyframes tux-wing-left {
+  0%, 100% {
+    transform: rotate(-18deg);
+  }
+  50% {
+    transform: rotate(-36deg) translateY(-3px);
+  }
+}
+@keyframes tux-wing-right {
+  0%, 100% {
+    transform: rotate(18deg);
+  }
+  50% {
+    transform: rotate(36deg) translateY(-3px);
+  }
+}
+@keyframes tux-body-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-1.6px);
+  }
+  75% {
+    transform: translateX(1.6px);
+  }
+}
+@keyframes tux-steam-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.85);
+  }
+  40% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-12px) scale(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tux-mascot {
+    transition: none;
+    --tux-hover-transform: var(--tux-rest-transform);
+  }
+  .tux-mascot:hover {
+    transition: none;
+  }
+  .tux-mascot:hover .wing-left,
+  .tux-mascot:hover .wing-right,
+  .tux-mascot:hover .tux-body,
+  .tux-mascot:hover .tux-head,
+  .tux-mascot:hover .tux-face,
+  .tux-mascot:hover .tux-belly,
+  .tux-mascot:hover .steam-left,
+  .tux-mascot:hover .steam-right {
+    animation: none !important;
+  }
 }
 .about-button {
   position: absolute;
@@ -710,6 +900,15 @@ textarea[readonly] {
   .header-with-about {
     flex-direction: column;
     gap: 0.75rem;
+    padding: 0;
+  }
+  .tux-mascot {
+    position: static;
+    --tux-rest-transform: none;
+    --tux-hover-transform: scale(1.08);
+    margin-bottom: 0.3rem;
+    width: 72px;
+    height: 72px;
   }
   .about-button {
     position: static;
@@ -827,6 +1026,15 @@ textarea[readonly] {
   .header-with-about {
     flex-direction: column;
     gap: 0.75rem;
+    padding: 0;
+  }
+  .tux-mascot {
+    position: static;
+    --tux-rest-transform: none;
+    --tux-hover-transform: scale(1.08);
+    margin-bottom: 0.5rem;
+    width: 76px;
+    height: 76px;
   }
   .about-button {
     position: static;
@@ -902,6 +1110,15 @@ textarea[readonly] {
   .header-with-about {
     flex-direction: column;
     gap: 0.75rem;
+    padding: 0;
+  }
+  .tux-mascot {
+    position: static;
+    --tux-rest-transform: none;
+    --tux-hover-transform: scale(1.08);
+    margin-bottom: 0.5rem;
+    width: 82px;
+    height: 82px;
   }
   .about-button {
     position: static;
@@ -943,6 +1160,15 @@ textarea[readonly] {
   .header-with-about {
     flex-direction: column;
     gap: 0.75rem;
+    padding: 0;
+  }
+  .tux-mascot {
+    position: static;
+    --tux-rest-transform: none;
+    --tux-hover-transform: scale(1.06);
+    margin-bottom: 0.5rem;
+    width: 84px;
+    height: 84px;
   }
   .about-button {
     position: static;
