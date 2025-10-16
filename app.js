@@ -6,9 +6,15 @@
   const { useState, useRef, useCallback, useEffect } = React;
 
   const EXPECTED_CHANNEL_LABEL = 'chat';
+  const CONTROL_CHANNEL_LABEL = 'control';
   const MAX_MESSAGE_LENGTH = 2000;
   const MAX_MESSAGES_PER_INTERVAL = 30;
   const MESSAGE_INTERVAL_MS = 5000;
+  const CONTROL_MAX_MESSAGES_PER_INTERVAL = 60;
+  const CONTROL_MESSAGE_INTERVAL_MS = 5000;
+  const CONTROL_MAX_PAYLOAD_LENGTH = 2048;
+  const CONTROL_TEXT_INSERT_LIMIT = 32;
+  const CONTROL_TOTAL_TEXT_BUDGET = 2048;
   const OPENAI_MODEL = 'gpt-4o-mini';
   const THEME_STORAGE_KEY = 'thecommunity.theme-preference';
   const THEME_OPTIONS = {
@@ -16,6 +22,13 @@
     DARK: 'dark'
   };
 
+  const CONTROL_MESSAGE_TYPES = {
+    POINTER: 'pointer',
+    POINTER_VISIBILITY: 'pointer-visibility',
+    KEYBOARD: 'keyboard',
+    PERMISSION: 'permission',
+    ACTION: 'action'
+  };
   /**
    * Renders the mascot that reacts angrily on hover.
    * Pure SVG so it can be reused without additional assets.
@@ -260,10 +273,23 @@
     const [isAiBusy, setIsAiBusy] = useState(false);
     const [aiStatus, setAiStatus] = useState('');
     const [aiError, setAiError] = useState('');
+    const [isScreenSharing, setIsScreenSharing] = useState(false);
+    const [shareSystemAudio, setShareSystemAudio] = useState(false);
+    const [isRemoteScreenActive, setIsRemoteScreenActive] = useState(false);
+    const [controlChannelReady, setControlChannelReady] = useState(false);
+    const [isRemoteControlAllowed, setIsRemoteControlAllowed] = useState(false);
+    const [canControlPeer, setCanControlPeer] = useState(false);
+    const [remoteControlStatus, setRemoteControlStatus] = useState(t.remoteControl.statusDisabled);
+    const [remotePointerState, setRemotePointerState] = useState({ visible: false, x: 50, y: 50 });
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
+    const controlChannelRef = useRef(null);
     const iceDoneRef = useRef(false);
+    const screenSenderRef = useRef(null);
+    const screenAudioSenderRef = useRef(null);
+    const screenStreamRef = useRef(null);
+    const remoteScreenStreamRef = useRef(null);
     const incomingTimestampsRef = useRef([]);
     const messageIdRef = useRef(0);
     const messagesContainerRef = useRef(null);
@@ -272,6 +298,20 @@
     const contributorsLoadedRef = useRef(false);
     const apiKeyButtonRef = useRef(null);
     const apiKeyInputRef = useRef(null);
+    const localScreenVideoRef = useRef(null);
+    const remoteScreenVideoRef = useRef(null);
+    const remotePointerTimeoutRef = useRef(null);
+    const remoteControlSurfaceRef = useRef(null);
+    const lastPointerSendRef = useRef(0);
+    const remoteControlAllowedRef = useRef(false);
+    const canControlPeerRef = useRef(false);
+    const remoteScreenActiveRef = useRef(false);
+    const controlIncomingTimestampsRef = useRef([]);
+    const controlWarningsRef = useRef({ rate: false, size: false });
+    const remoteKeyBudgetRef = useRef(CONTROL_TOTAL_TEXT_BUDGET);
+    const pointerFramePendingRef = useRef(false);
+    const pointerFrameIdRef = useRef(null);
+    const pointerQueuedPositionRef = useRef(null);
 
     /**
      * Queues a chat message for rendering.
@@ -291,6 +331,11 @@
       appendMessage(text, 'system');
     }, [appendMessage]);
 
+    const appendSystemMessageRef = useRef(appendSystemMessage);
+    useEffect(() => {
+      appendSystemMessageRef.current = appendSystemMessage;
+    }, [appendSystemMessage]);
+
     const handleToggleTheme = useCallback(() => {
       setTheme((prevTheme) => {
         const nextTheme = prevTheme === THEME_OPTIONS.DARK ? THEME_OPTIONS.LIGHT : THEME_OPTIONS.DARK;
@@ -307,9 +352,11 @@
       setLanguage(newLanguage);
       setCurrentLanguage(newLanguage);
       const newT = translations[newLanguage] || translations.de;
-      appendSystemMessage(`Language changed to ${newT.name}.`);
+      appendSystemMessage(newT.systemMessages.languageChanged(newT.name));
       setStatus(newT.status.waiting);
       setChannelStatus(newT.status.channelClosed);
+      setCopyButtonText(newT.signaling.copyButton);
+      setRemoteControlStatus(newT.remoteControl.statusDisabled);
     }, [appendSystemMessage]);
 
     const handleOpenApiKeyModal = useCallback(() => {
@@ -357,11 +404,11 @@
     }, [appendSystemMessage, handleCloseApiKeyModal, t]);
 
     /**
-     * Configures event handlers on the reliable data channel.
+     * Configures event handlers on the reliable chat channel.
      * Applies defensive checks and rate limiting to inbound traffic.
      * @param {RTCDataChannel} channel - Active data channel
      */
-    const setupChannelHandlers = useCallback((channel) => {
+    const setupChatChannel = useCallback((channel) => {
       channel.onopen = () => {
         setChannelStatus(t.status.channelOpen);
         setChannelReady(true);
@@ -399,6 +446,155 @@
     }, [appendMessage, appendSystemMessage, t]);
 
     /**
+     * Processes inbound control-channel payloads (populated in Step 4).
+     * @param {string} payload - Raw channel message
+     */
+    const cancelPendingPointerFrame = useCallback(() => {
+      if (pointerFramePendingRef.current && pointerFrameIdRef.current !== null) {
+        cancelAnimationFrame(pointerFrameIdRef.current);
+      }
+      pointerFramePendingRef.current = false;
+      pointerFrameIdRef.current = null;
+      pointerQueuedPositionRef.current = null;
+    }, []);
+
+    const handleIncomingControlMessage = useCallback((payload) => {
+      if (typeof payload !== 'string' || !payload) {
+        return;
+      }
+      if (payload.length > CONTROL_MAX_PAYLOAD_LENGTH) {
+        if (!controlWarningsRef.current.size) {
+          appendSystemMessageRef.current(t.remoteControl.system.payloadTooLarge);
+          controlWarningsRef.current.size = true;
+        }
+        return;
+      }
+      controlWarningsRef.current.size = false;
+      const now = Date.now();
+      controlIncomingTimestampsRef.current = controlIncomingTimestampsRef.current.filter((timestamp) => now - timestamp < CONTROL_MESSAGE_INTERVAL_MS);
+      if (controlIncomingTimestampsRef.current.length >= CONTROL_MAX_MESSAGES_PER_INTERVAL) {
+        if (!controlWarningsRef.current.rate) {
+          appendSystemMessageRef.current(t.remoteControl.system.rateLimited);
+          controlWarningsRef.current.rate = true;
+        }
+        return;
+      }
+      controlIncomingTimestampsRef.current.push(now);
+      controlWarningsRef.current.rate = false;
+
+      let message;
+      try {
+        message = JSON.parse(payload);
+      } catch (error) {
+        console.warn('Discarded malformed control message', error);
+        return;
+      }
+      if (!message || typeof message !== 'object') {
+        return;
+      }
+      switch (message.type) {
+        case CONTROL_MESSAGE_TYPES.PERMISSION: {
+          if (typeof message.allowed !== 'boolean') {
+            return;
+          }
+          const allowed = Boolean(message.allowed);
+          if (canControlPeerRef.current !== allowed) {
+            appendSystemMessageRef.current(allowed
+              ? t.remoteControl.system.peerEnabled
+              : t.remoteControl.system.peerDisabled);
+          }
+          canControlPeerRef.current = allowed;
+          setCanControlPeer(allowed);
+          setRemoteControlStatus(allowed ? t.remoteControl.statusGranted : t.remoteControl.statusDisabledByPeer);
+          if (!allowed) {
+            cancelPendingPointerFrame();
+            hideRemotePointerRef.current();
+          }
+          return;
+        }
+        case CONTROL_MESSAGE_TYPES.POINTER: {
+          if (!remoteControlAllowedRef.current) {
+            return;
+          }
+          if (message.kind !== 'move' && message.kind !== 'click') {
+            return;
+          }
+          const x = Number(message.x);
+          const y = Number(message.y);
+          if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            return;
+          }
+          showRemotePointerRef.current(x, y);
+          if (message.kind === 'click') {
+            const button = typeof message.button === 'string' ? message.button : 'left';
+            performRemoteClickRef.current(x, y, button);
+          }
+          return;
+        }
+        case CONTROL_MESSAGE_TYPES.POINTER_VISIBILITY: {
+          if (!remoteControlAllowedRef.current) {
+            return;
+          }
+          if (message.visible === false) {
+            hideRemotePointerRef.current();
+          }
+          return;
+        }
+        case CONTROL_MESSAGE_TYPES.KEYBOARD: {
+          if (!remoteControlAllowedRef.current) {
+            return;
+          }
+          handleRemoteKeyboardInputRef.current(message);
+          return;
+        }
+        case CONTROL_MESSAGE_TYPES.ACTION: {
+          if (!remoteControlAllowedRef.current) {
+            return;
+          }
+          if (message.action === 'clear-input') {
+            applyRemoteInputTransformRef.current(() => '');
+          }
+          return;
+        }
+        default:
+      }
+    }, [cancelPendingPointerFrame, t]);
+
+    /**
+     * Configures event handlers for the auxiliary control data channel.
+     * @param {RTCDataChannel} channel - Control channel instance
+     */
+    const setupControlChannel = useCallback((channel) => {
+      channel.onopen = () => {
+        controlChannelRef.current = channel;
+        setControlChannelReady(true);
+        setRemoteControlStatus(t.remoteControl.statusDisabled);
+        controlIncomingTimestampsRef.current = [];
+        controlWarningsRef.current = { rate: false, size: false };
+      };
+      channel.onclose = () => {
+        if (controlChannelRef.current === channel) {
+          controlChannelRef.current = null;
+        }
+        setControlChannelReady(false);
+        setCanControlPeer(false);
+        canControlPeerRef.current = false;
+        remoteControlAllowedRef.current = false;
+        setIsRemoteControlAllowed(false);
+        hideRemotePointerRef.current();
+        cancelPendingPointerFrame();
+        remoteKeyBudgetRef.current = CONTROL_TOTAL_TEXT_BUDGET;
+        setRemoteControlStatus(t.remoteControl.statusChannelClosed);
+      };
+      channel.onmessage = (event) => {
+        if (typeof event.data !== 'string') {
+          return;
+        }
+        handleIncomingControlMessage(event.data);
+      };
+    }, [cancelPendingPointerFrame, handleIncomingControlMessage, t]);
+
+    /**
      * Lazily creates (or returns) the RTCPeerConnection instance.
      * @returns {RTCPeerConnection}
      */
@@ -408,6 +604,17 @@
       }
       const pc = new RTCPeerConnection({ iceServers: [] });
       pcRef.current = pc;
+
+      const remoteStream = new MediaStream();
+      remoteScreenStreamRef.current = remoteStream;
+      if (!screenSenderRef.current) {
+        const videoTransceiver = pc.addTransceiver('video', { direction: 'sendrecv' });
+        screenSenderRef.current = videoTransceiver.sender;
+      }
+      if (!screenAudioSenderRef.current) {
+        const audioTransceiver = pc.addTransceiver('audio', { direction: 'sendrecv' });
+        screenAudioSenderRef.current = audioTransceiver.sender;
+      }
 
       pc.onicecandidate = (event) => {
         if (!event.candidate && pc.localDescription) {
@@ -427,19 +634,48 @@
         setStatus(t.status.connection(pc.connectionState));
       };
 
+      pc.ontrack = (event) => {
+        if (!remoteScreenStreamRef.current) {
+          remoteScreenStreamRef.current = new MediaStream();
+        }
+        const targetStream = remoteScreenStreamRef.current;
+        const track = event.track;
+        if (!targetStream.getTracks().some((existing) => existing.id === track.id)) {
+          targetStream.addTrack(track);
+        }
+        if (remoteScreenVideoRef.current && remoteScreenVideoRef.current.srcObject !== targetStream) {
+          remoteScreenVideoRef.current.srcObject = targetStream;
+        }
+        if (track.kind === 'video') {
+          setIsRemoteScreenActive(true);
+        }
+        track.onended = () => {
+          if (track.kind === 'video') {
+            setIsRemoteScreenActive(false);
+          }
+          if (targetStream.getTracks().some((existing) => existing.id === track.id)) {
+            targetStream.removeTrack(track);
+          }
+        };
+      };
+
       pc.ondatachannel = (event) => {
         const incomingChannel = event.channel;
-        if (incomingChannel.label !== EXPECTED_CHANNEL_LABEL) {
-          appendSystemMessage(t.systemMessages.channelBlocked(incomingChannel.label || ''));
-          incomingChannel.close();
+        if (incomingChannel.label === EXPECTED_CHANNEL_LABEL) {
+          channelRef.current = incomingChannel;
+          setupChatChannel(incomingChannel);
           return;
         }
-        channelRef.current = incomingChannel;
-        setupChannelHandlers(incomingChannel);
+        if (incomingChannel.label === CONTROL_CHANNEL_LABEL) {
+          setupControlChannel(incomingChannel);
+          return;
+        }
+        appendSystemMessage(t.systemMessages.channelBlocked(incomingChannel.label || ''));
+        incomingChannel.close();
       };
 
       return pc;
-    }, [appendSystemMessage, setupChannelHandlers, t]);
+    }, [appendSystemMessage, setupChatChannel, setupControlChannel, t]);
 
     /**
      * Resolves once ICE gathering finishes for the current connection.
@@ -493,9 +729,22 @@
         channelRef.current.close();
         channelRef.current = null;
       }
+      if (controlChannelRef.current) {
+        controlChannelRef.current.close();
+        controlChannelRef.current = null;
+      }
+      setControlChannelReady(false);
+      setCanControlPeer(false);
+      canControlPeerRef.current = false;
+      setRemoteControlStatus(t.remoteControl.statusDisabled);
+
       const channel = pc.createDataChannel(EXPECTED_CHANNEL_LABEL);
       channelRef.current = channel;
-      setupChannelHandlers(channel);
+      setupChatChannel(channel);
+
+      const controlChannel = pc.createDataChannel(CONTROL_CHANNEL_LABEL);
+      controlChannelRef.current = controlChannel;
+      setupControlChannel(controlChannel);
 
       incomingTimestampsRef.current = [];
       iceDoneRef.current = false;
@@ -516,7 +765,7 @@
       } finally {
         setIsCreatingOffer(false);
       }
-    }, [appendSystemMessage, ensurePeerConnection, setupChannelHandlers, waitForIce, t]);
+    }, [appendSystemMessage, ensurePeerConnection, setupChatChannel, setupControlChannel, waitForIce, t]);
 
     /**
      * Applies the pasted remote offer or answer to the peer connection.
@@ -569,6 +818,213 @@
       }
     }, [appendSystemMessage, ensurePeerConnection, parseRemoteDescription, waitForIce, t]);
 
+    const sendControlMessage = useCallback((message) => {
+      if (!message || typeof message !== 'object') {
+        return false;
+      }
+      const channel = controlChannelRef.current;
+      if (!channel || channel.readyState !== 'open') {
+        return false;
+      }
+      try {
+        channel.send(JSON.stringify(message));
+        return true;
+      } catch (error) {
+        console.warn('Failed to send control message', error);
+        appendSystemMessageRef.current(t.remoteControl.system.deliveryFailed);
+        return false;
+      }
+    }, [t]);
+
+    const handleStopScreenShare = useCallback(() => {
+      const stream = screenStreamRef.current;
+      if (stream) {
+        stream.getTracks().forEach((track) => {
+          try {
+            track.stop();
+          } catch (error) {
+            console.warn('Failed to stop screen share track', error);
+          }
+        });
+        screenStreamRef.current = null;
+      }
+      if (screenSenderRef.current) {
+        try {
+          screenSenderRef.current.replaceTrack(null);
+        } catch (error) {
+          console.warn('Failed to clear screen video sender', error);
+        }
+      }
+      if (screenAudioSenderRef.current) {
+        try {
+          screenAudioSenderRef.current.replaceTrack(null);
+        } catch (error) {
+          console.warn('Failed to clear screen audio sender', error);
+        }
+      }
+      if (localScreenVideoRef.current) {
+        localScreenVideoRef.current.srcObject = null;
+      }
+      if (isScreenSharing) {
+        appendSystemMessage(t.screenShare.messages.stopped);
+      }
+      if (remoteControlAllowedRef.current) {
+        const delivered = sendControlMessage({
+          type: CONTROL_MESSAGE_TYPES.PERMISSION,
+          allowed: false
+        });
+        cancelPendingPointerFrame();
+        hideRemotePointerRef.current();
+        appendSystemMessage(t.remoteControl.system.disabledOnScreenStop);
+        if (!delivered) {
+          appendSystemMessageRef.current(t.remoteControl.system.revokeFailed);
+        }
+      }
+      remoteControlAllowedRef.current = false;
+      setIsRemoteControlAllowed(false);
+      setRemoteControlStatus(t.remoteControl.statusDisabled);
+      remoteKeyBudgetRef.current = CONTROL_TOTAL_TEXT_BUDGET;
+      setIsScreenSharing(false);
+    }, [appendSystemMessage, cancelPendingPointerFrame, isScreenSharing, sendControlMessage, t]);
+
+    const handleStartScreenShare = useCallback(async () => {
+      if (isScreenSharing) {
+        return;
+      }
+      let stream = null;
+      try {
+        if (!navigator.mediaDevices || typeof navigator.mediaDevices.getDisplayMedia !== 'function') {
+          appendSystemMessage(t.screenShare.messages.notSupported);
+          return;
+        }
+        const pc = ensurePeerConnection();
+        if (!pc) {
+          throw new Error(t.screenShare.errors.peerNotReady);
+        }
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          video: { cursor: 'always' },
+          audio: shareSystemAudio ? { echoCancellation: false, noiseSuppression: false } : false
+        });
+        const [videoTrack] = stream.getVideoTracks();
+        if (!videoTrack) {
+          stream.getTracks().forEach((track) => track.stop());
+          throw new Error(t.screenShare.errors.noVideoTrack);
+        }
+        if (screenSenderRef.current) {
+          await screenSenderRef.current.replaceTrack(videoTrack);
+        }
+        const [audioTrack] = stream.getAudioTracks();
+        if (screenAudioSenderRef.current) {
+          await screenAudioSenderRef.current.replaceTrack(audioTrack || null);
+        }
+        screenStreamRef.current = stream;
+        if (localScreenVideoRef.current) {
+          localScreenVideoRef.current.srcObject = stream;
+        }
+        setIsScreenSharing(true);
+        appendSystemMessage(t.screenShare.messages.started);
+        videoTrack.onended = () => {
+          handleStopScreenShare();
+        };
+      } catch (error) {
+        console.error('Screen share failed', error);
+        if (stream) {
+          stream.getTracks().forEach((track) => {
+            try {
+              track.stop();
+            } catch (stopError) {
+              console.warn('Failed to stop captured track after error', stopError);
+            }
+          });
+        }
+        const reason = error && error.message ? error.message : t.screenShare.errors.permissionDenied;
+        appendSystemMessage(t.screenShare.errors.failed(reason));
+        setIsScreenSharing(false);
+      }
+    }, [appendSystemMessage, ensurePeerConnection, handleStopScreenShare, isScreenSharing, shareSystemAudio, t]);
+
+    const hideRemotePointer = useCallback(() => {
+      if (remotePointerTimeoutRef.current) {
+        clearTimeout(remotePointerTimeoutRef.current);
+        remotePointerTimeoutRef.current = null;
+      }
+      setRemotePointerState((prev) => (prev.visible ? { ...prev, visible: false } : prev));
+    }, []);
+    const hideRemotePointerRef = useRef(hideRemotePointer);
+    useEffect(() => {
+      hideRemotePointerRef.current = hideRemotePointer;
+    }, [hideRemotePointer]);
+
+    const showRemotePointer = useCallback((xPercent, yPercent) => {
+      const clampedX = Math.min(100, Math.max(0, Number(xPercent)));
+      const clampedY = Math.min(100, Math.max(0, Number(yPercent)));
+      setRemotePointerState({ visible: true, x: clampedX, y: clampedY });
+      if (remotePointerTimeoutRef.current) {
+        clearTimeout(remotePointerTimeoutRef.current);
+      }
+      remotePointerTimeoutRef.current = setTimeout(() => {
+        setRemotePointerState((prev) => (prev.visible ? { ...prev, visible: false } : prev));
+      }, 1200);
+    }, []);
+    const showRemotePointerRef = useRef(showRemotePointer);
+    useEffect(() => {
+      showRemotePointerRef.current = showRemotePointer;
+    }, [showRemotePointer]);
+
+    const performRemoteClick = useCallback((xPercent, yPercent, button = 'left') => {
+      if (button !== 'left') {
+        return;
+      }
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+      const clientX = (Number(xPercent) / 100) * viewportWidth;
+      const clientY = (Number(yPercent) / 100) * viewportHeight;
+      if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) {
+        return;
+      }
+      const target = document.elementFromPoint(clientX, clientY);
+      if (!target) {
+        return;
+      }
+      const mainElement = document.querySelector('main');
+      if (mainElement && !mainElement.contains(target)) {
+        return;
+      }
+      const input = target.closest('input, textarea');
+      if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
+        if (input.id !== 'outgoing') {
+          return;
+        }
+        input.focus({ preventScroll: true });
+        const valueLength = typeof input.value === 'string' ? input.value.length : 0;
+        if (typeof input.setSelectionRange === 'function') {
+          input.setSelectionRange(valueLength, valueLength);
+        }
+      }
+      // Intentionally ignore button clicks and other controls for security.
+    }, []);
+    const performRemoteClickRef = useRef(performRemoteClick);
+    useEffect(() => {
+      performRemoteClickRef.current = performRemoteClick;
+    }, [performRemoteClick]);
+
+    const applyRemoteInputTransform = useCallback((transform) => {
+      setInputText((prev) => {
+        const base = typeof prev === 'string' ? prev : '';
+        const nextValue = transform(base);
+        if (typeof nextValue !== 'string') {
+          return base;
+        }
+        return nextValue.length > MAX_MESSAGE_LENGTH
+          ? nextValue.slice(0, MAX_MESSAGE_LENGTH)
+          : nextValue;
+      });
+    }, []);
+    const applyRemoteInputTransformRef = useRef(applyRemoteInputTransform);
+    useEffect(() => {
+      applyRemoteInputTransformRef.current = applyRemoteInputTransform;
+    }, [applyRemoteInputTransform]);
+
     /**
      * Sends the typed message across the data channel after validation.
      */
@@ -588,6 +1044,101 @@
       setAiStatus('');
       setAiError('');
     }, [appendMessage, appendSystemMessage, inputText, t]);
+
+    const handleRemoteKeyboardInput = useCallback((message) => {
+      if (!remoteControlAllowedRef.current) {
+        return;
+      }
+      if (!message || typeof message.mode !== 'string') {
+        return;
+      }
+      const inputEl = document.getElementById('outgoing');
+      if (!inputEl) {
+        return;
+      }
+      if (typeof inputEl.focus === 'function') {
+        inputEl.focus({ preventScroll: true });
+      }
+      setAiStatus('');
+      setAiError('');
+      if (message.mode === 'text') {
+        const raw = typeof message.value === 'string' ? message.value : '';
+        const sanitized = raw.replace(/[\u0000-\u001F\u007F-\u009F]/g, '').slice(0, CONTROL_TEXT_INSERT_LIMIT);
+        if (!sanitized) {
+          return;
+        }
+        if (remoteKeyBudgetRef.current <= 0) {
+          appendSystemMessageRef.current(t.remoteControl.system.typingDisabled);
+          remoteControlAllowedRef.current = false;
+          setIsRemoteControlAllowed(false);
+          setRemoteControlStatus(t.remoteControl.statusDisabledInputLimit);
+          hideRemotePointerRef.current();
+          const delivered = sendControlMessage({
+            type: CONTROL_MESSAGE_TYPES.PERMISSION,
+            allowed: false
+          });
+          remoteKeyBudgetRef.current = CONTROL_TOTAL_TEXT_BUDGET;
+          if (!delivered) {
+            appendSystemMessageRef.current(t.remoteControl.system.revokeFailed);
+          }
+          return;
+        }
+        const allowedBudget = Math.min(remoteKeyBudgetRef.current, sanitized.length);
+        remoteKeyBudgetRef.current -= allowedBudget;
+        const textToInsert = sanitized.slice(0, allowedBudget);
+        applyRemoteInputTransformRef.current((prev) => `${prev}${textToInsert}`);
+        return;
+      }
+      if (message.mode === 'backspace') {
+        applyRemoteInputTransformRef.current((prev) => prev.slice(0, Math.max(0, prev.length - 1)));
+        return;
+      }
+      if (message.mode === 'enter') {
+        handleSend();
+      }
+    }, [handleSend, sendControlMessage, setAiError, setAiStatus, setIsRemoteControlAllowed, setRemoteControlStatus, t]);
+    const handleRemoteKeyboardInputRef = useRef(handleRemoteKeyboardInput);
+    useEffect(() => {
+      handleRemoteKeyboardInputRef.current = handleRemoteKeyboardInput;
+    }, [handleRemoteKeyboardInput]);
+
+    const handleToggleRemoteControl = useCallback(() => {
+      if (!controlChannelReady) {
+        appendSystemMessage(t.remoteControl.system.unavailable);
+        return;
+      }
+      const channel = controlChannelRef.current;
+      if (!channel || channel.readyState !== 'open') {
+        appendSystemMessage(t.remoteControl.system.negotiating);
+        return;
+      }
+      if (!isScreenSharing) {
+        appendSystemMessage(t.remoteControl.system.requiresScreenShare);
+        return;
+      }
+      const next = !remoteControlAllowedRef.current;
+      const delivered = sendControlMessage({
+        type: CONTROL_MESSAGE_TYPES.PERMISSION,
+        allowed: next
+      });
+      if (!delivered) {
+        appendSystemMessage(t.remoteControl.system.updateFailed);
+        return;
+      }
+      remoteControlAllowedRef.current = next;
+      setIsRemoteControlAllowed(next);
+      if (next) {
+        remoteKeyBudgetRef.current = CONTROL_TOTAL_TEXT_BUDGET;
+        setRemoteControlStatus(t.remoteControl.statusEnabled);
+        appendSystemMessage(t.remoteControl.system.peerCanControl);
+      } else {
+        setRemoteControlStatus(t.remoteControl.statusDisabled);
+        cancelPendingPointerFrame();
+        hideRemotePointerRef.current();
+        remoteKeyBudgetRef.current = CONTROL_TOTAL_TEXT_BUDGET;
+        appendSystemMessage(t.remoteControl.system.controlRevokedLocal);
+      }
+    }, [appendSystemMessage, cancelPendingPointerFrame, controlChannelReady, isScreenSharing, sendControlMessage, t]);
 
     const toggleSignalingCollapse = useCallback(() => {
       setIsSignalingCollapsed((prev) => !prev);
@@ -631,22 +1182,84 @@
         channelRef.current.close();
         channelRef.current = null;
       }
+      if (controlChannelRef.current) {
+        controlChannelRef.current.close();
+        controlChannelRef.current = null;
+      }
       if (pcRef.current) {
         pcRef.current.close();
         pcRef.current = null;
       }
+      if (screenSenderRef.current) {
+        try {
+          screenSenderRef.current.replaceTrack(null);
+        } catch (error) {
+          console.warn('Failed to clear screen video track', error);
+        }
+        screenSenderRef.current = null;
+      }
+      if (screenAudioSenderRef.current) {
+        try {
+          screenAudioSenderRef.current.replaceTrack(null);
+        } catch (error) {
+          console.warn('Failed to clear screen audio track', error);
+        }
+        screenAudioSenderRef.current = null;
+      }
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach((track) => {
+          try {
+            track.stop();
+          } catch (error) {
+            console.warn('Failed to stop screen share track', error);
+          }
+        });
+        screenStreamRef.current = null;
+      }
       iceDoneRef.current = false;
       incomingTimestampsRef.current = [];
+      controlIncomingTimestampsRef.current = [];
+      controlWarningsRef.current = { rate: false, size: false };
+      remoteKeyBudgetRef.current = CONTROL_TOTAL_TEXT_BUDGET;
       setChannelReady(false);
       setChannelStatus(t.status.channelClosed);
       setStatus(t.status.disconnected);
       setLocalSignal('');
       setRemoteSignal('');
       setIsSignalingCollapsed(false);
+      setIsScreenSharing(false);
+      setIsRemoteScreenActive(false);
+      setControlChannelReady(false);
+      setIsRemoteControlAllowed(false);
+      remoteControlAllowedRef.current = false;
+      setCanControlPeer(false);
+      canControlPeerRef.current = false;
+      setRemoteControlStatus(t.remoteControl.statusDisabled);
+      setRemotePointerState({ visible: false, x: 50, y: 50 });
+      setShareSystemAudio(false);
+      cancelPendingPointerFrame();
+      if (remotePointerTimeoutRef.current) {
+        clearTimeout(remotePointerTimeoutRef.current);
+        remotePointerTimeoutRef.current = null;
+      }
+      if (remoteScreenStreamRef.current) {
+        remoteScreenStreamRef.current.getTracks().forEach((track) => {
+          if (typeof track.stop === 'function') {
+            track.stop();
+          }
+        });
+        remoteScreenStreamRef.current = null;
+      }
+      if (localScreenVideoRef.current) {
+        localScreenVideoRef.current.srcObject = null;
+      }
+      if (remoteScreenVideoRef.current) {
+        remoteScreenVideoRef.current.srcObject = null;
+      }
       appendSystemMessage(t.systemMessages.disconnectNotice);
       setAiStatus('');
       setAiError('');
-    }, [appendSystemMessage, t]);
+    }, [appendSystemMessage, cancelPendingPointerFrame, t]);
 
     const handleAiRewrite = useCallback(async () => {
       const draft = inputText.trim();
@@ -945,9 +1558,233 @@
       };
     }, []);
 
+    useEffect(() => {
+      const localVideo = localScreenVideoRef.current;
+      if (localVideo) {
+        localVideo.srcObject = screenStreamRef.current || null;
+      }
+    }, [isScreenSharing]);
+
+    useEffect(() => {
+      const remoteVideo = remoteScreenVideoRef.current;
+      if (remoteVideo) {
+        remoteVideo.srcObject = remoteScreenStreamRef.current || null;
+      }
+    }, [isRemoteScreenActive]);
+
+    useEffect(() => () => {
+      if (remotePointerTimeoutRef.current) {
+        clearTimeout(remotePointerTimeoutRef.current);
+        remotePointerTimeoutRef.current = null;
+      }
+      cancelPendingPointerFrame();
+    }, [cancelPendingPointerFrame]);
+
+    useEffect(() => {
+      if (isRemoteScreenActive && !remoteScreenActiveRef.current) {
+        appendSystemMessage(t.screenShare.remote.peerStarted);
+      } else if (!isRemoteScreenActive && remoteScreenActiveRef.current) {
+        appendSystemMessage(t.screenShare.remote.peerStopped);
+      }
+      remoteScreenActiveRef.current = isRemoteScreenActive;
+    }, [appendSystemMessage, isRemoteScreenActive, t]);
+
+    useEffect(() => {
+      const surface = remoteControlSurfaceRef.current;
+      if (!surface || !canControlPeer) {
+        return;
+      }
+      lastPointerSendRef.current = 0;
+
+      const computePosition = (event) => {
+        const videoElement = remoteScreenVideoRef.current;
+        if (!videoElement) {
+          return null;
+        }
+        const rect = videoElement.getBoundingClientRect();
+        if (!rect.width || !rect.height) {
+          return null;
+        }
+        const deltaX = event.clientX - rect.left;
+        const deltaY = event.clientY - rect.top;
+        if (deltaX < 0 || deltaY < 0 || deltaX > rect.width || deltaY > rect.height) {
+          return null;
+        }
+        const percentX = (deltaX / rect.width) * 100;
+        const percentY = (deltaY / rect.height) * 100;
+        return {
+          x: Number(percentX.toFixed(2)),
+          y: Number(percentY.toFixed(2))
+        };
+      };
+
+      const schedulePointerFrame = () => {
+        if (pointerFramePendingRef.current) {
+          return;
+        }
+        pointerFramePendingRef.current = true;
+        pointerFrameIdRef.current = requestAnimationFrame(() => {
+          pointerFramePendingRef.current = false;
+          pointerFrameIdRef.current = null;
+          const queued = pointerQueuedPositionRef.current;
+          pointerQueuedPositionRef.current = null;
+          if (!queued) {
+            return;
+          }
+          lastPointerSendRef.current = performance.now();
+          sendControlMessage({
+            type: CONTROL_MESSAGE_TYPES.POINTER,
+            kind: 'move',
+            x: queued.x,
+            y: queued.y
+          });
+        });
+      };
+
+      const handlePointerDown = (event) => {
+        event.preventDefault();
+        surface.focus({ preventScroll: true });
+        const position = computePosition(event);
+        if (position) {
+          pointerQueuedPositionRef.current = position;
+          schedulePointerFrame();
+        }
+      };
+
+      const handlePointerMove = (event) => {
+        event.preventDefault();
+        const position = computePosition(event);
+        if (!position) {
+          if (lastPointerSendRef.current !== 0) {
+            lastPointerSendRef.current = 0;
+            cancelPendingPointerFrame();
+            pointerQueuedPositionRef.current = null;
+            sendControlMessage({
+              type: CONTROL_MESSAGE_TYPES.POINTER_VISIBILITY,
+              visible: false
+            });
+          }
+          return;
+        }
+        pointerQueuedPositionRef.current = position;
+        schedulePointerFrame();
+      };
+
+      const handlePointerUp = (event) => {
+        event.preventDefault();
+        const position = computePosition(event);
+        if (!position) {
+          return;
+        }
+        sendControlMessage({
+          type: CONTROL_MESSAGE_TYPES.POINTER,
+          kind: 'click',
+          button: event.button === 2 ? 'right' : 'left',
+          x: position.x,
+          y: position.y
+        });
+      };
+
+      const handlePointerLeave = () => {
+        lastPointerSendRef.current = 0;
+        cancelPendingPointerFrame();
+        pointerQueuedPositionRef.current = null;
+        sendControlMessage({
+          type: CONTROL_MESSAGE_TYPES.POINTER_VISIBILITY,
+          visible: false
+        });
+      };
+
+      const handleWheel = (event) => {
+        event.preventDefault();
+      };
+
+      const handleKeyDown = (event) => {
+        if (event.metaKey || event.ctrlKey || event.altKey) {
+          return;
+        }
+        if (event.key === 'Backspace') {
+          event.preventDefault();
+          sendControlMessage({
+            type: CONTROL_MESSAGE_TYPES.KEYBOARD,
+            mode: 'backspace'
+          });
+          return;
+        }
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          sendControlMessage({
+            type: CONTROL_MESSAGE_TYPES.KEYBOARD,
+            mode: 'enter'
+          });
+          return;
+        }
+        if (event.key.length === 1) {
+          const value = event.key;
+          if (/^[\u0000-\u001F]$/.test(value)) {
+            return;
+          }
+          event.preventDefault();
+          sendControlMessage({
+            type: CONTROL_MESSAGE_TYPES.KEYBOARD,
+            mode: 'text',
+            value
+          });
+        }
+      };
+
+      surface.addEventListener('pointerdown', handlePointerDown);
+      surface.addEventListener('pointermove', handlePointerMove);
+      surface.addEventListener('pointerup', handlePointerUp);
+      surface.addEventListener('pointerleave', handlePointerLeave);
+      surface.addEventListener('pointercancel', handlePointerLeave);
+      surface.addEventListener('wheel', handleWheel, { passive: false });
+      surface.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        surface.removeEventListener('pointerdown', handlePointerDown);
+        surface.removeEventListener('pointermove', handlePointerMove);
+        surface.removeEventListener('pointerup', handlePointerUp);
+        surface.removeEventListener('pointerleave', handlePointerLeave);
+        surface.removeEventListener('pointercancel', handlePointerLeave);
+        surface.removeEventListener('wheel', handleWheel, { passive: false });
+        surface.removeEventListener('keydown', handleKeyDown);
+        cancelPendingPointerFrame();
+        sendControlMessage({
+          type: CONTROL_MESSAGE_TYPES.POINTER_VISIBILITY,
+          visible: false
+        });
+      };
+    }, [cancelPendingPointerFrame, canControlPeer, sendControlMessage]);
+
+    useEffect(() => {
+      if (canControlPeer && remoteControlSurfaceRef.current) {
+        remoteControlSurfaceRef.current.focus({ preventScroll: true });
+        lastPointerSendRef.current = 0;
+      }
+    }, [canControlPeer]);
+
     const isDarkTheme = theme === THEME_OPTIONS.DARK;
     const themeButtonLabel = t.chat.themeToggle(isDarkTheme);
     const themeToggleTitle = t.chat.themeToggleTitle(isDarkTheme);
+    const screenShareHeaderStatus = isScreenSharing
+      ? t.screenShare.status.sharing
+      : channelReady
+        ? t.screenShare.status.ready
+        : t.screenShare.status.connect;
+    const remoteScreenHeaderStatus = isRemoteScreenActive
+      ? t.screenShare.remote.receiving
+      : t.screenShare.remote.idle;
+    const controlStatusLabel = controlChannelReady
+      ? remoteControlStatus
+      : t.remoteControl.statusUnavailable;
+    const remotePreviewClass = `screen-preview remote-preview${canControlPeer ? ' remote-preview-interactive' : ''}`;
+    const remotePointerStyle = remotePointerState.visible
+      ? {
+          left: `${remotePointerState.x}%`,
+          top: `${remotePointerState.y}%`
+        }
+      : null;
 
     return (
       React.createElement(React.Fragment, null,
@@ -1021,6 +1858,11 @@
               disabled: isApiKeyModalOpen
             }, t.about.button)
           ),
+          isRemoteControlAllowed && remotePointerState.visible && React.createElement('div', {
+            className: 'remote-pointer-indicator',
+            style: remotePointerStyle || undefined,
+            'aria-hidden': 'true'
+          }),
           isAboutOpen && React.createElement('div', { className: 'modal-overlay', role: 'presentation', onClick: toggleAbout },
             React.createElement('div', {
               className: 'modal-content',
@@ -1141,10 +1983,98 @@
                   },
                   placeholder: t.signaling.remoteSignalPlaceholder
                 })
+            )
+          )
+        ),
+        React.createElement('section', { id: 'screen-share' },
+          React.createElement('header', null,
+            React.createElement('div', { className: 'header-content' },
+              React.createElement('h2', null, t.screenShare.header),
+              React.createElement('p', { className: 'status', id: 'screen-share-status' }, screenShareHeaderStatus)
+            ),
+            React.createElement('div', { className: 'header-actions screen-share-actions' },
+              React.createElement('button', {
+                type: 'button',
+                onClick: handleStartScreenShare,
+                disabled: !channelReady || isScreenSharing,
+                'aria-label': t.screenShare.actions.startAria
+              }, isScreenSharing ? t.screenShare.actions.sharing : t.screenShare.actions.start),
+              React.createElement('button', {
+                type: 'button',
+                onClick: handleStopScreenShare,
+                disabled: !isScreenSharing,
+                'aria-label': t.screenShare.actions.stopAria
+              }, t.screenShare.actions.stop)
+            )
+          ),
+          React.createElement('div', { className: 'screen-share-controls' },
+            React.createElement('label', { className: 'screen-audio-toggle' },
+              React.createElement('input', {
+                type: 'checkbox',
+                checked: shareSystemAudio,
+                disabled: isScreenSharing,
+                onChange: (event) => setShareSystemAudio(event.target.checked)
+              }),
+              React.createElement('span', null, t.screenShare.includeAudio)
+            ),
+            React.createElement('button', {
+              type: 'button',
+              className: 'remote-control-toggle',
+              onClick: handleToggleRemoteControl,
+              disabled: !isScreenSharing || !controlChannelReady
+            }, isRemoteControlAllowed ? t.remoteControl.actions.disable : t.remoteControl.actions.allow),
+            React.createElement('div', { className: 'control-status' },
+              React.createElement('strong', null, t.remoteControl.label),
+              React.createElement('span', null, controlStatusLabel)
+            )
+          ),
+          React.createElement('div', { className: 'screen-share-grid' },
+            React.createElement('div', { className: 'screen-tile local' },
+              React.createElement('h3', null, t.screenShare.local.title),
+              React.createElement('div', { className: 'screen-preview' },
+                React.createElement('video', {
+                  ref: localScreenVideoRef,
+                  muted: true,
+                  autoPlay: true,
+                  playsInline: true,
+                  'aria-label': t.screenShare.local.aria
+                }),
+                !isScreenSharing && React.createElement('div', { className: 'screen-placeholder' },
+                  React.createElement('p', null, channelReady ? t.screenShare.local.placeholderReady : t.screenShare.local.placeholderDisconnected)
+                )
+              )
+            ),
+            React.createElement('div', { className: 'screen-tile remote' },
+              React.createElement('h3', null, t.screenShare.remote.title),
+              React.createElement('div', {
+                className: remotePreviewClass,
+                ref: remoteControlSurfaceRef,
+                role: canControlPeer ? 'group' : 'presentation',
+                tabIndex: canControlPeer ? 0 : -1,
+                'aria-disabled': canControlPeer ? 'false' : 'true',
+                'aria-label': canControlPeer
+                  ? t.screenShare.remote.ariaInteractive
+                  : t.screenShare.remote.aria
+              },
+                React.createElement('video', {
+                  ref: remoteScreenVideoRef,
+                  autoPlay: true,
+                  playsInline: true,
+                  'aria-label': t.screenShare.remote.streamAria
+                })
+              ),
+              React.createElement('p', { className: 'hint remote-screen-hint' },
+                canControlPeer
+                  ? t.remoteControl.hints.active
+                  : remoteScreenHeaderStatus
               )
             )
           ),
-          React.createElement('section', { id: 'chat' },
+          React.createElement('p', { className: 'hint screen-share-footnote' },
+            t.screenShare.footnote
+          )
+        ),
+        React.createElement('section', { id: 'chat' },
             React.createElement('header', null,
               React.createElement('div', { className: 'header-content' },
                 React.createElement('h2', null, t.chat.title),
