@@ -7,9 +7,14 @@
  * Fetches and parses contributors from GitHub repository issues.
  * @param {string} repo - Repository in format "owner/repo"
  * @returns {Promise<Array<{login: string, avatar_url: string, issue_count: number}>>} Array of contributor objects
- * @throws {Error} If the fetch fails
+ * @throws {Error} If the fetch fails or repo format is invalid
  */
 export async function fetchContributors(repo) {
+  // Validate repo format to prevent URL injection
+  if (!repo || typeof repo !== 'string' || !/^[\w.-]+\/[\w.-]+$/.test(repo)) {
+    throw new Error('Invalid repository format. Expected "owner/repo"');
+  }
+
   const response = await fetch(`https://api.github.com/repos/${repo}/issues?state=all&per_page=100`);
 
   if (!response.ok) {
@@ -42,9 +47,14 @@ export async function fetchContributors(repo) {
  * Fetches Claude-solved issues statistics.
  * @param {string} repo - Repository in format "owner/repo"
  * @returns {Promise<Array<Object>>} Array of issue statistics
- * @throws {Error} If the fetch fails
+ * @throws {Error} If the fetch fails or repo format is invalid
  */
 export async function fetchStatistics(repo) {
+  // Validate repo format to prevent URL injection
+  if (!repo || typeof repo !== 'string' || !/^[\w.-]+\/[\w.-]+$/.test(repo)) {
+    throw new Error('Invalid repository format. Expected "owner/repo"');
+  }
+
   const response = await fetch(`https://api.github.com/repos/${repo}/issues?state=all&per_page=100&labels=claude`);
 
   if (!response.ok) {

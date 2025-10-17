@@ -6,7 +6,8 @@
     "test": "playwright test",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
-    "test:loading": "playwright test tests/loading-performance.spec.js"
+    "test:loading": "playwright test tests/loading-performance.spec.js",
+    "test:utils": "playwright test tests/utils.spec.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0"
