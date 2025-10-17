@@ -7,6 +7,7 @@
 
   const EXPECTED_CHANNEL_LABEL = 'chat';
   const CONTROL_CHANNEL_LABEL = 'control';
+  const IMAGE_CHANNEL_LABEL = 'image';
   const MAX_MESSAGE_LENGTH = 2000;
   const MAX_MESSAGES_PER_INTERVAL = 30;
   const MESSAGE_INTERVAL_MS = 5000;
@@ -15,6 +16,12 @@
   const CONTROL_MAX_PAYLOAD_LENGTH = 2048;
   const CONTROL_TEXT_INSERT_LIMIT = 32;
   const CONTROL_TOTAL_TEXT_BUDGET = 2048;
+  const IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024;
+  const IMAGE_CHUNK_SIZE = 16 * 1024;
+  const IMAGE_MAX_PER_INTERVAL = 10;
+  const IMAGE_INTERVAL_MS = 60000;
+  const IMAGE_MAX_CONCURRENT = 3;
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   const OPENAI_MODEL = 'gpt-4o-mini';
   const THEME_STORAGE_KEY = 'thecommunity.theme-preference';
   const THEME_OPTIONS = {
@@ -281,10 +288,15 @@
     const [canControlPeer, setCanControlPeer] = useState(false);
     const [remoteControlStatus, setRemoteControlStatus] = useState(t.remoteControl.statusDisabled);
     const [remotePointerState, setRemotePointerState] = useState({ visible: false, x: 50, y: 50 });
+    const [statisticsIssues, setStatisticsIssues] = useState([]);
+    const [isLoadingStatistics, setIsLoadingStatistics] = useState(false);
+    const [statisticsError, setStatisticsError] = useState('');
+    const [randomJoke, setRandomJoke] = useState('');
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
     const controlChannelRef = useRef(null);
+    const imageChannelRef = useRef(null);
     const iceDoneRef = useRef(false);
     const screenSenderRef = useRef(null);
     const screenAudioSenderRef = useRef(null);
@@ -312,15 +324,22 @@
     const pointerFramePendingRef = useRef(false);
     const pointerFrameIdRef = useRef(null);
     const pointerQueuedPositionRef = useRef(null);
+    const imageTransfersRef = useRef(new Map());
+    const imageSendTimestampsRef = useRef([]);
+    const imageReceiveTimestampsRef = useRef([]);
+    const imageFileInputRef = useRef(null);
 
     /**
      * Queues a chat message for rendering.
      * @param {string} text - Message body
      * @param {'local'|'remote'|'system'} role - Message origin
+     * @param {Object} options - Additional options
+     * @param {string} options.imageUrl - Optional image data URL for image messages
+     * @param {string} options.fileName - Optional file name for image messages
      */
-    const appendMessage = useCallback((text, role) => {
+    const appendMessage = useCallback((text, role, options = {}) => {
       const id = messageIdRef.current++;
-      setMessages((prev) => [...prev, { id, text, role }]);
+      setMessages((prev) => [...prev, { id, text, role, ...options }]);
     }, []);
 
     /**
@@ -595,6 +614,115 @@
     }, [cancelPendingPointerFrame, handleIncomingControlMessage, t]);
 
     /**
+     * Handles incoming image channel messages for image transfer.
+     * @param {string} payload - JSON-encoded image message
+     */
+    const handleIncomingImageMessage = useCallback((payload) => {
+      if (typeof payload !== 'string' || !payload) {
+        return;
+      }
+      let message;
+      try {
+        message = JSON.parse(payload);
+      } catch (error) {
+        console.warn('Discarded malformed image message', error);
+        return;
+      }
+      if (!message || typeof message !== 'object') {
+        return;
+      }
+      const now = Date.now();
+      imageReceiveTimestampsRef.current = imageReceiveTimestampsRef.current.filter(
+        (timestamp) => now - timestamp < IMAGE_INTERVAL_MS
+      );
+      if (message.type === 'image-start') {
+        if (imageReceiveTimestampsRef.current.length >= IMAGE_MAX_PER_INTERVAL) {
+          appendSystemMessageRef.current(t.imageShare.rateLimitReceive);
+          return;
+        }
+        if (imageTransfersRef.current.size >= IMAGE_MAX_CONCURRENT) {
+          appendSystemMessageRef.current(t.imageShare.tooManyConcurrent);
+          return;
+        }
+        if (!message.imageId || !message.mimeType || !ALLOWED_IMAGE_TYPES.includes(message.mimeType)) {
+          appendSystemMessageRef.current(t.imageShare.invalidType);
+          return;
+        }
+        if (typeof message.totalSize !== 'number' || message.totalSize > IMAGE_MAX_SIZE_BYTES || message.totalSize <= 0) {
+          appendSystemMessageRef.current(t.imageShare.tooLarge);
+          return;
+        }
+        imageReceiveTimestampsRef.current.push(now);
+        imageTransfersRef.current.set(message.imageId, {
+          chunks: [],
+          mimeType: message.mimeType,
+          fileName: message.fileName || 'image',
+          totalChunks: message.totalChunks || 0,
+          totalSize: message.totalSize,
+          receivedChunks: 0
+        });
+        return;
+      }
+      if (message.type === 'image-chunk') {
+        const transfer = imageTransfersRef.current.get(message.imageId);
+        if (!transfer) {
+          return;
+        }
+        if (typeof message.chunkIndex !== 'number' || typeof message.data !== 'string') {
+          return;
+        }
+        transfer.chunks[message.chunkIndex] = message.data;
+        transfer.receivedChunks++;
+        if (transfer.receivedChunks === transfer.totalChunks) {
+          try {
+            const fullBase64 = transfer.chunks.join('');
+            const binaryString = atob(fullBase64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: transfer.mimeType });
+            const imageUrl = URL.createObjectURL(blob);
+            appendMessage(t.imageShare.receivedImage(transfer.fileName), 'remote', {
+              imageUrl,
+              fileName: transfer.fileName
+            });
+            imageTransfersRef.current.delete(message.imageId);
+          } catch (error) {
+            console.error('Failed to reconstruct image', error);
+            appendSystemMessageRef.current(t.imageShare.receiveFailed);
+            imageTransfersRef.current.delete(message.imageId);
+          }
+        }
+      }
+    }, [appendMessage, t]);
+
+    /**
+     * Configures event handlers for the image data channel.
+     * @param {RTCDataChannel} channel - Image channel instance
+     */
+    const setupImageChannel = useCallback((channel) => {
+      channel.onopen = () => {
+        imageChannelRef.current = channel;
+        appendSystemMessageRef.current(t.imageShare.channelReady);
+      };
+      channel.onclose = () => {
+        if (imageChannelRef.current === channel) {
+          imageChannelRef.current = null;
+        }
+        imageTransfersRef.current.clear();
+        imageSendTimestampsRef.current = [];
+        imageReceiveTimestampsRef.current = [];
+      };
+      channel.onmessage = (event) => {
+        if (typeof event.data !== 'string') {
+          return;
+        }
+        handleIncomingImageMessage(event.data);
+      };
+    }, [handleIncomingImageMessage, t]);
+
+    /**
      * Lazily creates (or returns) the RTCPeerConnection instance.
      * @returns {RTCPeerConnection}
      */
@@ -670,12 +798,16 @@
           setupControlChannel(incomingChannel);
           return;
         }
+        if (incomingChannel.label === IMAGE_CHANNEL_LABEL) {
+          setupImageChannel(incomingChannel);
+          return;
+        }
         appendSystemMessage(t.systemMessages.channelBlocked(incomingChannel.label || ''));
         incomingChannel.close();
       };
 
       return pc;
-    }, [appendSystemMessage, setupChatChannel, setupControlChannel, t]);
+    }, [appendSystemMessage, setupChatChannel, setupControlChannel, setupImageChannel, t]);
 
     /**
      * Resolves once ICE gathering finishes for the current connection.
@@ -746,6 +878,10 @@
       controlChannelRef.current = controlChannel;
       setupControlChannel(controlChannel);
 
+      const imageChannel = pc.createDataChannel(IMAGE_CHANNEL_LABEL);
+      imageChannelRef.current = imageChannel;
+      setupImageChannel(imageChannel);
+
       incomingTimestampsRef.current = [];
       iceDoneRef.current = false;
       setLocalSignal('');
@@ -765,7 +901,7 @@
       } finally {
         setIsCreatingOffer(false);
       }
-    }, [appendSystemMessage, ensurePeerConnection, setupChatChannel, setupControlChannel, waitForIce, t]);
+    }, [appendSystemMessage, ensurePeerConnection, setupChatChannel, setupControlChannel, setupImageChannel, waitForIce, t]);
 
     /**
      * Applies the pasted remote offer or answer to the peer connection.
@@ -1045,6 +1181,86 @@
       setAiError('');
     }, [appendMessage, appendSystemMessage, inputText, t]);
 
+    /**
+     * Handles image file selection and sends it through the image channel.
+     */
+    const handleImageSelect = useCallback(async (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (imageFileInputRef.current) {
+        imageFileInputRef.current.value = '';
+      }
+      if (!file) {
+        return;
+      }
+      const channel = imageChannelRef.current;
+      if (!channel || channel.readyState !== 'open') {
+        appendSystemMessage(t.imageShare.channelNotReady);
+        return;
+      }
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        appendSystemMessage(t.imageShare.invalidType);
+        return;
+      }
+      if (file.size > IMAGE_MAX_SIZE_BYTES) {
+        appendSystemMessage(t.imageShare.tooLarge);
+        return;
+      }
+      const now = Date.now();
+      imageSendTimestampsRef.current = imageSendTimestampsRef.current.filter(
+        (timestamp) => now - timestamp < IMAGE_INTERVAL_MS
+      );
+      if (imageSendTimestampsRef.current.length >= IMAGE_MAX_PER_INTERVAL) {
+        appendSystemMessage(t.imageShare.rateLimitSend);
+        return;
+      }
+      imageSendTimestampsRef.current.push(now);
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binaryString = '';
+        for (let i = 0; i < bytes.length; i++) {
+          binaryString += String.fromCharCode(bytes[i]);
+        }
+        const base64 = btoa(binaryString);
+        const imageId = `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const totalChunks = Math.ceil(base64.length / IMAGE_CHUNK_SIZE);
+        channel.send(JSON.stringify({
+          type: 'image-start',
+          imageId,
+          mimeType: file.type,
+          fileName: file.name,
+          totalSize: file.size,
+          totalChunks
+        }));
+        for (let i = 0; i < totalChunks; i++) {
+          const start = i * IMAGE_CHUNK_SIZE;
+          const end = Math.min(start + IMAGE_CHUNK_SIZE, base64.length);
+          const chunk = base64.substring(start, end);
+          channel.send(JSON.stringify({
+            type: 'image-chunk',
+            imageId,
+            chunkIndex: i,
+            totalChunks,
+            data: chunk
+          }));
+        }
+        const imageUrl = URL.createObjectURL(file);
+        appendMessage(t.imageShare.sentImage(file.name), 'local', {
+          imageUrl,
+          fileName: file.name
+        });
+      } catch (error) {
+        console.error('Failed to send image', error);
+        appendSystemMessage(t.imageShare.sendFailed);
+      }
+    }, [appendMessage, appendSystemMessage, t]);
+
+    const handleImageButtonClick = useCallback(() => {
+      if (imageFileInputRef.current) {
+        imageFileInputRef.current.click();
+      }
+    }, []);
+
     const handleRemoteKeyboardInput = useCallback((message) => {
       if (!remoteControlAllowedRef.current) {
         return;
@@ -1186,6 +1402,10 @@
         controlChannelRef.current.close();
         controlChannelRef.current = null;
       }
+      if (imageChannelRef.current) {
+        imageChannelRef.current.close();
+        imageChannelRef.current = null;
+      }
       if (pcRef.current) {
         pcRef.current.close();
         pcRef.current = null;
@@ -1221,6 +1441,9 @@
       controlIncomingTimestampsRef.current = [];
       controlWarningsRef.current = { rate: false, size: false };
       remoteKeyBudgetRef.current = CONTROL_TOTAL_TEXT_BUDGET;
+      imageTransfersRef.current.clear();
+      imageSendTimestampsRef.current = [];
+      imageReceiveTimestampsRef.current = [];
       setChannelReady(false);
       setChannelStatus(t.status.channelClosed);
       setStatus(t.status.disconnected);
@@ -1539,6 +1762,192 @@
         controller.abort();
       };
     }, [isAboutOpen, t]);
+
+    useEffect(() => {
+      const jokes = t.statistics.joke.jokes;
+      if (Array.isArray(jokes) && jokes.length > 0) {
+        const randomIndex = Math.floor(Math.random() * jokes.length);
+        setRandomJoke(jokes[randomIndex]);
+      }
+    }, [t]);
+
+    useEffect(() => {
+      const controller = new AbortController();
+      let didSucceed = false;
+
+      const loadStatistics = async () => {
+        setIsLoadingStatistics(true);
+        setStatisticsError('');
+        try {
+          // Check cache first
+          const cacheKey = 'thecommunity.statistics-cache';
+          const cacheTimeKey = 'thecommunity.statistics-cache-time';
+          const cacheMaxAge = 5 * 60 * 1000; // 5 minutes
+
+          try {
+            const cachedData = localStorage.getItem(cacheKey);
+            const cachedTime = localStorage.getItem(cacheTimeKey);
+
+            if (cachedData && cachedTime) {
+              const age = Date.now() - parseInt(cachedTime, 10);
+              if (age < cacheMaxAge) {
+                const parsed = JSON.parse(cachedData);
+                setStatisticsIssues(parsed);
+                setIsLoadingStatistics(false);
+                return;
+              }
+            }
+          } catch (cacheError) {
+            console.warn('Cache read failed, fetching fresh data', cacheError);
+          }
+
+          const response = await fetch(
+            'https://api.github.com/repos/TheMorpheus407/TheCommunity/issues?state=all&per_page=100',
+            {
+              signal: controller.signal,
+              headers: {
+                Accept: 'application/vnd.github+json'
+              }
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`Request failed with status ${response.status}`);
+          }
+
+          const payload = await response.json();
+          if (controller.signal.aborted) {
+            return;
+          }
+
+          const aiSolvedIssues = [];
+          if (Array.isArray(payload)) {
+            for (const item of payload) {
+              if (!item || item.pull_request) {
+                continue;
+              }
+
+              // More accurate detection: check for Claude labels or fetch comments to check for Claude mentions
+              const hasClaudeLabel = item.labels && Array.isArray(item.labels) &&
+                item.labels.some(label => label && typeof label.name === 'string' &&
+                  label.name.toLowerCase().includes('claude'));
+
+              // Only consider issues with comments that might involve Claude
+              if (hasClaudeLabel || item.comments > 0) {
+                // Determine status more accurately
+                const status = item.state === 'closed'
+                  ? (item.state_reason === 'completed' ? 'success' : 'failed')
+                  : 'pending';
+
+                const bodyText = item.body || '';
+                let summary = bodyText.slice(0, 150);
+                if (bodyText.length > 150) {
+                  summary += '...';
+                }
+
+                aiSolvedIssues.push({
+                  number: item.number,
+                  title: item.title || 'Untitled',
+                  body: bodyText,
+                  status: status,
+                  url: item.html_url,
+                  summary: summary,
+                  needsAiSummary: bodyText.length > 200 && openAiKey
+                });
+              }
+            }
+          }
+
+          // Try to cache the results
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(aiSolvedIssues));
+            localStorage.setItem(cacheTimeKey, Date.now().toString());
+          } catch (cacheError) {
+            console.warn('Failed to cache statistics', cacheError);
+          }
+
+          setStatisticsIssues(aiSolvedIssues);
+          didSucceed = true;
+
+          // If OpenAI key is available, generate AI summaries for longer issues
+          if (openAiKey && aiSolvedIssues.length > 0) {
+            generateAiSummaries(aiSolvedIssues, controller.signal);
+          }
+        } catch (error) {
+          if (controller.signal.aborted) {
+            return;
+          }
+          console.error('Failed to load statistics', error);
+          setStatisticsError(t.statistics.error);
+        } finally {
+          if (!controller.signal.aborted) {
+            setIsLoadingStatistics(false);
+          }
+        }
+      };
+
+      const generateAiSummaries = async (issues, signal) => {
+        for (const issue of issues) {
+          if (signal.aborted || !issue.needsAiSummary) {
+            continue;
+          }
+
+          try {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+              method: 'POST',
+              signal: signal,
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${openAiKey}`
+              },
+              body: JSON.stringify({
+                model: OPENAI_MODEL,
+                messages: [
+                  {
+                    role: 'system',
+                    content: 'Summarize the following GitHub issue in one concise sentence (max 100 characters). Focus on what needs to be done.'
+                  },
+                  {
+                    role: 'user',
+                    content: `Title: ${issue.title}\n\nDescription: ${issue.body.slice(0, 500)}`
+                  }
+                ],
+                temperature: 0.5,
+                max_tokens: 60
+              })
+            });
+
+            if (!response.ok || signal.aborted) {
+              continue;
+            }
+
+            const data = await response.json();
+            const aiSummary = data?.choices?.[0]?.message?.content?.trim();
+
+            if (aiSummary) {
+              setStatisticsIssues((prev) => prev.map((item) =>
+                item.number === issue.number
+                  ? { ...item, summary: aiSummary }
+                  : item
+              ));
+            }
+          } catch (error) {
+            if (!signal.aborted) {
+              console.warn(`Failed to generate AI summary for issue #${issue.number}`, error);
+            }
+          }
+
+          // Add delay to respect rate limits
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      };
+
+      loadStatistics();
+
+      return () => {
+        controller.abort();
+      };
+    }, [t, openAiKey]);
 
     useEffect(() => {
       const container = messagesContainerRef.current;
@@ -2141,10 +2550,32 @@
                       'data-role': message.role
                     },
                     React.createElement('strong', null, t.chat.roleLabels[message.role] || t.chat.roleLabels.system),
-                    React.createElement('span', null, message.text))
+                    React.createElement('span', null, message.text),
+                    message.imageUrl && React.createElement('img', {
+                      src: message.imageUrl,
+                      alt: message.fileName || 'Shared image',
+                      className: 'chat-image',
+                      loading: 'lazy'
+                    }))
                   ))
             ),
             React.createElement('div', { className: 'chat-input' },
+              React.createElement('input', {
+                type: 'file',
+                ref: imageFileInputRef,
+                onChange: handleImageSelect,
+                accept: ALLOWED_IMAGE_TYPES.join(','),
+                style: { display: 'none' },
+                'aria-label': t.imageShare.selectImage
+              }),
+              React.createElement('button', {
+                type: 'button',
+                className: 'image-button',
+                onClick: handleImageButtonClick,
+                disabled: !channelReady,
+                'aria-label': t.imageShare.sendImage,
+                title: t.imageShare.sendImageTitle
+              }, '📷'),
               React.createElement('input', {
                 id: 'outgoing',
                 type: 'text',
@@ -2187,6 +2618,63 @@
               className: `hint ai-feedback${aiError ? ' ai-feedback-error' : ''}`,
               role: 'note'
             }, aiError || aiStatus)
+          ),
+          React.createElement('section', { id: 'statistics' },
+            React.createElement('header', null,
+              React.createElement('div', { className: 'header-content' },
+                React.createElement('h2', null, t.statistics.title),
+                React.createElement('p', { className: 'status' }, t.statistics.header)
+              )
+            ),
+            !isLoadingStatistics && !statisticsError && React.createElement('p', { className: 'hint' },
+              openAiKey ? t.statistics.aiSummaryNote : t.statistics.cachedNote
+            ),
+            React.createElement('div', { className: 'statistics-content' },
+              isLoadingStatistics && React.createElement('p', { className: 'statistics-status' }, t.statistics.loading),
+              statisticsError && React.createElement('p', { className: 'statistics-status statistics-error' }, statisticsError),
+              !isLoadingStatistics && !statisticsError && statisticsIssues.length === 0 &&
+                React.createElement('p', { className: 'statistics-status' }, t.statistics.noIssues),
+              statisticsIssues.length > 0 && React.createElement('div', { className: 'statistics-table-wrapper' },
+                React.createElement('table', { className: 'statistics-table' },
+                  React.createElement('thead', null,
+                    React.createElement('tr', null,
+                      React.createElement('th', null, t.statistics.columns.issue),
+                      React.createElement('th', null, t.statistics.columns.title),
+                      React.createElement('th', null, t.statistics.columns.summary),
+                      React.createElement('th', null, t.statistics.columns.status)
+                    )
+                  ),
+                  React.createElement('tbody', null,
+                    statisticsIssues.map((issue) => {
+                      const statusClass = `status-badge status-${issue.status}`;
+                      const statusText = t.statistics.status[issue.status] || issue.status;
+                      const summary = issue.summary || issue.body.slice(0, 150) + (issue.body.length > 150 ? '...' : '');
+                      const isAiGenerated = issue.needsAiSummary && issue.summary && issue.summary !== (issue.body.slice(0, 150) + (issue.body.length > 150 ? '...' : ''));
+                      const summaryClass = `issue-summary${isAiGenerated ? ' summary-ai' : ''}${issue.needsAiSummary && !isAiGenerated ? ' summary-loading' : ''}`;
+
+                      return React.createElement('tr', { key: issue.number },
+                        React.createElement('td', { className: 'issue-number' },
+                          React.createElement('a', {
+                            href: issue.url,
+                            target: '_blank',
+                            rel: 'noopener noreferrer'
+                          }, t.statistics.issueNumber(issue.number))
+                        ),
+                        React.createElement('td', { className: 'issue-title' }, issue.title),
+                        React.createElement('td', { className: summaryClass }, summary),
+                        React.createElement('td', { className: 'issue-status' },
+                          React.createElement('span', { className: statusClass }, statusText)
+                        )
+                      );
+                    })
+                  )
+                )
+              ),
+              randomJoke && React.createElement('div', { className: 'statistics-joke' },
+                React.createElement('h3', null, t.statistics.joke.title),
+                React.createElement('p', null, randomJoke)
+              )
+            )
           )
         )
       )
@@ -2196,18 +2684,19 @@
   const rootElement = document.getElementById('root');
   const root = ReactDOM.createRoot(rootElement);
   root.render(React.createElement(App));
+  initBackgroundSound();
+  initKonamiCode();
 
   /**
    * Initialize background sound to play on first user interaction.
    * Modern browsers require user interaction before allowing audio playback.
    */
-  (function initBackgroundSound() {
+  function initBackgroundSound() {
     const audio = document.getElementById('background-sound');
     if (!audio) {
       return;
     }
 
-    // Set volume to maximum as requested
     audio.volume = 1.0;
 
     let hasStarted = false;
@@ -2219,8 +2708,8 @@
 
       audio.play().then(() => {
         hasStarted = true;
-        // Remove listeners after successful start
         document.removeEventListener('click', startAudio);
+        document.removeEventListener('pointerdown', startAudio);
         document.removeEventListener('keydown', startAudio);
         document.removeEventListener('touchstart', startAudio);
       }).catch((error) => {
@@ -2228,9 +2717,70 @@
       });
     };
 
-    // Listen for first user interaction
     document.addEventListener('click', startAudio, { once: false });
+    document.addEventListener('pointerdown', startAudio, { once: false });
     document.addEventListener('keydown', startAudio, { once: false });
     document.addEventListener('touchstart', startAudio, { once: false });
-  })();
+  }
+
+  /**
+   * Konami Code Easter Egg.
+   * Detects the sequence: ↑ ↑ ↓ ↓ ← → ← → B A
+   * When activated, toggles the Nyan Cat music.
+   */
+  function initKonamiCode() {
+    const KONAMI_CODE = [
+      'ArrowUp',
+      'ArrowUp',
+      'ArrowDown',
+      'ArrowDown',
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowLeft',
+      'ArrowRight',
+      'KeyB',
+      'KeyA'
+    ];
+
+    let konamiIndex = 0;
+    let isAudioPlaying = false;
+
+    function handleKonamiKeyPress(event) {
+      const expectedKey = KONAMI_CODE[konamiIndex];
+
+      if (event.code === expectedKey) {
+        konamiIndex++;
+
+        if (konamiIndex === KONAMI_CODE.length) {
+          activateNyanCat();
+          konamiIndex = 0;
+        }
+      } else {
+        konamiIndex = 0;
+      }
+    }
+
+    function activateNyanCat() {
+      const audio = document.getElementById('nyan-cat-audio');
+
+      if (!audio) {
+        console.warn('Nyan Cat audio element not found');
+        return;
+      }
+
+      if (isAudioPlaying) {
+        audio.pause();
+        audio.currentTime = 0;
+        isAudioPlaying = false;
+      } else {
+        audio.play().then(() => {
+          isAudioPlaying = true;
+        }).catch((error) => {
+          console.warn('Failed to play Nyan Cat audio:', error);
+        });
+      }
+    }
+
+    document.addEventListener('keydown', handleKonamiKeyPress);
+  }
 })();

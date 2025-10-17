@@ -213,6 +213,60 @@ const baseTranslation = Object.freeze({
       peerCanControl: 'Dein Peer kann nun deinen Bildschirm steuern. Behalte die Aktivitäten im Blick.',
       controlRevokedLocal: 'Fernsteuerung für deinen Bildschirm wurde beendet.'
     }
+  },
+  imageShare: {
+    selectImage: 'Bild auswählen',
+    sendImage: 'Bild senden',
+    sendImageTitle: 'Bild zum Senden auswählen',
+    channelReady: 'Bildfreigabe bereit.',
+    channelNotReady: 'Bildfreigabe noch nicht bereit. Warte auf Verbindung.',
+    invalidType: 'Ungültiger Bildtyp. Nur JPEG, PNG, GIF und WebP sind erlaubt.',
+    tooLarge: 'Bild ist zu groß. Maximale Größe ist 5 MB.',
+    rateLimitSend: 'Zu viele Bilder gesendet. Bitte warte eine Minute.',
+    rateLimitReceive: 'Zu viele Bilder empfangen. Peer sendet zu schnell.',
+    tooManyConcurrent: 'Zu viele gleichzeitige Bildübertragungen.',
+    sendFailed: 'Bild konnte nicht gesendet werden.',
+    receiveFailed: 'Bild konnte nicht empfangen werden.',
+    sentImage: (fileName) => `Bild gesendet: ${fileName}`,
+    receivedImage: (fileName) => `Bild empfangen: ${fileName}`
+  },
+  statistics: {
+    title: 'KI-Statistik',
+    header: 'Von KI gelöste Issues',
+    loading: 'Lade Statistiken...',
+    error: 'Statistiken konnten nicht geladen werden.',
+    noIssues: 'Noch keine von KI gelösten Issues gefunden.',
+    issueNumber: (num) => `Issue #${num}`,
+    status: {
+      success: 'Erfolgreich gelöst',
+      failed: 'Probleme aufgetreten',
+      pending: 'In Bearbeitung'
+    },
+    columns: {
+      issue: 'Issue',
+      title: 'Titel',
+      summary: 'Zusammenfassung',
+      status: 'Status'
+    },
+    summaryPlaceholder: 'Zusammenfassung wird geladen...',
+    summaryError: 'Zusammenfassung nicht verfügbar',
+    aiSummaryNote: 'KI-Zusammenfassungen werden generiert, wenn ein OpenAI-Schlüssel verfügbar ist.',
+    cachedNote: 'Daten werden 5 Minuten zwischengespeichert.',
+    joke: {
+      title: 'Makaberer Witz des Tages',
+      jokes: [
+        'Warum mögen Programmierer die Natur nicht? Zu viele Bugs.',
+        'Ein Entwickler starb. Sein letztes Wort war: "Es funktioniert auf meiner Maschine..."',
+        'Wie viele Programmierer braucht man, um eine Glühbirne zu wechseln? Keinen. Das ist ein Hardware-Problem.',
+        'Der schlimmste Bug ist der, den du schon behoben hast... in einem anderen Branch.',
+        'Ein SQL-Query geht in eine Bar, sieht zwei Tabellen und fragt: "Darf ich joinen?"',
+        'Debugging ist wie ein Detektivfilm, in dem du gleichzeitig Mörder und Detektiv bist.',
+        'Es gibt nur zwei harte Probleme in der Informatik: Cache-Invalidierung, Namen vergeben und Off-by-One-Fehler.',
+        'Das einzige, was schlimmer ist als Legacy-Code, ist Code, den du selbst vor 6 Monaten geschrieben hast.',
+        '"Es ist nur ein kleiner Fix" - Berühmte letzte Worte vor 3 Tagen Debugging.',
+        'Manche Menschen haben Albträume. Entwickler träumen von Production-Deployments am Freitagnachmittag.'
+      ]
+    }
   }
 });
 
