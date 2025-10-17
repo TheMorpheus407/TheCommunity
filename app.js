@@ -19,7 +19,8 @@
   const THEME_STORAGE_KEY = 'thecommunity.theme-preference';
   const THEME_OPTIONS = {
     LIGHT: 'light',
-    DARK: 'dark'
+    DARK: 'dark',
+    RGB: 'rgb'
   };
 
   const CONTROL_MESSAGE_TYPES = {
@@ -212,7 +213,7 @@
 
   /**
    * Determines the initial theme, preferring stored settings, then system preference.
-   * @returns {{theme: 'light'|'dark', isStored: boolean}}
+   * @returns {{theme: 'light'|'dark'|'rgb', isStored: boolean}}
    */
   function resolveInitialTheme() {
     if (typeof window === 'undefined') {
@@ -220,7 +221,7 @@
     }
     try {
       const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-      if (storedTheme === THEME_OPTIONS.LIGHT || storedTheme === THEME_OPTIONS.DARK) {
+      if (storedTheme === THEME_OPTIONS.LIGHT || storedTheme === THEME_OPTIONS.DARK || storedTheme === THEME_OPTIONS.RGB) {
         if (typeof document !== 'undefined') {
           document.documentElement.dataset.theme = storedTheme;
         }
@@ -338,9 +339,16 @@
 
     const handleToggleTheme = useCallback(() => {
       setTheme((prevTheme) => {
-        const nextTheme = prevTheme === THEME_OPTIONS.DARK ? THEME_OPTIONS.LIGHT : THEME_OPTIONS.DARK;
+        let nextTheme;
+        if (prevTheme === THEME_OPTIONS.DARK) {
+          nextTheme = THEME_OPTIONS.LIGHT;
+        } else if (prevTheme === THEME_OPTIONS.LIGHT) {
+          nextTheme = THEME_OPTIONS.RGB;
+        } else {
+          nextTheme = THEME_OPTIONS.DARK;
+        }
         const currentT = translations[language] || translations.de;
-        const themeName = nextTheme === THEME_OPTIONS.DARK ? 'dark' : 'light';
+        const themeName = nextTheme === THEME_OPTIONS.DARK ? 'dark' : nextTheme === THEME_OPTIONS.LIGHT ? 'light' : 'RGB Gaming';
         appendSystemMessage(currentT.systemMessages.themeSwitch(themeName));
         return nextTheme;
       });
@@ -1765,8 +1773,19 @@
     }, [canControlPeer]);
 
     const isDarkTheme = theme === THEME_OPTIONS.DARK;
-    const themeButtonLabel = t.chat.themeToggle(isDarkTheme);
-    const themeToggleTitle = t.chat.themeToggleTitle(isDarkTheme);
+    const isRgbTheme = theme === THEME_OPTIONS.RGB;
+    let themeButtonLabel;
+    let themeToggleTitle;
+    if (isRgbTheme) {
+      themeButtonLabel = '🌈 RGB';
+      themeToggleTitle = 'Switch to Dark Mode';
+    } else if (isDarkTheme) {
+      themeButtonLabel = t.chat.themeToggle(true);
+      themeToggleTitle = t.chat.themeToggleTitle(true);
+    } else {
+      themeButtonLabel = t.chat.themeToggle(false);
+      themeToggleTitle = t.chat.themeToggleTitle(false);
+    }
     const screenShareHeaderStatus = isScreenSharing
       ? t.screenShare.status.sharing
       : channelReady
