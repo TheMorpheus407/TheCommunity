@@ -2196,4 +2196,41 @@
   const rootElement = document.getElementById('root');
   const root = ReactDOM.createRoot(rootElement);
   root.render(React.createElement(App));
+
+  /**
+   * Initialize background sound to play on first user interaction.
+   * Modern browsers require user interaction before allowing audio playback.
+   */
+  (function initBackgroundSound() {
+    const audio = document.getElementById('background-sound');
+    if (!audio) {
+      return;
+    }
+
+    // Set volume to maximum as requested
+    audio.volume = 1.0;
+
+    let hasStarted = false;
+
+    const startAudio = () => {
+      if (hasStarted) {
+        return;
+      }
+
+      audio.play().then(() => {
+        hasStarted = true;
+        // Remove listeners after successful start
+        document.removeEventListener('click', startAudio);
+        document.removeEventListener('keydown', startAudio);
+        document.removeEventListener('touchstart', startAudio);
+      }).catch((error) => {
+        console.warn('Background sound autoplay blocked:', error);
+      });
+    };
+
+    // Listen for first user interaction
+    document.addEventListener('click', startAudio, { once: false });
+    document.addEventListener('keydown', startAudio, { once: false });
+    document.addEventListener('touchstart', startAudio, { once: false });
+  })();
 })();
