@@ -29,6 +29,12 @@
     DARK: 'dark',
     RGB: 'rgb'
   };
+  const THEME_SEQUENCE = [THEME_OPTIONS.DARK, THEME_OPTIONS.LIGHT, THEME_OPTIONS.RGB];
+
+  function getNextThemeValue(currentTheme) {
+    const index = THEME_SEQUENCE.indexOf(currentTheme);
+    return THEME_SEQUENCE[(index + 1) % THEME_SEQUENCE.length];
+  }
 
   const CONTROL_MESSAGE_TYPES = {
     POINTER: 'pointer',
@@ -358,17 +364,9 @@
 
     const handleToggleTheme = useCallback(() => {
       setTheme((prevTheme) => {
-        let nextTheme;
-        if (prevTheme === THEME_OPTIONS.DARK) {
-          nextTheme = THEME_OPTIONS.LIGHT;
-        } else if (prevTheme === THEME_OPTIONS.LIGHT) {
-          nextTheme = THEME_OPTIONS.RGB;
-        } else {
-          nextTheme = THEME_OPTIONS.DARK;
-        }
+        const nextTheme = getNextThemeValue(prevTheme);
         const currentT = translations[language] || translations.de;
-        const themeName = nextTheme === THEME_OPTIONS.DARK ? 'dark' : nextTheme === THEME_OPTIONS.LIGHT ? 'light' : 'RGB Gaming';
-        appendSystemMessage(currentT.systemMessages.themeSwitch(themeName));
+        appendSystemMessage(currentT.systemMessages.themeSwitch(nextTheme));
         return nextTheme;
       });
       hasStoredThemeRef.current = true;
@@ -2181,20 +2179,9 @@
       }
     }, [canControlPeer]);
 
-    const isDarkTheme = theme === THEME_OPTIONS.DARK;
-    const isRgbTheme = theme === THEME_OPTIONS.RGB;
-    let themeButtonLabel;
-    let themeToggleTitle;
-    if (isRgbTheme) {
-      themeButtonLabel = '🌈 RGB';
-      themeToggleTitle = 'Switch to Dark Mode';
-    } else if (isDarkTheme) {
-      themeButtonLabel = t.chat.themeToggle(true);
-      themeToggleTitle = t.chat.themeToggleTitle(true);
-    } else {
-      themeButtonLabel = t.chat.themeToggle(false);
-      themeToggleTitle = t.chat.themeToggleTitle(false);
-    }
+    const nextTheme = getNextThemeValue(theme);
+    const themeButtonLabel = t.chat.themeToggle(nextTheme);
+    const themeToggleTitle = t.chat.themeToggleTitle(nextTheme);
     const screenShareHeaderStatus = isScreenSharing
       ? t.screenShare.status.sharing
       : channelReady
@@ -2539,7 +2526,6 @@
                 type: 'button',
                 className: 'theme-toggle-button',
                 onClick: handleToggleTheme,
-                'aria-pressed': isDarkTheme,
                 title: themeToggleTitle,
                 'aria-label': themeToggleTitle,
                 disabled: isApiKeyModalOpen
