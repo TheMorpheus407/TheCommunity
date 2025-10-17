@@ -234,6 +234,8 @@ const baseTranslation = Object.freeze({
     },
     summaryPlaceholder: 'Zusammenfassung wird geladen...',
     summaryError: 'Zusammenfassung nicht verfügbar',
+    aiSummaryNote: 'KI-Zusammenfassungen werden generiert, wenn ein OpenAI-Schlüssel verfügbar ist.',
+    cachedNote: 'Daten werden 5 Minuten zwischengespeichert.',
     joke: {
       title: 'Makaberer Witz des Tages',
       jokes: [

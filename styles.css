@@ -1022,6 +1022,16 @@ textarea[readonly] {
   line-height: 1.4;
 }
 
+.issue-summary.summary-loading {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.issue-summary.summary-ai {
+  color: var(--color-text-info);
+  font-style: italic;
+}
+
 .issue-status {
   text-align: center;
 }
@@ -1088,6 +1098,26 @@ textarea[readonly] {
   main {
     padding: 1.25rem;
     gap: 1.25rem;
+  }
+  .statistics-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .statistics-table {
+    min-width: 600px;
+  }
+  .statistics-table th,
+  .statistics-table td {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+  .issue-summary {
+    max-width: 200px;
+    font-size: 0.85rem;
+  }
+  .status-badge {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
   }
   .header-with-about {
     flex-direction: column;
@@ -1214,6 +1244,21 @@ textarea[readonly] {
   main {
     padding: 1.5rem;
     gap: 1.25rem;
+  }
+  .statistics-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .statistics-table {
+    min-width: 600px;
+  }
+  .statistics-table th,
+  .statistics-table td {
+    padding: 0.85rem;
+    font-size: 0.9rem;
+  }
+  .issue-summary {
+    max-width: 250px;
   }
   .header-with-about {
     flex-direction: column;
