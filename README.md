@@ -33,6 +33,7 @@ TheCommunity is a community-driven project that demonstrates true peer-to-peer c
 - **Collapsible Signaling Window** - Hide the technical signaling UI once connected
 - **Responsive Design** - Works seamlessly on desktop and mobile devices
 - **Light/Dark Theme Toggle** - One-click switch between palettes, remembered per browser and seeded from system preference
+- **Language Picker** - Switch the interface between multiple German dialects on the fly
 - **Status Indicators** - Real-time connection status and channel state feedback
 - **Accessible** - ARIA labels and semantic HTML for better accessibility
 

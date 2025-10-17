@@ -22,12 +22,6 @@
     DARK: 'dark'
   };
 
-  const ROLE_LABELS = {
-    local: 'You',
-    remote: 'Peer',
-    system: 'Notice'
-  };
-
   const CONTROL_MESSAGE_TYPES = {
     POINTER: 'pointer',
     POINTER_VISIBILITY: 'pointer-visibility',
@@ -35,13 +29,14 @@
     PERMISSION: 'permission',
     ACTION: 'action'
   };
-
   /**
    * Renders the mascot that reacts angrily on hover.
    * Pure SVG so it can be reused without additional assets.
+   * @param {Object} props
+   * @param {Object} props.t - Translation object
    * @returns {React.ReactElement}
    */
-  function TuxMascot() {
+  function TuxMascot({ t }) {
     const svgChildren = [
       React.createElement('ellipse', {
         key: 'shadow',
@@ -199,7 +194,7 @@
       {
         className: 'tux-mascot',
         role: 'img',
-        'aria-label': 'Angry Tux mascot, hover to rile him up'
+        'aria-label': t.mascot.ariaLabel
       },
       React.createElement(
         'svg',
@@ -254,8 +249,10 @@
     }
     const [theme, setTheme] = useState(initialThemeRef.current.theme);
     const hasStoredThemeRef = useRef(initialThemeRef.current.isStored);
-    const [status, setStatus] = useState('Waiting to connect...');
-    const [channelStatus, setChannelStatus] = useState('Channel closed');
+    const [language, setLanguage] = useState(getCurrentLanguage());
+    const t = translations[language] || translations.de;
+    const [status, setStatus] = useState(t.status.waiting);
+    const [channelStatus, setChannelStatus] = useState(t.status.channelClosed);
     const [localSignal, setLocalSignal] = useState('');
     const [remoteSignal, setRemoteSignal] = useState('');
     const [messages, setMessages] = useState([]);
@@ -268,7 +265,7 @@
     const [contributors, setContributors] = useState([]);
     const [contributorsError, setContributorsError] = useState('');
     const [isLoadingContributors, setIsLoadingContributors] = useState(false);
-    const [copyButtonText, setCopyButtonText] = useState('Copy');
+    const [copyButtonText, setCopyButtonText] = useState(t.signaling.copyButton);
     const [openAiKey, setOpenAiKey] = useState('');
     const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(true);
     const [apiKeyInput, setApiKeyInput] = useState('');
@@ -282,7 +279,7 @@
     const [controlChannelReady, setControlChannelReady] = useState(false);
     const [isRemoteControlAllowed, setIsRemoteControlAllowed] = useState(false);
     const [canControlPeer, setCanControlPeer] = useState(false);
-    const [remoteControlStatus, setRemoteControlStatus] = useState('Control disabled');
+    const [remoteControlStatus, setRemoteControlStatus] = useState(t.remoteControl.statusDisabled);
     const [remotePointerState, setRemotePointerState] = useState({ visible: false, x: 50, y: 50 });
 
     const pcRef = useRef(null);
@@ -342,10 +339,24 @@
     const handleToggleTheme = useCallback(() => {
       setTheme((prevTheme) => {
         const nextTheme = prevTheme === THEME_OPTIONS.DARK ? THEME_OPTIONS.LIGHT : THEME_OPTIONS.DARK;
-        appendSystemMessage(`Theme switched to ${nextTheme === THEME_OPTIONS.DARK ? 'dark' : 'light'} mode.`);
+        const currentT = translations[language] || translations.de;
+        const themeName = nextTheme === THEME_OPTIONS.DARK ? 'dark' : 'light';
+        appendSystemMessage(currentT.systemMessages.themeSwitch(themeName));
         return nextTheme;
       });
       hasStoredThemeRef.current = true;
+    }, [appendSystemMessage, language]);
+
+    const handleLanguageChange = useCallback((event) => {
+      const newLanguage = event.target.value;
+      setLanguage(newLanguage);
+      setCurrentLanguage(newLanguage);
+      const newT = translations[newLanguage] || translations.de;
+      appendSystemMessage(newT.systemMessages.languageChanged(newT.name));
+      setStatus(newT.status.waiting);
+      setChannelStatus(newT.status.channelClosed);
+      setCopyButtonText(newT.signaling.copyButton);
+      setRemoteControlStatus(newT.remoteControl.statusDisabled);
     }, [appendSystemMessage]);
 
     const handleOpenApiKeyModal = useCallback(() => {
@@ -365,8 +376,8 @@
       handleCloseApiKeyModal();
       setAiStatus('');
       setAiError('');
-      appendSystemMessage('Continuing without AI assistance. You can add a key later from the Chat section.');
-    }, [appendSystemMessage, handleCloseApiKeyModal]);
+      appendSystemMessage(t.systemMessages.continueWithoutAi);
+    }, [appendSystemMessage, handleCloseApiKeyModal, t]);
 
     const handleSaveApiKey = useCallback((event) => {
       if (event && typeof event.preventDefault === 'function') {
@@ -374,23 +385,23 @@
       }
       const trimmed = apiKeyInput.trim();
       if (!trimmed) {
-        setApiKeyError('Provide an OpenAI API key to enable AI assistance.');
+        setApiKeyError(t.aiErrors.emptyKey);
         return;
       }
       setOpenAiKey(trimmed);
-      setAiStatus('OpenAI assistance ready. Review suggestions before sending.');
+      setAiStatus(t.systemMessages.aiReady);
       setAiError('');
-      appendSystemMessage('OpenAI API key stored only in this browser session. Refresh the page to clear it.');
+      appendSystemMessage(t.systemMessages.apiKeyStored);
       handleCloseApiKeyModal();
-    }, [apiKeyInput, appendSystemMessage, handleCloseApiKeyModal]);
+    }, [apiKeyInput, appendSystemMessage, handleCloseApiKeyModal, t]);
 
     const handleDisableAi = useCallback(() => {
       setOpenAiKey('');
       setAiStatus('');
       setAiError('');
-      appendSystemMessage('AI assistance disabled. Messages will be sent without AI help.');
+      appendSystemMessage(t.systemMessages.aiDisabled);
       handleCloseApiKeyModal();
-    }, [appendSystemMessage, handleCloseApiKeyModal]);
+    }, [appendSystemMessage, handleCloseApiKeyModal, t]);
 
     /**
      * Configures event handlers on the reliable chat channel.
@@ -399,13 +410,13 @@
      */
     const setupChatChannel = useCallback((channel) => {
       channel.onopen = () => {
-        setChannelStatus('Channel open');
+        setChannelStatus(t.status.channelOpen);
         setChannelReady(true);
         setIsSignalingCollapsed(true);
         incomingTimestampsRef.current = [];
       };
       channel.onclose = () => {
-        setChannelStatus('Channel closed');
+        setChannelStatus(t.status.channelClosed);
         setChannelReady(false);
         setIsSignalingCollapsed(false);
         incomingTimestampsRef.current = [];
@@ -413,12 +424,12 @@
       };
       channel.onmessage = (event) => {
         if (typeof event.data !== 'string') {
-          appendSystemMessage('Security notice: blocked a message that was not plain text.');
+          appendSystemMessage(t.systemMessages.securityBlocked);
           return;
         }
         const payload = event.data;
         if (payload.length > MAX_MESSAGE_LENGTH) {
-          appendSystemMessage(`Message blocked: exceeded the ${MAX_MESSAGE_LENGTH} character limit.`);
+          appendSystemMessage(t.systemMessages.messageTooLong(MAX_MESSAGE_LENGTH));
           return;
         }
         const now = Date.now();
@@ -427,12 +438,12 @@
         );
         incomingTimestampsRef.current.push(now);
         if (incomingTimestampsRef.current.length > MAX_MESSAGES_PER_INTERVAL) {
-          appendSystemMessage('Rate limit applied: peer is sending messages too quickly.');
+          appendSystemMessage(t.systemMessages.rateLimit);
           return;
         }
         appendMessage(payload, 'remote');
       };
-    }, [appendMessage, appendSystemMessage]);
+    }, [appendMessage, appendSystemMessage, t]);
 
     /**
      * Processes inbound control-channel payloads (populated in Step 4).
@@ -453,7 +464,7 @@
       }
       if (payload.length > CONTROL_MAX_PAYLOAD_LENGTH) {
         if (!controlWarningsRef.current.size) {
-          appendSystemMessageRef.current('Control message ignored: payload exceeded size limits.');
+          appendSystemMessageRef.current(t.remoteControl.system.payloadTooLarge);
           controlWarningsRef.current.size = true;
         }
         return;
@@ -463,7 +474,7 @@
       controlIncomingTimestampsRef.current = controlIncomingTimestampsRef.current.filter((timestamp) => now - timestamp < CONTROL_MESSAGE_INTERVAL_MS);
       if (controlIncomingTimestampsRef.current.length >= CONTROL_MAX_MESSAGES_PER_INTERVAL) {
         if (!controlWarningsRef.current.rate) {
-          appendSystemMessageRef.current('Control channel rate limit exceeded. Ignoring rapid inputs.');
+          appendSystemMessageRef.current(t.remoteControl.system.rateLimited);
           controlWarningsRef.current.rate = true;
         }
         return;
@@ -489,12 +500,12 @@
           const allowed = Boolean(message.allowed);
           if (canControlPeerRef.current !== allowed) {
             appendSystemMessageRef.current(allowed
-              ? 'Peer enabled remote control. Use the screen preview to interact.'
-              : 'Peer disabled remote control.');
+              ? t.remoteControl.system.peerEnabled
+              : t.remoteControl.system.peerDisabled);
           }
           canControlPeerRef.current = allowed;
           setCanControlPeer(allowed);
-          setRemoteControlStatus(allowed ? 'Control granted - interact with peer screen' : 'Control disabled by peer');
+          setRemoteControlStatus(allowed ? t.remoteControl.statusGranted : t.remoteControl.statusDisabledByPeer);
           if (!allowed) {
             cancelPendingPointerFrame();
             hideRemotePointerRef.current();
@@ -547,7 +558,7 @@
         }
         default:
       }
-    }, [cancelPendingPointerFrame]);
+    }, [cancelPendingPointerFrame, t]);
 
     /**
      * Configures event handlers for the auxiliary control data channel.
@@ -557,7 +568,7 @@
       channel.onopen = () => {
         controlChannelRef.current = channel;
         setControlChannelReady(true);
-        setRemoteControlStatus('Control disabled');
+        setRemoteControlStatus(t.remoteControl.statusDisabled);
         controlIncomingTimestampsRef.current = [];
         controlWarningsRef.current = { rate: false, size: false };
       };
@@ -573,7 +584,7 @@
         hideRemotePointerRef.current();
         cancelPendingPointerFrame();
         remoteKeyBudgetRef.current = CONTROL_TOTAL_TEXT_BUDGET;
-        setRemoteControlStatus('Control channel closed');
+        setRemoteControlStatus(t.remoteControl.statusChannelClosed);
       };
       channel.onmessage = (event) => {
         if (typeof event.data !== 'string') {
@@ -581,7 +592,7 @@
         }
         handleIncomingControlMessage(event.data);
       };
-    }, [cancelPendingPointerFrame, handleIncomingControlMessage]);
+    }, [cancelPendingPointerFrame, handleIncomingControlMessage, t]);
 
     /**
      * Lazily creates (or returns) the RTCPeerConnection instance.
@@ -609,18 +620,18 @@
         if (!event.candidate && pc.localDescription) {
           iceDoneRef.current = true;
           setLocalSignal(JSON.stringify(pc.localDescription));
-          setStatus('Signal ready to share');
+          setStatus(t.status.signalReady);
         }
       };
 
       pc.oniceconnectionstatechange = () => {
         if (!pcRef.current) return;
-        setStatus(`ICE: ${pc.iceConnectionState}`);
+        setStatus(t.status.ice(pc.iceConnectionState));
       };
 
       pc.onconnectionstatechange = () => {
         if (!pcRef.current) return;
-        setStatus(`Connection: ${pc.connectionState}`);
+        setStatus(t.status.connection(pc.connectionState));
       };
 
       pc.ontrack = (event) => {
@@ -659,12 +670,12 @@
           setupControlChannel(incomingChannel);
           return;
         }
-        appendSystemMessage(`Security notice: blocked unexpected data channel "${incomingChannel.label || 'unnamed'}".`);
+        appendSystemMessage(t.systemMessages.channelBlocked(incomingChannel.label || ''));
         incomingChannel.close();
       };
 
       return pc;
-    }, [appendSystemMessage, setupChatChannel, setupControlChannel]);
+    }, [appendSystemMessage, setupChatChannel, setupControlChannel, t]);
 
     /**
      * Resolves once ICE gathering finishes for the current connection.
@@ -694,19 +705,19 @@
     const parseRemoteDescription = useCallback(() => {
       const raw = remoteSignal.trim();
       if (!raw) {
-        throw new Error('Remote signal is empty. Paste the JSON you received from your peer.');
+        throw new Error(t.systemMessages.remoteEmpty);
       }
       let desc;
       try {
         desc = JSON.parse(raw);
       } catch (err) {
-        throw new Error('Remote signal is not valid JSON. Copy the complete signal again and retry.');
+        throw new Error(t.systemMessages.remoteInvalidJson);
       }
       if (!desc.type || !desc.sdp || !['offer', 'answer'].includes(desc.type)) {
-        throw new Error('Remote signal is missing required data. Ensure you pasted the offer or answer exactly as provided.');
+        throw new Error(t.systemMessages.remoteMissingData);
       }
       return desc;
-    }, [remoteSignal]);
+    }, [remoteSignal, t]);
 
     /**
      * Generates a WebRTC offer and prepares it for manual sharing.
@@ -725,7 +736,7 @@
       setControlChannelReady(false);
       setCanControlPeer(false);
       canControlPeerRef.current = false;
-      setRemoteControlStatus('Control disabled');
+      setRemoteControlStatus(t.remoteControl.statusDisabled);
 
       const channel = pc.createDataChannel(EXPECTED_CHANNEL_LABEL);
       channelRef.current = channel;
@@ -740,7 +751,7 @@
       setLocalSignal('');
       setRemoteSignal('');
       setChannelReady(false);
-      setStatus('Creating offer...');
+      setStatus(t.status.creatingOffer);
       setIsCreatingOffer(true);
 
       try {
@@ -749,12 +760,12 @@
         await waitForIce();
       } catch (err) {
         console.error(err);
-        setStatus('Failed to create offer');
-        appendSystemMessage('Unable to create offer. WebRTC may be unsupported or browser permissions were denied.');
+        setStatus(t.status.disconnected);
+        appendSystemMessage(t.systemMessages.createOfferFailed);
       } finally {
         setIsCreatingOffer(false);
       }
-    }, [appendSystemMessage, ensurePeerConnection, setupChatChannel, setupControlChannel, waitForIce]);
+    }, [appendSystemMessage, ensurePeerConnection, setupChatChannel, setupControlChannel, waitForIce, t]);
 
     /**
      * Applies the pasted remote offer or answer to the peer connection.
@@ -765,15 +776,15 @@
       try {
         const desc = parseRemoteDescription();
         await pc.setRemoteDescription(desc);
-        setStatus(`Remote ${desc.type} applied`);
+        setStatus(t.status.remoteApplied(desc.type));
         if (desc.type === 'answer') {
-          setChannelStatus('Answer applied, waiting for channel...');
+          setChannelStatus(t.status.answerApplied);
         }
       } catch (err) {
         console.error(err);
         setStatus(err.message);
       }
-    }, [ensurePeerConnection, parseRemoteDescription]);
+    }, [ensurePeerConnection, parseRemoteDescription, t]);
 
     /**
      * Produces an answer for an applied offer and shares it with the peer.
@@ -784,14 +795,14 @@
       iceDoneRef.current = false;
       setLocalSignal('');
       setChannelReady(false);
-      setStatus('Creating answer...');
+      setStatus(t.status.creatingAnswer);
       setIsCreatingAnswer(true);
 
       try {
         if (!pc.currentRemoteDescription) {
           const desc = parseRemoteDescription();
           if (desc.type !== 'offer') {
-            throw new Error('Need a remote offer before creating an answer.');
+            throw new Error(t.systemMessages.needOfferForAnswer);
           }
           await pc.setRemoteDescription(desc);
         }
@@ -800,12 +811,12 @@
         await waitForIce();
       } catch (err) {
         console.error(err);
-        setStatus(err.message || 'Failed to create answer');
-        appendSystemMessage('Unable to create answer. Apply a valid remote offer first and ensure WebRTC is available.');
+        setStatus(err.message || t.status.disconnected);
+        appendSystemMessage(t.systemMessages.createAnswerFailed);
       } finally {
         setIsCreatingAnswer(false);
       }
-    }, [appendSystemMessage, ensurePeerConnection, parseRemoteDescription, waitForIce]);
+    }, [appendSystemMessage, ensurePeerConnection, parseRemoteDescription, waitForIce, t]);
 
     const sendControlMessage = useCallback((message) => {
       if (!message || typeof message !== 'object') {
@@ -820,10 +831,10 @@
         return true;
       } catch (error) {
         console.warn('Failed to send control message', error);
-        appendSystemMessageRef.current('Control message could not be delivered. Check your connection.');
+        appendSystemMessageRef.current(t.remoteControl.system.deliveryFailed);
         return false;
       }
-    }, []);
+    }, [t]);
 
     const handleStopScreenShare = useCallback(() => {
       const stream = screenStreamRef.current;
@@ -855,7 +866,7 @@
         localScreenVideoRef.current.srcObject = null;
       }
       if (isScreenSharing) {
-        appendSystemMessage('Screen sharing stopped.');
+        appendSystemMessage(t.screenShare.messages.stopped);
       }
       if (remoteControlAllowedRef.current) {
         const delivered = sendControlMessage({
@@ -864,17 +875,17 @@
         });
         cancelPendingPointerFrame();
         hideRemotePointerRef.current();
-        appendSystemMessage('Remote control disabled because screen sharing stopped.');
+        appendSystemMessage(t.remoteControl.system.disabledOnScreenStop);
         if (!delivered) {
-          appendSystemMessageRef.current('Failed to notify peer about remote control revocation.');
+          appendSystemMessageRef.current(t.remoteControl.system.revokeFailed);
         }
       }
       remoteControlAllowedRef.current = false;
       setIsRemoteControlAllowed(false);
-      setRemoteControlStatus('Control disabled');
+      setRemoteControlStatus(t.remoteControl.statusDisabled);
       remoteKeyBudgetRef.current = CONTROL_TOTAL_TEXT_BUDGET;
       setIsScreenSharing(false);
-    }, [appendSystemMessage, cancelPendingPointerFrame, isScreenSharing, sendControlMessage]);
+    }, [appendSystemMessage, cancelPendingPointerFrame, isScreenSharing, sendControlMessage, t]);
 
     const handleStartScreenShare = useCallback(async () => {
       if (isScreenSharing) {
@@ -883,12 +894,12 @@
       let stream = null;
       try {
         if (!navigator.mediaDevices || typeof navigator.mediaDevices.getDisplayMedia !== 'function') {
-          appendSystemMessage('Screen sharing is not supported in this browser.');
+          appendSystemMessage(t.screenShare.messages.notSupported);
           return;
         }
         const pc = ensurePeerConnection();
         if (!pc) {
-          throw new Error('Peer connection is not ready.');
+          throw new Error(t.screenShare.errors.peerNotReady);
         }
         stream = await navigator.mediaDevices.getDisplayMedia({
           video: { cursor: 'always' },
@@ -897,7 +908,7 @@
         const [videoTrack] = stream.getVideoTracks();
         if (!videoTrack) {
           stream.getTracks().forEach((track) => track.stop());
-          throw new Error('No video track returned by screen capture.');
+          throw new Error(t.screenShare.errors.noVideoTrack);
         }
         if (screenSenderRef.current) {
           await screenSenderRef.current.replaceTrack(videoTrack);
@@ -911,7 +922,7 @@
           localScreenVideoRef.current.srcObject = stream;
         }
         setIsScreenSharing(true);
-        appendSystemMessage('Screen sharing started. Be mindful of sensitive information.');
+        appendSystemMessage(t.screenShare.messages.started);
         videoTrack.onended = () => {
           handleStopScreenShare();
         };
@@ -926,10 +937,11 @@
             }
           });
         }
-        appendSystemMessage(`Screen share failed: ${error && error.message ? error.message : 'permission was denied.'}`);
+        const reason = error && error.message ? error.message : t.screenShare.errors.permissionDenied;
+        appendSystemMessage(t.screenShare.errors.failed(reason));
         setIsScreenSharing(false);
       }
-    }, [appendSystemMessage, ensurePeerConnection, handleStopScreenShare, isScreenSharing, shareSystemAudio]);
+    }, [appendSystemMessage, ensurePeerConnection, handleStopScreenShare, isScreenSharing, shareSystemAudio, t]);
 
     const hideRemotePointer = useCallback(() => {
       if (remotePointerTimeoutRef.current) {
@@ -1023,7 +1035,7 @@
         return;
       }
       if (trimmed.length > MAX_MESSAGE_LENGTH) {
-        appendSystemMessage(`Message too long: limit is ${MAX_MESSAGE_LENGTH} characters (you typed ${trimmed.length}).`);
+        appendSystemMessage(t.systemMessages.messageInputTooLong(MAX_MESSAGE_LENGTH, trimmed.length));
         return;
       }
       channel.send(trimmed);
@@ -1031,7 +1043,7 @@
       setInputText('');
       setAiStatus('');
       setAiError('');
-    }, [appendMessage, appendSystemMessage, inputText]);
+    }, [appendMessage, appendSystemMessage, inputText, t]);
 
     const handleRemoteKeyboardInput = useCallback((message) => {
       if (!remoteControlAllowedRef.current) {
@@ -1056,10 +1068,10 @@
           return;
         }
         if (remoteKeyBudgetRef.current <= 0) {
-          appendSystemMessageRef.current('Remote typing disabled: input limit reached.');
+          appendSystemMessageRef.current(t.remoteControl.system.typingDisabled);
           remoteControlAllowedRef.current = false;
           setIsRemoteControlAllowed(false);
-          setRemoteControlStatus('Control disabled (input limit reached)');
+          setRemoteControlStatus(t.remoteControl.statusDisabledInputLimit);
           hideRemotePointerRef.current();
           const delivered = sendControlMessage({
             type: CONTROL_MESSAGE_TYPES.PERMISSION,
@@ -1067,7 +1079,7 @@
           });
           remoteKeyBudgetRef.current = CONTROL_TOTAL_TEXT_BUDGET;
           if (!delivered) {
-            appendSystemMessageRef.current('Failed to notify peer about remote control revocation.');
+            appendSystemMessageRef.current(t.remoteControl.system.revokeFailed);
           }
           return;
         }
@@ -1084,7 +1096,7 @@
       if (message.mode === 'enter') {
         handleSend();
       }
-    }, [handleSend, sendControlMessage, setAiError, setAiStatus, setIsRemoteControlAllowed, setRemoteControlStatus]);
+    }, [handleSend, sendControlMessage, setAiError, setAiStatus, setIsRemoteControlAllowed, setRemoteControlStatus, t]);
     const handleRemoteKeyboardInputRef = useRef(handleRemoteKeyboardInput);
     useEffect(() => {
       handleRemoteKeyboardInputRef.current = handleRemoteKeyboardInput;
@@ -1092,16 +1104,16 @@
 
     const handleToggleRemoteControl = useCallback(() => {
       if (!controlChannelReady) {
-        appendSystemMessage('Remote control is unavailable until the control channel is ready.');
+        appendSystemMessage(t.remoteControl.system.unavailable);
         return;
       }
       const channel = controlChannelRef.current;
       if (!channel || channel.readyState !== 'open') {
-        appendSystemMessage('Remote control channel is still negotiating. Try again in a moment.');
+        appendSystemMessage(t.remoteControl.system.negotiating);
         return;
       }
       if (!isScreenSharing) {
-        appendSystemMessage('Start sharing your screen before enabling remote control.');
+        appendSystemMessage(t.remoteControl.system.requiresScreenShare);
         return;
       }
       const next = !remoteControlAllowedRef.current;
@@ -1110,23 +1122,23 @@
         allowed: next
       });
       if (!delivered) {
-        appendSystemMessage('Unable to update remote control state. Please try again.');
+        appendSystemMessage(t.remoteControl.system.updateFailed);
         return;
       }
       remoteControlAllowedRef.current = next;
       setIsRemoteControlAllowed(next);
       if (next) {
         remoteKeyBudgetRef.current = CONTROL_TOTAL_TEXT_BUDGET;
-        setRemoteControlStatus('Remote control enabled - peer may interact');
-        appendSystemMessage('Peer can now control your shared screen. Keep an eye on activity.');
+        setRemoteControlStatus(t.remoteControl.statusEnabled);
+        appendSystemMessage(t.remoteControl.system.peerCanControl);
       } else {
-        setRemoteControlStatus('Control disabled');
+        setRemoteControlStatus(t.remoteControl.statusDisabled);
         cancelPendingPointerFrame();
         hideRemotePointerRef.current();
         remoteKeyBudgetRef.current = CONTROL_TOTAL_TEXT_BUDGET;
-        appendSystemMessage('Remote control disabled for your shared screen.');
+        appendSystemMessage(t.remoteControl.system.controlRevokedLocal);
       }
-    }, [appendSystemMessage, cancelPendingPointerFrame, controlChannelReady, isScreenSharing, sendControlMessage]);
+    }, [appendSystemMessage, cancelPendingPointerFrame, controlChannelReady, isScreenSharing, sendControlMessage, t]);
 
     const toggleSignalingCollapse = useCallback(() => {
       setIsSignalingCollapsed((prev) => !prev);
@@ -1145,22 +1157,22 @@
       }
       try {
         await navigator.clipboard.writeText(localSignal);
-        setCopyButtonText('Copied!');
-        setTimeout(() => setCopyButtonText('Copy'), 2000);
+        setCopyButtonText(t.signaling.copied);
+        setTimeout(() => setCopyButtonText(t.signaling.copyButton), 2000);
       } catch (err) {
         console.error('Failed to copy local signal', err);
-        setCopyButtonText('Failed');
-        setTimeout(() => setCopyButtonText('Copy'), 2000);
+        setCopyButtonText(t.signaling.copyFailed);
+        setTimeout(() => setCopyButtonText(t.signaling.copyButton), 2000);
       }
-    }, [localSignal]);
+    }, [localSignal, t]);
 
     /**
      * Clears all messages from the chat history.
      */
     const handleClearMessages = useCallback(() => {
       setMessages([]);
-      appendSystemMessage('Chat history cleared.');
-    }, [appendSystemMessage]);
+      appendSystemMessage(t.systemMessages.chatCleared);
+    }, [appendSystemMessage, t]);
 
     /**
      * Terminates the current peer connection and resets signaling state.
@@ -1206,15 +1218,15 @@
       }
       iceDoneRef.current = false;
       incomingTimestampsRef.current = [];
+      controlIncomingTimestampsRef.current = [];
+      controlWarningsRef.current = { rate: false, size: false };
+      remoteKeyBudgetRef.current = CONTROL_TOTAL_TEXT_BUDGET;
       setChannelReady(false);
-      setChannelStatus('Channel closed');
-      setStatus('Disconnected');
+      setChannelStatus(t.status.channelClosed);
+      setStatus(t.status.disconnected);
       setLocalSignal('');
       setRemoteSignal('');
       setIsSignalingCollapsed(false);
-      appendSystemMessage('Connection closed. Create a new offer to reconnect.');
-      setAiStatus('');
-      setAiError('');
       setIsScreenSharing(false);
       setIsRemoteScreenActive(false);
       setControlChannelReady(false);
@@ -1222,13 +1234,10 @@
       remoteControlAllowedRef.current = false;
       setCanControlPeer(false);
       canControlPeerRef.current = false;
-      setRemoteControlStatus('Control disabled');
+      setRemoteControlStatus(t.remoteControl.statusDisabled);
       setRemotePointerState({ visible: false, x: 50, y: 50 });
       setShareSystemAudio(false);
       cancelPendingPointerFrame();
-      controlIncomingTimestampsRef.current = [];
-      controlWarningsRef.current = { rate: false, size: false };
-      remoteKeyBudgetRef.current = CONTROL_TOTAL_TEXT_BUDGET;
       if (remotePointerTimeoutRef.current) {
         clearTimeout(remotePointerTimeoutRef.current);
         remotePointerTimeoutRef.current = null;
@@ -1247,7 +1256,10 @@
       if (remoteScreenVideoRef.current) {
         remoteScreenVideoRef.current.srcObject = null;
       }
-    }, [appendSystemMessage]);
+      appendSystemMessage(t.systemMessages.disconnectNotice);
+      setAiStatus('');
+      setAiError('');
+    }, [appendSystemMessage, cancelPendingPointerFrame, t]);
 
     const handleAiRewrite = useCallback(async () => {
       const draft = inputText.trim();
@@ -1256,17 +1268,17 @@
       }
       if (!openAiKey) {
         setApiKeyInput(openAiKey);
-        setApiKeyError('Add your OpenAI API key to enable AI rewriting.');
+        setApiKeyError(t.aiErrors.emptyKey);
         setIsApiKeyModalOpen(true);
         setIsAboutOpen(false);
         return;
       }
       if (draft.length > MAX_MESSAGE_LENGTH) {
-        appendSystemMessage(`AI rewrite not attempted: drafts must be under ${MAX_MESSAGE_LENGTH} characters.`);
+        appendSystemMessage(t.systemMessages.aiRewriteNotAttempted(MAX_MESSAGE_LENGTH));
         return;
       }
       setIsAiBusy(true);
-      setAiStatus('Requesting AI rewrite...');
+      setAiStatus(t.systemMessages.aiReady);
       setAiError('');
       try {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -1294,9 +1306,9 @@
         });
         if (!response.ok) {
           if (response.status === 401 || response.status === 403) {
-            throw new Error('OpenAI rejected the request. Check that your API key is correct and has required access.');
+            throw new Error(t.aiErrors.unauthorized);
           }
-          throw new Error(`OpenAI request failed with status ${response.status}`);
+          throw new Error(t.aiErrors.requestFailed(response.status));
         }
         const data = await response.json();
         const aiText =
@@ -1306,29 +1318,29 @@
           data.choices[0].message &&
           data.choices[0].message.content;
         if (!aiText) {
-          throw new Error('OpenAI response missing content.');
+          throw new Error(t.aiErrors.missingContent);
         }
         const cleaned = aiText.trim();
         if (!cleaned) {
-          throw new Error('OpenAI returned an empty suggestion.');
+          throw new Error(t.aiErrors.emptySuggestion);
         }
         if (cleaned.length > MAX_MESSAGE_LENGTH) {
           setInputText(cleaned.slice(0, MAX_MESSAGE_LENGTH));
-          appendSystemMessage('AI suggestion truncated to fit the message length limit.');
+          appendSystemMessage(t.systemMessages.aiTruncated);
         } else {
           setInputText(cleaned);
         }
-        setAiStatus('AI suggestion applied. Review and edit before sending.');
+        setAiStatus(t.systemMessages.aiSuggestionApplied);
         setAiError('');
       } catch (error) {
         console.error('AI rewrite failed', error);
         setAiStatus('');
-        setAiError(error.message || 'OpenAI request failed.');
-        appendSystemMessage(`AI rewrite failed: ${error.message || 'request was rejected.'}`);
+        setAiError(error.message || t.aiErrors.requestFailed('unknown'));
+        appendSystemMessage(t.systemMessages.aiRewriteFailed(error.message || ''));
       } finally {
         setIsAiBusy(false);
       }
-    }, [appendSystemMessage, inputText, openAiKey, setIsAboutOpen]);
+    }, [appendSystemMessage, inputText, openAiKey, setIsAboutOpen, t]);
 
     useEffect(() => {
       if (typeof document !== 'undefined') {
@@ -1374,9 +1386,9 @@
 
     useEffect(() => {
       if (!localSignal) {
-        setCopyButtonText('Copy');
+        setCopyButtonText(t.signaling.copyButton);
       }
-    }, [localSignal]);
+    }, [localSignal, t]);
 
     useEffect(() => {
       if (!isApiKeyModalOpen) {
@@ -1510,7 +1522,7 @@
             return;
           }
           console.error('Failed to load contributors', error);
-          setContributorsError('Unable to load contributor list. Please try again later.');
+          setContributorsError(t.about.contributorsError);
         } finally {
           if (!controller.signal.aborted) {
             setIsLoadingContributors(false);
@@ -1526,7 +1538,7 @@
       return () => {
         controller.abort();
       };
-    }, [isAboutOpen]);
+    }, [isAboutOpen, t]);
 
     useEffect(() => {
       const container = messagesContainerRef.current;
@@ -1570,12 +1582,12 @@
 
     useEffect(() => {
       if (isRemoteScreenActive && !remoteScreenActiveRef.current) {
-        appendSystemMessage('Peer started sharing their screen.');
+        appendSystemMessage(t.screenShare.remote.peerStarted);
       } else if (!isRemoteScreenActive && remoteScreenActiveRef.current) {
-        appendSystemMessage('Peer stopped sharing their screen.');
+        appendSystemMessage(t.screenShare.remote.peerStopped);
       }
       remoteScreenActiveRef.current = isRemoteScreenActive;
-    }, [appendSystemMessage, isRemoteScreenActive]);
+    }, [appendSystemMessage, isRemoteScreenActive, t]);
 
     useEffect(() => {
       const surface = remoteControlSurfaceRef.current;
@@ -1753,19 +1765,19 @@
     }, [canControlPeer]);
 
     const isDarkTheme = theme === THEME_OPTIONS.DARK;
-    const themeButtonLabel = isDarkTheme ? '🌙 Dark Mode' : '🌞 Light Mode';
-    const themeToggleTitle = isDarkTheme ? 'Switch to light theme' : 'Switch to dark theme';
+    const themeButtonLabel = t.chat.themeToggle(isDarkTheme);
+    const themeToggleTitle = t.chat.themeToggleTitle(isDarkTheme);
     const screenShareHeaderStatus = isScreenSharing
-      ? 'Sharing your screen'
+      ? t.screenShare.status.sharing
       : channelReady
-        ? 'Ready to share'
-        : 'Connect to enable screen sharing';
+        ? t.screenShare.status.ready
+        : t.screenShare.status.connect;
     const remoteScreenHeaderStatus = isRemoteScreenActive
-      ? 'Receiving peer screen'
-      : 'Peer not sharing a screen';
+      ? t.screenShare.remote.receiving
+      : t.screenShare.remote.idle;
     const controlStatusLabel = controlChannelReady
       ? remoteControlStatus
-      : 'Control channel unavailable';
+      : t.remoteControl.statusUnavailable;
     const remotePreviewClass = `screen-preview remote-preview${canControlPeer ? ' remote-preview-interactive' : ''}`;
     const remotePointerStyle = remotePointerState.visible
       ? {
@@ -1786,12 +1798,12 @@
             onClick: (event) => event.stopPropagation()
           },
             React.createElement('div', { className: 'modal-header' },
-              React.createElement('h2', { id: 'api-key-dialog-title' }, 'OpenAI Integration'),
+              React.createElement('h2', { id: 'api-key-dialog-title' }, t.apiKeyModal.title),
               React.createElement('button', {
                 className: 'modal-close',
                 onClick: handleContinueWithoutAi,
-                'aria-label': 'Close API key dialog'
-              }, 'Close')
+                'aria-label': t.apiKeyModal.closeAriaLabel
+              }, t.apiKeyModal.close)
             ),
             React.createElement('form', {
               className: 'modal-body api-key-form',
@@ -1799,16 +1811,16 @@
               noValidate: true
             },
               React.createElement('p', { className: 'modal-description' },
-                'Provide your personal OpenAI API key to enable optional AI assistance. The key is stored only in memory and sent exclusively to api.openai.com during rewrite requests.'
+                t.apiKeyModal.description
               ),
-              React.createElement('label', { className: 'modal-label', htmlFor: 'openai-api-key' }, 'OpenAI API key'),
+              React.createElement('label', { className: 'modal-label', htmlFor: 'openai-api-key' }, t.apiKeyModal.label),
               React.createElement('input', {
                 id: 'openai-api-key',
                 type: 'password',
                 value: apiKeyInput,
                 onChange: (event) => setApiKeyInput(event.target.value),
                 ref: apiKeyInputRef,
-                placeholder: 'sk-...',
+                placeholder: t.apiKeyModal.placeholder,
                 autoComplete: 'off',
                 'aria-describedby': apiKeyError ? 'api-key-error' : undefined
               }),
@@ -1817,34 +1829,34 @@
                 className: 'modal-error',
                 role: 'alert'
               }, apiKeyError),
-              React.createElement('p', { className: 'modal-hint' }, 'Never share API keys on untrusted devices. Refresh this page or disable AI to clear the key.'),
+              React.createElement('p', { className: 'modal-hint' }, t.apiKeyModal.hint),
               React.createElement('div', { className: 'modal-actions' },
-                React.createElement('button', { type: 'submit' }, 'Save key'),
-                React.createElement('button', { type: 'button', onClick: handleDisableAi }, 'Disable AI'),
-                React.createElement('button', { type: 'button', onClick: handleContinueWithoutAi }, 'Continue without AI')
+                React.createElement('button', { type: 'submit' }, t.apiKeyModal.save),
+                React.createElement('button', { type: 'button', onClick: handleDisableAi }, t.apiKeyModal.disable),
+                React.createElement('button', { type: 'button', onClick: handleContinueWithoutAi }, t.apiKeyModal.continueWithout)
               )
             )
           )
         ),
         React.createElement('main', null,
           React.createElement('div', { className: 'header-with-about' },
-            React.createElement(TuxMascot, null),
+            React.createElement(TuxMascot, { t: t }),
             React.createElement('h1', { className: 'app-title' },
               React.createElement('span', {
                 className: 'app-title-icon',
                 'aria-hidden': 'true'
               }, '🐬'),
-              React.createElement('span', { className: 'app-title-text' }, 'PodTalk')
+              React.createElement('span', { className: 'app-title-text' }, t.app.title)
             ),
             React.createElement('button', {
               className: 'about-button',
               onClick: toggleAbout,
-              'aria-label': 'About this project',
+              'aria-label': t.about.buttonAriaLabel,
               'aria-expanded': isAboutOpen,
               'aria-controls': 'about-dialog',
               ref: aboutButtonRef,
               disabled: isApiKeyModalOpen
-            }, 'About')
+            }, t.about.button)
           ),
           isRemoteControlAllowed && remotePointerState.visible && React.createElement('div', {
             className: 'remote-pointer-indicator',
@@ -1861,25 +1873,25 @@
               onClick: (e) => e.stopPropagation()
             },
               React.createElement('div', { className: 'modal-header' },
-                React.createElement('h2', { id: 'about-dialog-title' }, 'About TheCommunity'),
+                React.createElement('h2', { id: 'about-dialog-title' }, t.about.title),
                 React.createElement('button', {
                   className: 'modal-close',
                   onClick: toggleAbout,
-                  'aria-label': 'Close about dialog',
+                  'aria-label': t.about.closeAriaLabel,
                   ref: closeAboutButtonRef
-                }, 'Close')
+                }, t.about.close)
               ),
               React.createElement('div', { className: 'modal-body' },
-                React.createElement('p', null, 'This is a peer-to-peer WebRTC chat application with no backend. The community steers where this project goes through GitHub Issues.'),
-                React.createElement('h3', null, 'Contributors'),
-                React.createElement('p', { className: 'contributors-intro' }, 'Thank you to everyone who contributed by creating issues:'),
-                isLoadingContributors && React.createElement('p', { className: 'contributors-status' }, 'Loading contributors...'),
+                React.createElement('p', null, t.about.description),
+                React.createElement('h3', null, t.about.contributorsTitle),
+                React.createElement('p', { className: 'contributors-intro' }, t.about.contributorsIntro),
+                isLoadingContributors && React.createElement('p', { className: 'contributors-status' }, t.about.loadingContributors),
                 contributorsError && React.createElement('p', { className: 'contributors-status contributors-error' }, contributorsError),
                 !isLoadingContributors && !contributorsError && contributors.length === 0 &&
-                  React.createElement('p', { className: 'contributors-status' }, 'No issues yet. Open one to join the credits.'),
+                  React.createElement('p', { className: 'contributors-status' }, t.about.noIssues),
                 contributors.length > 0 && React.createElement('ul', { className: 'contributors-list' },
                   contributors.map((contributor) => {
-                    const issueLabel = contributor.issueCount === 1 ? '1 issue' : `${contributor.issueCount} issues`;
+                    const issueLabel = t.about.issueCount(contributor.issueCount);
                     return React.createElement('li', { key: contributor.login },
                       React.createElement('a', {
                         href: contributor.htmlUrl,
@@ -1896,69 +1908,69 @@
           React.createElement('section', { id: 'signaling', className: isSignalingCollapsed ? 'collapsed' : '' },
             React.createElement('header', null,
               React.createElement('div', { className: 'header-content' },
-                React.createElement('h2', null, 'Manual Signaling'),
+                React.createElement('h2', null, t.signaling.title),
                 React.createElement('p', { className: 'status', id: 'status' }, status)
               ),
               React.createElement('button', {
                 className: 'collapse-toggle',
                 onClick: toggleSignalingCollapse,
-                'aria-label': isSignalingCollapsed ? 'Expand signaling' : 'Collapse signaling',
+                'aria-label': t.signaling.collapseAriaLabel(isSignalingCollapsed),
                 'aria-expanded': !isSignalingCollapsed
               }, isSignalingCollapsed ? '▼' : '▲')
             ),
             !isSignalingCollapsed && React.createElement('div', { className: 'signaling-content' },
               React.createElement('p', { className: 'warning' },
-                React.createElement('strong', null, 'Security notice:'),
-                'Sharing WebRTC signals reveals your network addresses. Only exchange offers with peers you trust.'
+                React.createElement('strong', null, t.signaling.securityNotice),
+                t.signaling.securityWarning
               ),
               React.createElement('p', { className: 'hint' },
-                'Step 1: One user clicks "Create Offer" and shares the generated signal below.', React.createElement('br'),
-                'Step 2: The other user pastes it in "Remote Signal", clicks "Apply Remote", then "Create Answer" and shares their response.', React.createElement('br'),
-                'Step 3: The first user pastes the answer into "Remote Signal" and applies it. Chat starts when the status says connected.'
+                t.signaling.step1, React.createElement('br'),
+                t.signaling.step2, React.createElement('br'),
+                t.signaling.step3
               ),
               React.createElement('div', { className: 'controls' },
                 React.createElement('button', {
                   id: 'create-offer',
                   onClick: handleCreateOffer,
                   disabled: isCreatingOffer
-                }, isCreatingOffer ? 'Working...' : 'Create Offer'),
+                }, isCreatingOffer ? t.signaling.working : t.signaling.createOffer),
                 React.createElement('button', {
                   id: 'create-answer',
                   onClick: handleCreateAnswer,
                   disabled: isCreatingAnswer
-                }, isCreatingAnswer ? 'Working...' : 'Create Answer'),
+                }, isCreatingAnswer ? t.signaling.working : t.signaling.createAnswer),
                 React.createElement('button', {
                   id: 'apply-remote',
                   onClick: handleApplyRemote
-                }, 'Apply Remote'),
+                }, t.signaling.applyRemote),
                 React.createElement('button', {
                   id: 'disconnect',
                   onClick: handleDisconnect,
                   disabled: !channelReady,
-                  'aria-label': 'Disconnect from peer'
-                }, 'Disconnect')
+                  'aria-label': t.signaling.disconnectAriaLabel
+                }, t.signaling.disconnect)
               ),
               React.createElement('div', { className: 'signal-block' },
                 React.createElement('div', { className: 'signal-heading' },
                   React.createElement('label', { htmlFor: 'local-signal' },
-                    React.createElement('strong', null, 'Local Signal (share this)')
+                    React.createElement('strong', null, t.signaling.localSignalLabel)
                   ),
                   React.createElement('button', {
                     onClick: handleCopySignal,
                     disabled: !localSignal,
                     className: 'copy-signal-button',
-                    'aria-label': 'Copy local signal to clipboard'
+                    'aria-label': t.signaling.copyAriaLabel
                   }, copyButtonText)
                 ),
                 React.createElement('textarea', {
                   id: 'local-signal',
                   readOnly: true,
                   value: localSignal,
-                  placeholder: 'Local SDP will appear here once ready.'
+                  placeholder: t.signaling.localSignalPlaceholder
                 })
               ),
               React.createElement('label', null,
-                React.createElement('strong', null, 'Remote Signal (paste received JSON here)'),
+                React.createElement('strong', null, t.signaling.remoteSignalLabel),
                 React.createElement('textarea', {
                   id: 'remote-signal',
                   value: remoteSignal,
@@ -1969,7 +1981,7 @@
                       handleApplyRemote();
                     }
                   },
-                  placeholder: 'Paste the JSON from your peer. Press Ctrl+Enter (Cmd+Enter on Mac) or click Apply Remote.'
+                  placeholder: t.signaling.remoteSignalPlaceholder
                 })
             )
           )
@@ -1977,7 +1989,7 @@
         React.createElement('section', { id: 'screen-share' },
           React.createElement('header', null,
             React.createElement('div', { className: 'header-content' },
-              React.createElement('h2', null, 'Screen Sharing'),
+              React.createElement('h2', null, t.screenShare.header),
               React.createElement('p', { className: 'status', id: 'screen-share-status' }, screenShareHeaderStatus)
             ),
             React.createElement('div', { className: 'header-actions screen-share-actions' },
@@ -1985,14 +1997,14 @@
                 type: 'button',
                 onClick: handleStartScreenShare,
                 disabled: !channelReady || isScreenSharing,
-                'aria-label': 'Start sharing your screen'
-              }, isScreenSharing ? 'Sharing…' : 'Start Sharing'),
+                'aria-label': t.screenShare.actions.startAria
+              }, isScreenSharing ? t.screenShare.actions.sharing : t.screenShare.actions.start),
               React.createElement('button', {
                 type: 'button',
                 onClick: handleStopScreenShare,
                 disabled: !isScreenSharing,
-                'aria-label': 'Stop sharing your screen'
-              }, 'Stop Sharing')
+                'aria-label': t.screenShare.actions.stopAria
+              }, t.screenShare.actions.stop)
             )
           ),
           React.createElement('div', { className: 'screen-share-controls' },
@@ -2003,79 +2015,98 @@
                 disabled: isScreenSharing,
                 onChange: (event) => setShareSystemAudio(event.target.checked)
               }),
-              React.createElement('span', null, 'Include system audio')
+              React.createElement('span', null, t.screenShare.includeAudio)
             ),
             React.createElement('button', {
               type: 'button',
               className: 'remote-control-toggle',
               onClick: handleToggleRemoteControl,
               disabled: !isScreenSharing || !controlChannelReady
-            }, isRemoteControlAllowed ? 'Disable Remote Control' : 'Allow Remote Control'),
+            }, isRemoteControlAllowed ? t.remoteControl.actions.disable : t.remoteControl.actions.allow),
             React.createElement('div', { className: 'control-status' },
-              React.createElement('strong', null, 'Remote control:'),
+              React.createElement('strong', null, t.remoteControl.label),
               React.createElement('span', null, controlStatusLabel)
             )
           ),
           React.createElement('div', { className: 'screen-share-grid' },
             React.createElement('div', { className: 'screen-tile local' },
-              React.createElement('h3', null, 'Your Screen'),
+              React.createElement('h3', null, t.screenShare.local.title),
               React.createElement('div', { className: 'screen-preview' },
                 React.createElement('video', {
                   ref: localScreenVideoRef,
                   muted: true,
                   autoPlay: true,
                   playsInline: true,
-                  'aria-label': 'Local screen preview'
+                  'aria-label': t.screenShare.local.aria
                 }),
                 !isScreenSharing && React.createElement('div', { className: 'screen-placeholder' },
-                  React.createElement('p', null, channelReady ? 'Start sharing to broadcast your screen.' : 'Connect with a peer to enable screen sharing.')
+                  React.createElement('p', null, channelReady ? t.screenShare.local.placeholderReady : t.screenShare.local.placeholderDisconnected)
                 )
               )
             ),
             React.createElement('div', { className: 'screen-tile remote' },
-              React.createElement('h3', null, "Peer's Screen"),
-            React.createElement('div', {
+              React.createElement('h3', null, t.screenShare.remote.title),
+              React.createElement('div', {
                 className: remotePreviewClass,
                 ref: remoteControlSurfaceRef,
                 role: canControlPeer ? 'group' : 'presentation',
                 tabIndex: canControlPeer ? 0 : -1,
                 'aria-disabled': canControlPeer ? 'false' : 'true',
                 'aria-label': canControlPeer
-                  ? 'Peer screen preview. Focus here to control their screen.'
-                  : 'Peer screen preview'
+                  ? t.screenShare.remote.ariaInteractive
+                  : t.screenShare.remote.aria
               },
                 React.createElement('video', {
                   ref: remoteScreenVideoRef,
                   autoPlay: true,
                   playsInline: true,
-                  'aria-label': 'Peer screen stream'
+                  'aria-label': t.screenShare.remote.streamAria
                 })
               ),
               React.createElement('p', { className: 'hint remote-screen-hint' },
                 canControlPeer
-                  ? 'Remote control active — move your cursor here to interact with their screen.'
+                  ? t.remoteControl.hints.active
                   : remoteScreenHeaderStatus
               )
             )
           ),
           React.createElement('p', { className: 'hint screen-share-footnote' },
-            'Screen sharing is peer-to-peer only. Share and grant control access exclusively with people you trust.'
+            t.screenShare.footnote
           )
         ),
         React.createElement('section', { id: 'chat' },
             React.createElement('header', null,
               React.createElement('div', { className: 'header-content' },
-                React.createElement('h2', null, 'Chat'),
+                React.createElement('h2', null, t.chat.title),
                 React.createElement('p', { className: 'status', id: 'channel-status' }, channelStatus)
               ),
             React.createElement('div', { className: 'header-actions' },
+              React.createElement('label', {
+                htmlFor: 'language-select',
+                className: 'language-label'
+              }, t.language.label + ':'),
+              React.createElement('select', {
+                id: 'language-select',
+                value: language,
+                onChange: handleLanguageChange,
+                className: 'language-select',
+                'aria-label': t.language.ariaLabel,
+                disabled: isApiKeyModalOpen
+              },
+                getAvailableLanguages().map((lang) =>
+                  React.createElement('option', {
+                    key: lang.code,
+                    value: lang.code
+                  }, lang.name)
+                )
+              ),
               React.createElement('button', {
                 type: 'button',
                 className: 'api-key-button',
                 onClick: handleOpenApiKeyModal,
                 ref: apiKeyButtonRef,
                 disabled: isApiKeyModalOpen
-              }, openAiKey ? 'Update OpenAI Key' : 'Add OpenAI Key'),
+              }, openAiKey ? t.chat.updateApiKey : t.chat.addApiKey),
               React.createElement('button', {
                 type: 'button',
                 className: 'theme-toggle-button',
@@ -2088,9 +2119,9 @@
               messages.length > 0 && React.createElement('button', {
                 onClick: handleClearMessages,
                 className: 'clear-chat-button',
-                'aria-label': 'Clear all chat messages',
+                'aria-label': t.chat.clearAriaLabel,
                 disabled: isApiKeyModalOpen
-              }, 'Clear')
+              }, t.chat.clear)
               )
             ),
             React.createElement('div', {
@@ -2102,14 +2133,14 @@
                 ? React.createElement('div', {
                     className: 'empty-state',
                     role: 'note'
-                  }, 'No messages yet. Connect with a peer to start chatting.')
+                  }, t.chat.emptyState)
                 : messages.map((message) => (
                     React.createElement('div', {
                       key: message.id,
                       className: 'chat-line',
                       'data-role': message.role
                     },
-                    React.createElement('strong', null, ROLE_LABELS[message.role] || 'Notice'),
+                    React.createElement('strong', null, t.chat.roleLabels[message.role] || t.chat.roleLabels.system),
                     React.createElement('span', null, message.text))
                   ))
             ),
@@ -2117,7 +2148,7 @@
               React.createElement('input', {
                 id: 'outgoing',
                 type: 'text',
-                placeholder: 'Type a message...',
+                placeholder: t.chat.inputPlaceholder,
                 autoComplete: 'off',
                 disabled: !channelReady,
                 value: inputText,
@@ -2129,7 +2160,7 @@
                   }
                 },
                 maxLength: MAX_MESSAGE_LENGTH,
-                'aria-label': 'Message input',
+                'aria-label': t.chat.inputAriaLabel,
                 'aria-describedby': 'channel-status'
               }),
               React.createElement('button', {
@@ -2137,21 +2168,21 @@
                 className: 'ai-button',
                 onClick: handleAiRewrite,
                 disabled: isAiBusy || !inputText.trim(),
-                'aria-label': openAiKey ? 'Rewrite message with OpenAI' : 'Add OpenAI key to enable AI',
-                title: openAiKey ? 'Let OpenAI suggest a clearer version of your message.' : 'Add your OpenAI key to enable AI assistance.'
-              }, isAiBusy ? 'Rewriting…' : 'Rewrite with AI'),
+                'aria-label': openAiKey ? t.chat.aiButton : t.chat.aiButtonNoKey,
+                title: openAiKey ? t.chat.aiButtonTitle : t.chat.aiButtonTitleNoKey
+              }, isAiBusy ? t.chat.aiButtonBusy : t.chat.aiButton),
               React.createElement('button', {
                 id: 'send',
                 onClick: handleSend,
                 disabled: !channelReady || !inputText.trim(),
-                'aria-label': 'Send message',
-                title: 'Send message'
-              }, 'Send')
+                'aria-label': t.chat.sendAriaLabel,
+                title: t.chat.sendTitle
+              }, t.chat.send)
             ),
             React.createElement('p', {
               className: 'hint chat-counter',
               role: 'note'
-            }, `${inputText.length} / ${MAX_MESSAGE_LENGTH}`),
+            }, t.chat.charCount(inputText.length, MAX_MESSAGE_LENGTH)),
             (aiStatus || aiError) && React.createElement('p', {
               className: `hint ai-feedback${aiError ? ' ai-feedback-error' : ''}`,
               role: 'note'

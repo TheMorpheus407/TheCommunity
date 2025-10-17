@@ -612,6 +612,45 @@ textarea[readonly] {
   min-width: 150px;
   white-space: nowrap;
 }
+.language-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+.language-select {
+  appearance: none;
+  background-color: var(--color-input-bg);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-input-border);
+  border-radius: 6px;
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238ab4f8' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 12px;
+}
+.language-select:hover:not(:disabled) {
+  border-color: var(--color-outline);
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.2);
+}
+.language-select:focus {
+  outline: none;
+  border-color: var(--color-outline);
+  box-shadow: 0 0 0 3px rgba(138, 180, 248, 0.3);
+}
+.language-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.language-select option {
+  background-color: var(--color-panel-bg);
+  color: var(--color-text-primary);
+  padding: 0.5rem;
+}
 .ai-button {
   min-width: 160px;
   white-space: nowrap;
