@@ -1,16 +1,16 @@
 name: Auto-Merge Trigger
 
 on:
-  check_suite:
+  workflow_run:
+    workflows: ["Claude Code Review"]
     types: [completed]
 
 jobs:
   trigger-claude-merge:
     # Only trigger when claude-review succeeds
     if: |
-      github.event.check_suite.conclusion == 'success' &&
-      github.event.check_suite.head_branch != 'main' &&
-      github.event.check_suite.app.name == 'Claude Code Review'
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch != 'main'
 
     runs-on: ubuntu-latest
     permissions:
@@ -22,12 +22,12 @@ jobs:
         run: |
           PR_NUMBER=$(gh pr list \
             --repo "${{ github.repository }}" \
-            --head "${{ github.event.check_suite.head_branch }}" \
+            --head "${{ github.event.workflow_run.head_branch }}" \
             --json number \
             --jq '.[0].number')
 
           if [ -z "$PR_NUMBER" ]; then
-            echo "No PR found for branch ${{ github.event.check_suite.head_branch }}"
+            echo "No PR found for branch ${{ github.event.workflow_run.head_branch }}"
             exit 0
           fi
 
