@@ -14,6 +14,7 @@ jobs:
 
     runs-on: ubuntu-latest
     permissions:
+      contents: write
       pull-requests: write
 
     steps:
@@ -36,11 +37,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Post comment to trigger Claude merge
+      - name: Merge PR automatically
         if: steps.find-pr.outputs.pr_number != ''
         run: |
-          gh pr comment ${{ steps.find-pr.outputs.pr_number }} \
+          echo "Merging PR #${{ steps.find-pr.outputs.pr_number }} after successful review"
+          gh pr merge ${{ steps.find-pr.outputs.pr_number }} \
             --repo "${{ github.repository }}" \
-            --body "@claude The review passed. Please merge this PR using \`gh pr merge ${{ steps.find-pr.outputs.pr_number }} --merge --admin\`"
+            --merge \
+            --admin
         env:
           GH_TOKEN: ${{ github.token }}
