@@ -2196,4 +2196,69 @@
   const rootElement = document.getElementById('root');
   const root = ReactDOM.createRoot(rootElement);
   root.render(React.createElement(App));
+
+  /**
+   * Konami Code Easter Egg
+   * Detects the sequence: ↑ ↑ ↓ ↓ ← → ← → B A
+   * When activated, plays Nyan Cat music
+   */
+  (function initKonamiCode() {
+    const KONAMI_CODE = [
+      'ArrowUp',
+      'ArrowUp',
+      'ArrowDown',
+      'ArrowDown',
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowLeft',
+      'ArrowRight',
+      'KeyB',
+      'KeyA'
+    ];
+
+    let konamiIndex = 0;
+    let isAudioPlaying = false;
+
+    function handleKonamiKeyPress(event) {
+      const expectedKey = KONAMI_CODE[konamiIndex];
+
+      if (event.code === expectedKey) {
+        konamiIndex++;
+
+        if (konamiIndex === KONAMI_CODE.length) {
+          // Konami code completed!
+          activateNyanCat();
+          konamiIndex = 0;
+        }
+      } else {
+        // Reset if wrong key pressed
+        konamiIndex = 0;
+      }
+    }
+
+    function activateNyanCat() {
+      const audio = document.getElementById('nyan-cat-audio');
+
+      if (!audio) {
+        console.warn('Nyan Cat audio element not found');
+        return;
+      }
+
+      if (isAudioPlaying) {
+        // Stop the music if already playing
+        audio.pause();
+        audio.currentTime = 0;
+        isAudioPlaying = false;
+      } else {
+        // Start the music
+        audio.play().then(() => {
+          isAudioPlaying = true;
+        }).catch((error) => {
+          console.warn('Failed to play Nyan Cat audio:', error);
+        });
+      }
+    }
+
+    document.addEventListener('keydown', handleKonamiKeyPress);
+  })();
 })();
