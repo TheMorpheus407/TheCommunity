@@ -54,8 +54,28 @@ const baseTranslation = Object.freeze({
     title: 'Chat',
     addApiKey: 'OpenAI-Schlüssel hinzufügen',
     updateApiKey: 'OpenAI-Schlüssel aktualisieren',
-    themeToggle: (isDark) => (isDark ? '🌞 Heller Modus' : '🌙 Dunkler Modus'),
-    themeToggleTitle: (isDark) => (isDark ? 'Zum hellen Theme wechseln' : 'Zum dunklen Theme wechseln'),
+    themeToggle: (nextTheme) => {
+      switch (nextTheme) {
+        case 'light':
+          return '🌞 Heller Modus';
+        case 'rgb':
+          return '🌈 RGB-Modus';
+        case 'dark':
+        default:
+          return '🌙 Dunkler Modus';
+      }
+    },
+    themeToggleTitle: (nextTheme) => {
+      switch (nextTheme) {
+        case 'light':
+          return 'Zum hellen Theme wechseln';
+        case 'rgb':
+          return 'Zum RGB-Gaming-Modus wechseln';
+        case 'dark':
+        default:
+          return 'Zum dunklen Theme wechseln';
+      }
+    },
     clear: 'Leeren',
     clearAriaLabel: 'Alle Chat-Nachrichten löschen',
     emptyState: 'Noch keine Nachrichten. Verbinde dich mit einem Peer, um zu chatten.',
@@ -102,7 +122,18 @@ const baseTranslation = Object.freeze({
     answerApplied: 'Antwort angewendet, warte auf Kanal...'
   },
   systemMessages: {
-    themeSwitch: (theme) => `Theme gewechselt zu ${theme === 'dark' ? 'dunklem' : 'hellem'} Modus.`,
+    themeSwitch: (theme) => {
+      switch (theme) {
+        case 'dark':
+          return 'Theme gewechselt zu dunklem Modus.';
+        case 'light':
+          return 'Theme gewechselt zu hellem Modus.';
+        case 'rgb':
+          return 'Theme gewechselt zu RGB-Gaming-Modus.';
+        default:
+          return `Theme gewechselt zu ${theme}.`;
+      }
+    },
     continueWithoutAi: 'Ohne KI-Unterstützung fortfahren. Du kannst später im Chatbereich einen Schlüssel hinzufügen.',
     apiKeyStored: 'OpenAI-Schlüssel nur in dieser Browsersitzung gespeichert. Aktualisiere die Seite, um ihn zu entfernen.',
     aiDisabled: 'KI-Unterstützung deaktiviert. Nachrichten werden ohne KI gesendet.',

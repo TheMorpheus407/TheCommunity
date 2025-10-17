@@ -129,6 +129,204 @@
   border-color: rgba(255, 255, 255, 0.95);
 }
 
+[data-theme='rgb'] {
+  color-scheme: dark;
+  --color-bg-body: #0a0a0f;
+  --color-text-primary: #ffffff;
+  --color-text-muted: #e0e0e0;
+  --color-text-faint: rgba(255, 255, 255, 0.7);
+  --color-text-accent: #00ffff;
+  --color-text-error: #ff0080;
+  --color-text-warning: #ff6b00;
+  --color-text-info: #00d4ff;
+  --color-text-soft: rgba(255, 255, 255, 0.9);
+  --color-text-subtle: rgba(255, 255, 255, 0.65);
+  --color-panel-bg: #0f0f14;
+  --color-panel-border: #ff00ff;
+  --color-surface-muted: #0d0d12;
+  --color-surface-hover: #15151a;
+  --color-surface-alt: #12121a;
+  --color-surface-strong: #0e0e16;
+  --color-chip-bg: #1a1a24;
+  --color-modal-bg: #0f0f14;
+  --color-modal-border: #00ffff;
+  --color-outline: #00ffff;
+  --color-border-subtle: #ff00ff;
+  --color-border-strong: #00ffff;
+  --color-input-bg: #0d0d12;
+  --color-input-border: #ff00ff;
+  --color-empty-state: rgba(255, 255, 255, 0.7);
+  --color-hint: rgba(255, 255, 255, 0.8);
+  --shadow-panel: 0 0 30px rgba(255, 0, 255, 0.3), 0 0 60px rgba(0, 255, 255, 0.2);
+  --shadow-elevated: 0 0 40px rgba(255, 0, 255, 0.4), 0 0 80px rgba(0, 255, 255, 0.3);
+  --shadow-modal: 0 0 100px rgba(255, 0, 255, 0.5);
+  --overlay-scrim: rgba(0, 0, 0, 0.85);
+  animation: rgb-gradient-shift 8s ease-in-out infinite;
+}
+
+@keyframes rgb-gradient-shift {
+  0%, 100% {
+    background: linear-gradient(135deg, #0a0a0f 0%, #150a1f 50%, #0a0a0f 100%);
+  }
+  25% {
+    background: linear-gradient(135deg, #0a0a0f 0%, #0a1f1f 50%, #0a0a0f 100%);
+  }
+  50% {
+    background: linear-gradient(135deg, #0a0a0f 0%, #1f0a1f 50%, #0a0a0f 100%);
+  }
+  75% {
+    background: linear-gradient(135deg, #0a0a0f 0%, #1f1f0a 50%, #0a0a0f 100%);
+  }
+}
+
+[data-theme='rgb'] body {
+  background: linear-gradient(135deg, #0a0a0f 0%, #150a1f 50%, #0a0a0f 100%);
+  background-size: 400% 400%;
+  animation: rgb-gradient-shift 8s ease-in-out infinite;
+}
+
+[data-theme='rgb'] main {
+  border: 2px solid;
+  border-image: linear-gradient(135deg, #ff00ff, #00ffff, #ff00ff) 1;
+  box-shadow: 0 0 30px rgba(255, 0, 255, 0.4), 0 0 60px rgba(0, 255, 255, 0.3), inset 0 0 30px rgba(255, 0, 255, 0.1);
+  animation: rgb-border-pulse 3s ease-in-out infinite;
+}
+
+@keyframes rgb-border-pulse {
+  0%, 100% {
+    border-image: linear-gradient(135deg, #ff00ff, #00ffff, #ff00ff) 1;
+    box-shadow: 0 0 30px rgba(255, 0, 255, 0.4), 0 0 60px rgba(0, 255, 255, 0.3), inset 0 0 30px rgba(255, 0, 255, 0.1);
+  }
+  33% {
+    border-image: linear-gradient(135deg, #00ffff, #ff0080, #00ffff) 1;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.4), 0 0 60px rgba(255, 0, 128, 0.3), inset 0 0 30px rgba(0, 255, 255, 0.1);
+  }
+  66% {
+    border-image: linear-gradient(135deg, #ff0080, #00ff00, #ff0080) 1;
+    box-shadow: 0 0 30px rgba(255, 0, 128, 0.4), 0 0 60px rgba(0, 255, 0, 0.3), inset 0 0 30px rgba(255, 0, 128, 0.1);
+  }
+}
+
+[data-theme='rgb'] h1,
+[data-theme='rgb'] h2,
+[data-theme='rgb'] h3 {
+  background: linear-gradient(90deg, #ff00ff, #00ffff, #ff0080, #00ff00, #ff00ff);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: rgb-text-shine 4s linear infinite;
+}
+
+@keyframes rgb-text-shine {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+[data-theme='rgb'] section {
+  border: 2px solid;
+  border-image: linear-gradient(90deg, #ff00ff, #00ffff, #ff00ff) 1;
+  box-shadow: 0 0 20px rgba(255, 0, 255, 0.3), 0 0 40px rgba(0, 255, 255, 0.2);
+  animation: rgb-section-glow 4s ease-in-out infinite;
+}
+
+@keyframes rgb-section-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 0, 255, 0.3), 0 0 40px rgba(0, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.4), 0 0 60px rgba(255, 0, 255, 0.3);
+  }
+}
+
+[data-theme='rgb'] button:not(:disabled) {
+  background: linear-gradient(135deg, #1a0a2e, #0f1419);
+  border: 2px solid;
+  border-image: linear-gradient(135deg, #ff00ff, #00ffff) 1;
+  box-shadow: 0 0 15px rgba(255, 0, 255, 0.4), 0 0 30px rgba(0, 255, 255, 0.2);
+  transition: all 200ms ease;
+}
+
+[data-theme='rgb'] button:not(:disabled):hover {
+  background: linear-gradient(135deg, #2a0a3e, #0f2429);
+  box-shadow: 0 0 25px rgba(255, 0, 255, 0.6), 0 0 50px rgba(0, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+[data-theme='rgb'] button:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: 0 0 20px rgba(255, 0, 255, 0.5), 0 0 40px rgba(0, 255, 255, 0.3);
+}
+
+[data-theme='rgb'] textarea,
+[data-theme='rgb'] input {
+  border: 2px solid;
+  border-image: linear-gradient(90deg, #ff00ff, #00ffff) 1;
+  box-shadow: inset 0 0 15px rgba(255, 0, 255, 0.1);
+}
+
+[data-theme='rgb'] textarea:focus,
+[data-theme='rgb'] input:focus {
+  border-image: linear-gradient(90deg, #00ffff, #ff00ff) 1;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4), inset 0 0 20px rgba(255, 0, 255, 0.2);
+}
+
+[data-theme='rgb'] .chat-line {
+  border: 1px solid;
+  border-image: linear-gradient(90deg, rgba(255, 0, 255, 0.5), rgba(0, 255, 255, 0.5)) 1;
+  box-shadow: 0 0 10px rgba(255, 0, 255, 0.2);
+}
+
+[data-theme='rgb'] .chat-line[data-role="remote"] {
+  border-image: linear-gradient(90deg, rgba(0, 255, 255, 0.5), rgba(255, 0, 255, 0.5)) 1;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+[data-theme='rgb'] .screen-placeholder {
+  background: rgba(10, 10, 15, 0.88);
+  border: 1px solid rgba(255, 0, 255, 0.3);
+}
+
+[data-theme='rgb'] .remote-pointer-indicator {
+  background: linear-gradient(135deg, #ff00ff, #00ffff);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 30px rgba(255, 0, 255, 0.8), 0 0 60px rgba(0, 255, 255, 0.6);
+  animation: rgb-pointer-pulse 1s ease-in-out infinite;
+}
+
+@keyframes rgb-pointer-pulse {
+  0%, 100% {
+    box-shadow: 0 0 30px rgba(255, 0, 255, 0.8), 0 0 60px rgba(0, 255, 255, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(0, 255, 255, 0.8), 0 0 80px rgba(255, 0, 255, 0.6);
+  }
+}
+
+[data-theme='rgb'] .tux-eye-glow {
+  fill: #00ffff;
+}
+
+[data-theme='rgb'] .tux-mascot:hover .tux-eye-glow {
+  opacity: 1;
+  animation: rgb-tux-glow 1s ease-in-out infinite;
+}
+
+@keyframes rgb-tux-glow {
+  0%, 100% {
+    fill: #00ffff;
+    filter: drop-shadow(0 0 10px #00ffff);
+  }
+  50% {
+    fill: #ff00ff;
+    filter: drop-shadow(0 0 15px #ff00ff);
+  }
+}
+
 body {
   margin: 0;
   min-height: 100vh;

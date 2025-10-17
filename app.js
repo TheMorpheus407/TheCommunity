@@ -26,8 +26,15 @@
   const THEME_STORAGE_KEY = 'thecommunity.theme-preference';
   const THEME_OPTIONS = {
     LIGHT: 'light',
-    DARK: 'dark'
+    DARK: 'dark',
+    RGB: 'rgb'
   };
+  const THEME_SEQUENCE = [THEME_OPTIONS.DARK, THEME_OPTIONS.LIGHT, THEME_OPTIONS.RGB];
+
+  function getNextThemeValue(currentTheme) {
+    const index = THEME_SEQUENCE.indexOf(currentTheme);
+    return THEME_SEQUENCE[(index + 1) % THEME_SEQUENCE.length];
+  }
 
   const CONTROL_MESSAGE_TYPES = {
     POINTER: 'pointer',
@@ -219,7 +226,7 @@
 
   /**
    * Determines the initial theme, preferring stored settings, then system preference.
-   * @returns {{theme: 'light'|'dark', isStored: boolean}}
+   * @returns {{theme: 'light'|'dark'|'rgb', isStored: boolean}}
    */
   function resolveInitialTheme() {
     if (typeof window === 'undefined') {
@@ -227,7 +234,7 @@
     }
     try {
       const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-      if (storedTheme === THEME_OPTIONS.LIGHT || storedTheme === THEME_OPTIONS.DARK) {
+      if (storedTheme === THEME_OPTIONS.LIGHT || storedTheme === THEME_OPTIONS.DARK || storedTheme === THEME_OPTIONS.RGB) {
         if (typeof document !== 'undefined') {
           document.documentElement.dataset.theme = storedTheme;
         }
@@ -357,10 +364,9 @@
 
     const handleToggleTheme = useCallback(() => {
       setTheme((prevTheme) => {
-        const nextTheme = prevTheme === THEME_OPTIONS.DARK ? THEME_OPTIONS.LIGHT : THEME_OPTIONS.DARK;
+        const nextTheme = getNextThemeValue(prevTheme);
         const currentT = translations[language] || translations.de;
-        const themeName = nextTheme === THEME_OPTIONS.DARK ? 'dark' : 'light';
-        appendSystemMessage(currentT.systemMessages.themeSwitch(themeName));
+        appendSystemMessage(currentT.systemMessages.themeSwitch(nextTheme));
         return nextTheme;
       });
       hasStoredThemeRef.current = true;
@@ -2173,9 +2179,9 @@
       }
     }, [canControlPeer]);
 
-    const isDarkTheme = theme === THEME_OPTIONS.DARK;
-    const themeButtonLabel = t.chat.themeToggle(isDarkTheme);
-    const themeToggleTitle = t.chat.themeToggleTitle(isDarkTheme);
+    const nextTheme = getNextThemeValue(theme);
+    const themeButtonLabel = t.chat.themeToggle(nextTheme);
+    const themeToggleTitle = t.chat.themeToggleTitle(nextTheme);
     const screenShareHeaderStatus = isScreenSharing
       ? t.screenShare.status.sharing
       : channelReady
@@ -2520,7 +2526,6 @@
                 type: 'button',
                 className: 'theme-toggle-button',
                 onClick: handleToggleTheme,
-                'aria-pressed': isDarkTheme,
                 title: themeToggleTitle,
                 'aria-label': themeToggleTitle,
                 disabled: isApiKeyModalOpen
