@@ -2298,6 +2298,25 @@
               ),
               React.createElement('div', { className: 'modal-body' },
                 React.createElement('p', null, t.about.description),
+                React.createElement('div', { style: { margin: '20px 0', padding: '15px', background: '#e3f2fd', borderRadius: '8px', borderLeft: '4px solid #2196f3' } },
+                  React.createElement('h3', { style: { marginTop: 0, color: '#1976d2' } }, '🔬 Featured Analysis'),
+                  React.createElement('p', { style: { marginBottom: '10px' } }, 'Explore a complete High-Energy Physics analysis of the Higgs boson discovery channel:'),
+                  React.createElement('a', {
+                    href: 'higgs_analysis.html',
+                    target: '_blank',
+                    rel: 'noopener noreferrer',
+                    style: {
+                      display: 'inline-block',
+                      padding: '10px 20px',
+                      background: '#667eea',
+                      color: 'white',
+                      textDecoration: 'none',
+                      borderRadius: '6px',
+                      fontWeight: '600',
+                      transition: 'background 0.3s'
+                    }
+                  }, 'H→ZZ→4ℓ Analysis →')
+                ),
                 React.createElement('h3', null, t.about.contributorsTitle),
                 React.createElement('p', { className: 'contributors-intro' }, t.about.contributorsIntro),
                 isLoadingContributors && React.createElement('p', { className: 'contributors-status' }, t.about.loadingContributors),
