@@ -2689,13 +2689,51 @@
   const rootElement = document.getElementById('root');
   const root = ReactDOM.createRoot(rootElement);
   root.render(React.createElement(App));
+  initBackgroundSound();
+  initKonamiCode();
 
   /**
-   * Konami Code Easter Egg
-   * Detects the sequence: ↑ ↑ ↓ ↓ ← → ← → B A
-   * When activated, plays Nyan Cat music
+   * Initialize background sound to play on first user interaction.
+   * Modern browsers require user interaction before allowing audio playback.
    */
-  (function initKonamiCode() {
+  function initBackgroundSound() {
+    const audio = document.getElementById('background-sound');
+    if (!audio) {
+      return;
+    }
+
+    audio.volume = 1.0;
+
+    let hasStarted = false;
+
+    const startAudio = () => {
+      if (hasStarted) {
+        return;
+      }
+
+      audio.play().then(() => {
+        hasStarted = true;
+        document.removeEventListener('click', startAudio);
+        document.removeEventListener('pointerdown', startAudio);
+        document.removeEventListener('keydown', startAudio);
+        document.removeEventListener('touchstart', startAudio);
+      }).catch((error) => {
+        console.warn('Background sound autoplay blocked:', error);
+      });
+    };
+
+    document.addEventListener('click', startAudio, { once: false });
+    document.addEventListener('pointerdown', startAudio, { once: false });
+    document.addEventListener('keydown', startAudio, { once: false });
+    document.addEventListener('touchstart', startAudio, { once: false });
+  }
+
+  /**
+   * Konami Code Easter Egg.
+   * Detects the sequence: ↑ ↑ ↓ ↓ ← → ← → B A
+   * When activated, toggles the Nyan Cat music.
+   */
+  function initKonamiCode() {
     const KONAMI_CODE = [
       'ArrowUp',
       'ArrowUp',
@@ -2719,12 +2757,10 @@
         konamiIndex++;
 
         if (konamiIndex === KONAMI_CODE.length) {
-          // Konami code completed!
           activateNyanCat();
           konamiIndex = 0;
         }
       } else {
-        // Reset if wrong key pressed
         konamiIndex = 0;
       }
     }
@@ -2738,12 +2774,10 @@
       }
 
       if (isAudioPlaying) {
-        // Stop the music if already playing
         audio.pause();
         audio.currentTime = 0;
         isAudioPlaying = false;
       } else {
-        // Start the music
         audio.play().then(() => {
           isAudioPlaying = true;
         }).catch((error) => {
@@ -2753,5 +2787,5 @@
     }
 
     document.addEventListener('keydown', handleKonamiKeyPress);
-  })();
+  }
 })();
