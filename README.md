@@ -37,6 +37,10 @@ TheCommunity is a community-driven project that demonstrates true peer-to-peer c
 - **Status Indicators** - Real-time connection status and channel state feedback
 - **Accessible** - ARIA labels and semantic HTML for better accessibility
 
+### 🔊 Audio Experience
+- **Background Loop** - After your first interaction the requested “oiia oiia” soundtrack starts at full volume and keeps looping for peak gamer energy (Issue #73).
+- **Konami Remix** - Enter the classic ↑ ↑ ↓ ↓ ← → ← → B A combo to toggle the Nyan Cat track on top of the background loop.
+
 ### 🛠️ Technical Features
 - **Zero Dependencies** - Uses only native browser APIs and React from CDN
 - **No Build Step** - Pure JavaScript that runs directly in the browser
