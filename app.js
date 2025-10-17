@@ -7,6 +7,7 @@
 
   const EXPECTED_CHANNEL_LABEL = 'chat';
   const CONTROL_CHANNEL_LABEL = 'control';
+  const IMAGE_CHANNEL_LABEL = 'image';
   const MAX_MESSAGE_LENGTH = 2000;
   const MAX_MESSAGES_PER_INTERVAL = 30;
   const MESSAGE_INTERVAL_MS = 5000;
@@ -15,6 +16,12 @@
   const CONTROL_MAX_PAYLOAD_LENGTH = 2048;
   const CONTROL_TEXT_INSERT_LIMIT = 32;
   const CONTROL_TOTAL_TEXT_BUDGET = 2048;
+  const IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024;
+  const IMAGE_CHUNK_SIZE = 16 * 1024;
+  const IMAGE_MAX_PER_INTERVAL = 10;
+  const IMAGE_INTERVAL_MS = 60000;
+  const IMAGE_MAX_CONCURRENT = 3;
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   const OPENAI_MODEL = 'gpt-4o-mini';
   const THEME_STORAGE_KEY = 'thecommunity.theme-preference';
   const THEME_OPTIONS = {
@@ -285,6 +292,7 @@
     const pcRef = useRef(null);
     const channelRef = useRef(null);
     const controlChannelRef = useRef(null);
+    const imageChannelRef = useRef(null);
     const iceDoneRef = useRef(false);
     const screenSenderRef = useRef(null);
     const screenAudioSenderRef = useRef(null);
@@ -312,15 +320,22 @@
     const pointerFramePendingRef = useRef(false);
     const pointerFrameIdRef = useRef(null);
     const pointerQueuedPositionRef = useRef(null);
+    const imageTransfersRef = useRef(new Map());
+    const imageSendTimestampsRef = useRef([]);
+    const imageReceiveTimestampsRef = useRef([]);
+    const imageFileInputRef = useRef(null);
 
     /**
      * Queues a chat message for rendering.
      * @param {string} text - Message body
      * @param {'local'|'remote'|'system'} role - Message origin
+     * @param {Object} options - Additional options
+     * @param {string} options.imageUrl - Optional image data URL for image messages
+     * @param {string} options.fileName - Optional file name for image messages
      */
-    const appendMessage = useCallback((text, role) => {
+    const appendMessage = useCallback((text, role, options = {}) => {
       const id = messageIdRef.current++;
-      setMessages((prev) => [...prev, { id, text, role }]);
+      setMessages((prev) => [...prev, { id, text, role, ...options }]);
     }, []);
 
     /**
@@ -595,6 +610,115 @@
     }, [cancelPendingPointerFrame, handleIncomingControlMessage, t]);
 
     /**
+     * Handles incoming image channel messages for image transfer.
+     * @param {string} payload - JSON-encoded image message
+     */
+    const handleIncomingImageMessage = useCallback((payload) => {
+      if (typeof payload !== 'string' || !payload) {
+        return;
+      }
+      let message;
+      try {
+        message = JSON.parse(payload);
+      } catch (error) {
+        console.warn('Discarded malformed image message', error);
+        return;
+      }
+      if (!message || typeof message !== 'object') {
+        return;
+      }
+      const now = Date.now();
+      imageReceiveTimestampsRef.current = imageReceiveTimestampsRef.current.filter(
+        (timestamp) => now - timestamp < IMAGE_INTERVAL_MS
+      );
+      if (message.type === 'image-start') {
+        if (imageReceiveTimestampsRef.current.length >= IMAGE_MAX_PER_INTERVAL) {
+          appendSystemMessageRef.current(t.imageShare.rateLimitReceive);
+          return;
+        }
+        if (imageTransfersRef.current.size >= IMAGE_MAX_CONCURRENT) {
+          appendSystemMessageRef.current(t.imageShare.tooManyConcurrent);
+          return;
+        }
+        if (!message.imageId || !message.mimeType || !ALLOWED_IMAGE_TYPES.includes(message.mimeType)) {
+          appendSystemMessageRef.current(t.imageShare.invalidType);
+          return;
+        }
+        if (typeof message.totalSize !== 'number' || message.totalSize > IMAGE_MAX_SIZE_BYTES || message.totalSize <= 0) {
+          appendSystemMessageRef.current(t.imageShare.tooLarge);
+          return;
+        }
+        imageReceiveTimestampsRef.current.push(now);
+        imageTransfersRef.current.set(message.imageId, {
+          chunks: [],
+          mimeType: message.mimeType,
+          fileName: message.fileName || 'image',
+          totalChunks: message.totalChunks || 0,
+          totalSize: message.totalSize,
+          receivedChunks: 0
+        });
+        return;
+      }
+      if (message.type === 'image-chunk') {
+        const transfer = imageTransfersRef.current.get(message.imageId);
+        if (!transfer) {
+          return;
+        }
+        if (typeof message.chunkIndex !== 'number' || typeof message.data !== 'string') {
+          return;
+        }
+        transfer.chunks[message.chunkIndex] = message.data;
+        transfer.receivedChunks++;
+        if (transfer.receivedChunks === transfer.totalChunks) {
+          try {
+            const fullBase64 = transfer.chunks.join('');
+            const binaryString = atob(fullBase64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: transfer.mimeType });
+            const imageUrl = URL.createObjectURL(blob);
+            appendMessage(t.imageShare.receivedImage(transfer.fileName), 'remote', {
+              imageUrl,
+              fileName: transfer.fileName
+            });
+            imageTransfersRef.current.delete(message.imageId);
+          } catch (error) {
+            console.error('Failed to reconstruct image', error);
+            appendSystemMessageRef.current(t.imageShare.receiveFailed);
+            imageTransfersRef.current.delete(message.imageId);
+          }
+        }
+      }
+    }, [appendMessage, t]);
+
+    /**
+     * Configures event handlers for the image data channel.
+     * @param {RTCDataChannel} channel - Image channel instance
+     */
+    const setupImageChannel = useCallback((channel) => {
+      channel.onopen = () => {
+        imageChannelRef.current = channel;
+        appendSystemMessageRef.current(t.imageShare.channelReady);
+      };
+      channel.onclose = () => {
+        if (imageChannelRef.current === channel) {
+          imageChannelRef.current = null;
+        }
+        imageTransfersRef.current.clear();
+        imageSendTimestampsRef.current = [];
+        imageReceiveTimestampsRef.current = [];
+      };
+      channel.onmessage = (event) => {
+        if (typeof event.data !== 'string') {
+          return;
+        }
+        handleIncomingImageMessage(event.data);
+      };
+    }, [handleIncomingImageMessage, t]);
+
+    /**
      * Lazily creates (or returns) the RTCPeerConnection instance.
      * @returns {RTCPeerConnection}
      */
@@ -670,12 +794,16 @@
           setupControlChannel(incomingChannel);
           return;
         }
+        if (incomingChannel.label === IMAGE_CHANNEL_LABEL) {
+          setupImageChannel(incomingChannel);
+          return;
+        }
         appendSystemMessage(t.systemMessages.channelBlocked(incomingChannel.label || ''));
         incomingChannel.close();
       };
 
       return pc;
-    }, [appendSystemMessage, setupChatChannel, setupControlChannel, t]);
+    }, [appendSystemMessage, setupChatChannel, setupControlChannel, setupImageChannel, t]);
 
     /**
      * Resolves once ICE gathering finishes for the current connection.
@@ -746,6 +874,10 @@
       controlChannelRef.current = controlChannel;
       setupControlChannel(controlChannel);
 
+      const imageChannel = pc.createDataChannel(IMAGE_CHANNEL_LABEL);
+      imageChannelRef.current = imageChannel;
+      setupImageChannel(imageChannel);
+
       incomingTimestampsRef.current = [];
       iceDoneRef.current = false;
       setLocalSignal('');
@@ -765,7 +897,7 @@
       } finally {
         setIsCreatingOffer(false);
       }
-    }, [appendSystemMessage, ensurePeerConnection, setupChatChannel, setupControlChannel, waitForIce, t]);
+    }, [appendSystemMessage, ensurePeerConnection, setupChatChannel, setupControlChannel, setupImageChannel, waitForIce, t]);
 
     /**
      * Applies the pasted remote offer or answer to the peer connection.
@@ -1045,6 +1177,86 @@
       setAiError('');
     }, [appendMessage, appendSystemMessage, inputText, t]);
 
+    /**
+     * Handles image file selection and sends it through the image channel.
+     */
+    const handleImageSelect = useCallback(async (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (imageFileInputRef.current) {
+        imageFileInputRef.current.value = '';
+      }
+      if (!file) {
+        return;
+      }
+      const channel = imageChannelRef.current;
+      if (!channel || channel.readyState !== 'open') {
+        appendSystemMessage(t.imageShare.channelNotReady);
+        return;
+      }
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        appendSystemMessage(t.imageShare.invalidType);
+        return;
+      }
+      if (file.size > IMAGE_MAX_SIZE_BYTES) {
+        appendSystemMessage(t.imageShare.tooLarge);
+        return;
+      }
+      const now = Date.now();
+      imageSendTimestampsRef.current = imageSendTimestampsRef.current.filter(
+        (timestamp) => now - timestamp < IMAGE_INTERVAL_MS
+      );
+      if (imageSendTimestampsRef.current.length >= IMAGE_MAX_PER_INTERVAL) {
+        appendSystemMessage(t.imageShare.rateLimitSend);
+        return;
+      }
+      imageSendTimestampsRef.current.push(now);
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binaryString = '';
+        for (let i = 0; i < bytes.length; i++) {
+          binaryString += String.fromCharCode(bytes[i]);
+        }
+        const base64 = btoa(binaryString);
+        const imageId = `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const totalChunks = Math.ceil(base64.length / IMAGE_CHUNK_SIZE);
+        channel.send(JSON.stringify({
+          type: 'image-start',
+          imageId,
+          mimeType: file.type,
+          fileName: file.name,
+          totalSize: file.size,
+          totalChunks
+        }));
+        for (let i = 0; i < totalChunks; i++) {
+          const start = i * IMAGE_CHUNK_SIZE;
+          const end = Math.min(start + IMAGE_CHUNK_SIZE, base64.length);
+          const chunk = base64.substring(start, end);
+          channel.send(JSON.stringify({
+            type: 'image-chunk',
+            imageId,
+            chunkIndex: i,
+            totalChunks,
+            data: chunk
+          }));
+        }
+        const imageUrl = URL.createObjectURL(file);
+        appendMessage(t.imageShare.sentImage(file.name), 'local', {
+          imageUrl,
+          fileName: file.name
+        });
+      } catch (error) {
+        console.error('Failed to send image', error);
+        appendSystemMessage(t.imageShare.sendFailed);
+      }
+    }, [appendMessage, appendSystemMessage, t]);
+
+    const handleImageButtonClick = useCallback(() => {
+      if (imageFileInputRef.current) {
+        imageFileInputRef.current.click();
+      }
+    }, []);
+
     const handleRemoteKeyboardInput = useCallback((message) => {
       if (!remoteControlAllowedRef.current) {
         return;
@@ -1186,6 +1398,10 @@
         controlChannelRef.current.close();
         controlChannelRef.current = null;
       }
+      if (imageChannelRef.current) {
+        imageChannelRef.current.close();
+        imageChannelRef.current = null;
+      }
       if (pcRef.current) {
         pcRef.current.close();
         pcRef.current = null;
@@ -1221,6 +1437,9 @@
       controlIncomingTimestampsRef.current = [];
       controlWarningsRef.current = { rate: false, size: false };
       remoteKeyBudgetRef.current = CONTROL_TOTAL_TEXT_BUDGET;
+      imageTransfersRef.current.clear();
+      imageSendTimestampsRef.current = [];
+      imageReceiveTimestampsRef.current = [];
       setChannelReady(false);
       setChannelStatus(t.status.channelClosed);
       setStatus(t.status.disconnected);
@@ -2141,10 +2360,32 @@
                       'data-role': message.role
                     },
                     React.createElement('strong', null, t.chat.roleLabels[message.role] || t.chat.roleLabels.system),
-                    React.createElement('span', null, message.text))
+                    React.createElement('span', null, message.text),
+                    message.imageUrl && React.createElement('img', {
+                      src: message.imageUrl,
+                      alt: message.fileName || 'Shared image',
+                      className: 'chat-image',
+                      loading: 'lazy'
+                    }))
                   ))
             ),
             React.createElement('div', { className: 'chat-input' },
+              React.createElement('input', {
+                type: 'file',
+                ref: imageFileInputRef,
+                onChange: handleImageSelect,
+                accept: ALLOWED_IMAGE_TYPES.join(','),
+                style: { display: 'none' },
+                'aria-label': t.imageShare.selectImage
+              }),
+              React.createElement('button', {
+                type: 'button',
+                className: 'image-button',
+                onClick: handleImageButtonClick,
+                disabled: !channelReady,
+                'aria-label': t.imageShare.sendImage,
+                title: t.imageShare.sendImageTitle
+              }, '📷'),
               React.createElement('input', {
                 id: 'outgoing',
                 type: 'text',

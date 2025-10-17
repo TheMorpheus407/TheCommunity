@@ -213,6 +213,22 @@ const baseTranslation = Object.freeze({
       peerCanControl: 'Dein Peer kann nun deinen Bildschirm steuern. Behalte die Aktivitäten im Blick.',
       controlRevokedLocal: 'Fernsteuerung für deinen Bildschirm wurde beendet.'
     }
+  },
+  imageShare: {
+    selectImage: 'Bild auswählen',
+    sendImage: 'Bild senden',
+    sendImageTitle: 'Bild zum Senden auswählen',
+    channelReady: 'Bildfreigabe bereit.',
+    channelNotReady: 'Bildfreigabe noch nicht bereit. Warte auf Verbindung.',
+    invalidType: 'Ungültiger Bildtyp. Nur JPEG, PNG, GIF und WebP sind erlaubt.',
+    tooLarge: 'Bild ist zu groß. Maximale Größe ist 5 MB.',
+    rateLimitSend: 'Zu viele Bilder gesendet. Bitte warte eine Minute.',
+    rateLimitReceive: 'Zu viele Bilder empfangen. Peer sendet zu schnell.',
+    tooManyConcurrent: 'Zu viele gleichzeitige Bildübertragungen.',
+    sendFailed: 'Bild konnte nicht gesendet werden.',
+    receiveFailed: 'Bild konnte nicht empfangen werden.',
+    sentImage: (fileName) => `Bild gesendet: ${fileName}`,
+    receivedImage: (fileName) => `Bild empfangen: ${fileName}`
   }
 });
 
