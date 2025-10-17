@@ -806,6 +806,42 @@ textarea[readonly] {
   opacity: 0.6;
   cursor: not-allowed;
 }
+.chat-input input[type="text"] {
+  flex: 1;
+}
+.image-button {
+  flex-shrink: 0;
+  padding: 0.7rem 1rem;
+  font-size: 1.3rem;
+  line-height: 1;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+.image-button:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  border-color: var(--color-outline);
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.2);
+}
+.image-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.chat-image {
+  display: block;
+  max-width: 100%;
+  max-height: 400px;
+  margin-top: 0.5rem;
+  border-radius: 8px;
+  object-fit: contain;
+  cursor: pointer;
+  transition: transform 200ms ease;
+}
+.chat-image:hover {
+  transform: scale(1.02);
+}
 .hint {
   font-size: 0.85rem;
   color: var(--color-text-primary);
