@@ -49,9 +49,23 @@ jobs:
 
             Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
 
-            Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
+            CRITICAL INSTRUCTIONS:
+            1. Post your detailed review as a comment using `gh pr comment`
+            2. After posting your review, you MUST decide if the PR should be approved or blocked
+            3. If you find ANY of the following, you MUST fail this check by running `exit 1`:
+               - Critical bugs or security vulnerabilities
+               - Breaking changes without proper migration path
+               - Incomplete implementations that would break production
+               - Missing critical functionality promised in the PR description
+               - Code that violates the project's security or architectural guidelines
+            4. Only allow the check to pass (exit 0 or no explicit exit) if:
+               - The PR is production-ready
+               - Any issues found are minor/non-blocking
+               - The code meets quality standards
+
+            Think carefully about whether this PR should block or pass, then act accordingly.
 
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
-          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
+          claude_args: '--allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(exit *)"'
 
