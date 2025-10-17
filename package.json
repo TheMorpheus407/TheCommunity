@@ -3,7 +3,14 @@
   "version": "1.0.0",
   "description": "WebRTC P2P Chat Application",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:loading": "playwright test tests/loading-performance.spec.js",
+    "test:utils": "playwright test tests/utils.spec.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
   },
   "private": true
 }
