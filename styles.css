@@ -925,6 +925,159 @@ textarea[readonly] {
 .contributors-status.contributors-error {
   color: var(--color-text-warning);
 }
+
+/* ===== Statistics Section ===== */
+
+#statistics {
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-panel-border);
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow: var(--shadow-panel);
+}
+
+#statistics header {
+  margin-bottom: 1.5rem;
+}
+
+.statistics-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.statistics-status {
+  margin: 0.5rem 0;
+  color: var(--color-hint);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.statistics-status.statistics-error {
+  color: var(--color-text-error);
+}
+
+.statistics-table-wrapper {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.statistics-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface-strong);
+}
+
+.statistics-table thead {
+  background: var(--color-surface-alt);
+}
+
+.statistics-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  border-bottom: 2px solid var(--color-border-strong);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statistics-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text-soft);
+}
+
+.statistics-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.statistics-table tbody tr:hover {
+  background: var(--color-surface-hover);
+}
+
+.issue-number a {
+  color: var(--color-outline);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.issue-number a:hover {
+  color: var(--color-text-info);
+  text-decoration: underline;
+}
+
+.issue-title {
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.issue-summary {
+  max-width: 400px;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.issue-status {
+  text-align: center;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.status-badge.status-success {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-badge.status-failed {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-badge.status-pending {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.statistics-joke {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--color-surface-alt);
+  border-radius: 12px;
+  border: 1px solid var(--color-border-subtle);
+  text-align: center;
+}
+
+.statistics-joke h3 {
+  margin: 0 0 1rem 0;
+  color: var(--color-text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.statistics-joke p {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 1rem;
+  line-height: 1.6;
+  font-style: italic;
+}
+
 /* ===== Mobile Responsive Design ===== */
 
 /* Small phones and narrow screens (< 400px) */
