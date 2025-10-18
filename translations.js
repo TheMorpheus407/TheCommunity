@@ -473,6 +473,304 @@ const dialectConfigs = {
         }
       }
     }
+  },
+  fra: {
+    name: 'Fränggisch',
+    replacements: [],
+    overrides: {
+      mascot: {
+        ariaLabel: 'Grantigs Tux-Maskoddchn, schweb drüber, dann werd\'r gscheid narrisch'
+      },
+      app: {
+        title: 'PodTalk'
+      },
+      about: {
+        button: 'Üwwer',
+        buttonAriaLabel: 'Üwwer dess Broggd',
+        title: 'Üwwer TheCommunity',
+        description: 'Des is a Peer-to-Peer-WebRTC-Gschwätz-App ganz ohne Server. Die Gmoochdschaft regeldd all\'s über GitHub-Issues.',
+        contributorsTitle: 'Mitmoochda',
+        contributorsIntro: 'Vergelt\'s Gott an alla, die mit Issues gholfa hamm:',
+        loadingContributors: 'Lad Mitmoochda...',
+        contributorsError: 'Mitmoochda-Lisd konn ned gholdd werdn. Probier\'s späder nouchmool.',
+        noIssues: 'Nouch ka Issues. Mach a Issue auf, dann stähsd aa bei de Credits.',
+        issueCount: (count) => (count === 1 ? '1 Issue' : `${count} Issues`),
+        close: 'Zumachn',
+        closeAriaLabel: 'Üwwer-Dialog zumachn'
+      },
+      signaling: {
+        title: 'Handgmochds Signalisiern',
+        collapseAriaLabel: (collapsed) => (collapsed ? 'Signalisiern ausklappn' : 'Signalisiern einklappn'),
+        securityNotice: 'Sichaherheeds-Hinweis:',
+        securityWarning: 'Wennde dei WebRTC-Signal weitergibsd, zeigst a dei Netzwerkadressen. Gib\'s bloß Leit, dene\'d vertraugsd.',
+        step1: 'Schdridd 1: Oiner driggd auf „Aagebood machn" und gebbd des Signal weiter.',
+        step2: 'Schdridd 2: Der annere függds bei „Fremds Signal" ei, driggd auf „Remote owend" und dann auf „Antwort machn" un schickd des zrugg.',
+        step3: 'Schdridd 3: Der erst függd die Antwort aa bei „Fremds Signal" ei. Der Gschwätz fangd a, sobbald „verbundn" do steht.',
+        createOffer: 'Aagebood machn',
+        createAnswer: 'Antwort machn',
+        applyRemote: 'Remote owend',
+        disconnect: 'Obbruchn',
+        disconnectAriaLabel: 'Verbinddung zum Peer obbruchn',
+        working: 'Schaff...',
+        localSignalLabel: 'Eigns Signal (des weitergebm)',
+        localSignalPlaceholder: 'Des lokale SDP kummd do nei, sobbald\'s feardich is.',
+        remoteSignalLabel: 'Fremds Signal (des kriegde JSON nei)',
+        remoteSignalPlaceholder: 'Füg des JSON vom Peer ei. Drigg Strg+Enter (am Mac Cmd+Enter) oder klick auf Remote owend.',
+        copyButton: 'Kopiern',
+        copied: 'Kopierd!',
+        copyFailed: 'Fehlschlogn',
+        copyAriaLabel: 'Eigns Signal in Zwischenspeicha kopiern'
+      },
+      chat: {
+        title: 'Gschwätz',
+        addApiKey: 'OpenAI-Schlüssl eiwern',
+        updateApiKey: 'OpenAI-Schlüssl erneiern',
+        themeToggle: (nextTheme) => {
+          switch (nextTheme) {
+            case 'light':
+              return '🌞 Häller Modus';
+            case 'rgb':
+              return '🌈 RGB-Modus';
+            case 'dark':
+            default:
+              return '🌙 Dungler Modus';
+          }
+        },
+        themeToggleTitle: (nextTheme) => {
+          switch (nextTheme) {
+            case 'light':
+              return 'Aufs helle Bräschendaddion umschaltn';
+            case 'rgb':
+              return 'Aufn RGB-Gaming-Modus umschaltn';
+            case 'dark':
+            default:
+              return 'Aufs dungle Bräschendaddion umschaltn';
+          }
+        },
+        clear: 'Leer machn',
+        clearAriaLabel: 'Alla Gschwätz-Norichdn leschn',
+        emptyState: 'Nouch ka Norichdn. Verbinn di mit am Peer, wennnde schwätz maggsd.',
+        roleLabels: {
+          local: 'Du',
+          remote: 'Peer',
+          system: 'Hinweis'
+        },
+        inputPlaceholder: 'Norichd eiwern...',
+        inputAriaLabel: 'Norichd-Eigob',
+        aiButton: 'Mit KI umschreim',
+        aiButtonBusy: 'Schreim um...',
+        aiButtonNoKey: 'OpenAI-Schlüssl eiwern, damit KI geht',
+        aiButtonTitle: 'Lass OpenAI dei Norichd kloarer umschreim.',
+        aiButtonTitleNoKey: 'Eiwern dei OpenAI-Schlüssl, dann geht KI-Unterstützung.',
+        send: 'Schickn',
+        sendAriaLabel: 'Norichd schickn',
+        sendTitle: 'Norichd schickn',
+        charCount: (current, max) => `${current} / ${max}`
+      },
+      apiKeyModal: {
+        title: 'OpenAI-Integratschn',
+        close: 'Zumachn',
+        closeAriaLabel: 'API-Schlüssl-Dialog zumachn',
+        description: 'Gib dei persöhnlichn OpenAI-API-Schlüssl ei, dann geht die KI. Der Schlüssl bleibd bloß in dera Sitzung und gehd nur an api.openai.com.',
+        label: 'OpenAI-API-Schlüssl',
+        placeholder: 'sk-...',
+        hint: 'Gib dei Schlüssl ned auf fremde Gräd ein. Lad die Seit neu oder mach KI aus, wenn\'dn leschn maggsd.',
+        save: 'Schlüssl speichrn',
+        disable: 'KI ausschaltn',
+        continueWithout: 'Ohne KI weidamachn'
+      },
+      status: {
+        waiting: 'Waard auf Verbinddung...',
+        signalReady: 'Signal is feardich zum weitergebm',
+        ice: (state) => `ICE: ${state}`,
+        connection: (state) => `Verbinddung: ${state}`,
+        creatingOffer: 'Mach Aagebood...',
+        creatingAnswer: 'Mach Antwort...',
+        remoteApplied: (type) => `Fremds ${type} ogewendd`,
+        disconnected: 'Getrennd',
+        channelOpen: 'Kanal offn',
+        channelClosed: 'Kanal zua',
+        answerApplied: 'Antwort ogewendd, waards auf Kanal...'
+      },
+      systemMessages: {
+        themeSwitch: (theme) => {
+          switch (theme) {
+            case 'dark':
+              return 'Bräschendaddion is jetz dungl.';
+            case 'light':
+              return 'Bräschendaddion is jetz hell.';
+            case 'rgb':
+              return 'Bräschendaddion is jetz RGB-Gaming-Modus.';
+            default:
+              return `Bräschendaddion is jetz ${theme}.`;
+          }
+        },
+        continueWithoutAi: 'Mach ohne KI weida. Kannsd späda im Gschwätz no an Schlüssl eiwern.',
+        apiKeyStored: 'OpenAI-Schlüssl bloß in dera Sitzung speicherd. Lad die Seit neu, dann isser weg.',
+        aiDisabled: 'KI is aus. Norichdn geh\'n ohne KI.',
+        aiReady: 'KI is startklor. Prüff Vorschläg bevor\'d schickst.',
+        securityBlocked: 'Sicherheitsnotiz: Ned-textuelli Norichd geblockd.',
+        messageTooLong: (max) => `Norichd geblockd: zu lang, Limit ${max} Zeichn.`,
+        rateLimit: 'Limit: Peer schickd z\'viel.',
+        channelBlocked: (label) => `Sicherheitsnotiz: Unnerwaards Datenkanal „${label || 'unbenannt'}" geblockd.`,
+        createOfferFailed: 'Aagebood konn ned gmachd werdn. Prüff Browser-Erschtattung un WebRTC.',
+        remoteEmpty: 'Fremds Signal is leer. Füg des JSON ei.',
+        remoteInvalidJson: 'Fremds Signal is ka gültigs JSON.',
+        remoteMissingData: 'Dem fremdn Signal fehln Datn. Nimm des Angebot oder die Antwort wia\'s is.',
+        createAnswerFailed: 'Antwort konn ned gmachd werdn. Wend erst a gültigs Angebot aa.',
+        needOfferForAnswer: 'Antwort braucht erst a Angebot.',
+        messageInputTooLong: (max, current) => `Norichd zu lang: Limit ${max}, jetzt ${current}.`,
+        disconnectNotice: 'Verbinddung weg. Mach a neis Aagebood.',
+        aiRewriteFailed: (error) => `KI-Umsschreimn is schiefganga: ${error || 'Anfrooch abgweisn.'}`,
+        aiTruncated: 'KI-Vorschlog is gkürzt, damit\'s nei passt.',
+        aiSuggestionApplied: 'KI-Vorschlog übernumm. Prüff bevor\'d schickst.',
+        chatCleared: 'Gschwätz-Verlauf is glöscht.',
+        aiRewriteNotAttempted: (max) => `Konn ned umgeschriebn werdn: mussi unner ${max} Zeichn bleim.`,
+        languageChanged: (name) => `Sprooch auf ${name} gstellt.`
+      },
+      aiErrors: {
+        emptyKey: 'Gib an OpenAI-Schlüssl ei, dann gehd des Umschreimn.',
+        unauthorized: 'OpenAI hods abgweisn. Prüff dei Schlüssl.',
+        requestFailed: (status) => `OpenAI-Anfrooch schiefganga (Status ${status}).`,
+        missingContent: 'Antwort hod kan Text ghabt.',
+        emptySuggestion: 'OpenAI hod nix gschriebn.'
+      },
+      language: {
+        label: 'Sprooch',
+        ariaLabel: 'Sprooch aussuchn'
+      },
+      screenShare: {
+        header: 'Gloddsn-Freigebm',
+        actions: {
+          start: 'Freigebm anfang',
+          startAria: 'Gloddsn frei gebm',
+          sharing: 'Freigebm laffd...',
+          stop: 'Freigebm aufhörn',
+          stopAria: 'Gloddsn-Freigebm stoppn'
+        },
+        includeAudio: 'System-Audio aa gebm',
+        status: {
+          sharing: 'Gebbd dei Gloddsn frei',
+          ready: 'Bereid zur Frei gebm',
+          connect: 'Verbinn di, dann gehd Gloddsn-Frei gebm'
+        },
+        remote: {
+          receiving: 'Kriegd Gloddsn vom Peer',
+          idle: 'Peer gebbd grad nix frei',
+          title: 'Gloddsn vom Peer',
+          ariaInteractive: 'Vorschau vom Peer-Gloddsn. Fokus drauf, dann koochsd steuern.',
+          aria: 'Vorschau vom Peer-Gloddsn',
+          streamAria: 'Gloddsn-Stream vom Peer',
+          peerStarted: 'Peer hod Frei gebm angfang.',
+          peerStopped: 'Peer hod Frei gebm aufghörd.'
+        },
+        local: {
+          title: 'Dei Gloddsn',
+          aria: 'Eigene Gloddsn-Vorschau',
+          placeholderReady: 'Starz Frei gebm, dann sehgn die annern dei Gloddsn.',
+          placeholderDisconnected: 'Verbinn di mit am Peer, dann gehd Frei gebm.'
+        },
+        messages: {
+          stopped: 'Frei gebm is zua.',
+          notSupported: 'Dei Browser kennts ned.',
+          started: 'Gloddsn-Frei gebm laffd. Pass auf mit sensible Sache.'
+        },
+        errors: {
+          peerNotReady: 'Peer is no ned soweit.',
+          noVideoTrack: 'Kan Video-Kanal aus der Aufnahm kriagt.',
+          permissionDenied: 'Erlaubnis verweigert.',
+          failed: (reason) => `Frei gebm is schiefganga: ${reason}`
+        },
+        footnote: 'Gloddsn-Frei gebm is direkt Peer-to-Peer. Gebbd\'s bloß Leit, dene\'d vertraugsd.'
+      },
+      remoteControl: {
+        label: 'Fernschderung:',
+        actions: {
+          allow: 'Fernschderung erlauba',
+          disable: 'Fernschderung beendn'
+        },
+        statusDisabled: 'Fernschderung aus',
+        statusGranted: 'Fernschderung an – du kanschd dei Gloddsn steuern loßn',
+        statusDisabledByPeer: 'Peer hod Fernschderung ausgmachd',
+        statusChannelClosed: 'Fernschder-Kanal zua',
+        statusDisabledInputLimit: 'Fernschderung aus (z\'vui Eingobn)',
+        statusEnabled: 'Fernschderung an – Peer derf steuern',
+        statusUnavailable: 'Fernschder-Kanal ned da',
+        hints: {
+          active: 'Fernschderung an – beweg dei Maus do, dann gehd\'s.'
+        },
+        system: {
+          disabledOnScreenStop: 'Fernschderung aus, weil Frei gebm gstoppt is.',
+          revokeFailed: 'Peer konnt ned informiert werdn.',
+          payloadTooLarge: 'Nachricht zu groß, ignoriert.',
+          rateLimited: 'Zu vui Eingobn, Kanal is gebremst.',
+          peerEnabled: 'Peer derf jetz steuern. Nutz Vorschau.',
+          peerDisabled: 'Peer hod ausgmachd.',
+          deliveryFailed: 'Nachricht konnt ned gschickt werdn. Prüff Verbinddung.',
+          typingDisabled: 'Eingobn blockiert: Limit erreicht.',
+          unavailable: 'Fernschderung gehd erst, wenn Kanal bereit.',
+          negotiating: 'Verhandeld no... wart a weng.',
+          requiresScreenShare: 'Mach erst Frei gebm an.',
+          updateFailed: 'Konn Status ned aktualisiern. Probier nouchmool.',
+          peerCanControl: 'Dei Peer kann jetz dei Gloddsn bedienn. Pass auf.',
+          controlRevokedLocal: 'Fernschderung is ausgmachd.'
+        }
+      },
+      imageShare: {
+        selectImage: 'Bild aussuchn',
+        sendImage: 'Bild schickn',
+        sendImageTitle: 'Bild zum Schickn aussuchn',
+        channelReady: 'Bildfreigebm bereit.',
+        channelNotReady: 'Bildfreigebm no ned soweit.',
+        invalidType: 'Falscha Bild-Typ. Nua JPEG, PNG, GIF, WebP.',
+        tooLarge: 'Bild z\'groß. Max 5 MB.',
+        rateLimitSend: 'Z\'vui Bildla gschickd. Wart a Minud.',
+        rateLimitReceive: 'Peer schickd z\'vui Bildla.',
+        tooManyConcurrent: 'Z\'vui gleichzeidige Übertragungen.',
+        sendFailed: 'Bild konnt ned gschickd werdn.',
+        receiveFailed: 'Bild konnt ned emfpangd werdn.',
+        sentImage: (fileName) => `Bild gschickd: ${fileName}`,
+        receivedImage: (fileName) => `Bild kriagt: ${fileName}`
+      },
+      statistics: {
+        title: 'KI-Statistik',
+        header: 'Von KI g\'löste Issues',
+        loading: 'Lad Statistik...',
+        error: 'Statistik konnt ned gholdd werdn.',
+        noIssues: 'Nouch ka Issues von KI.',
+        issueNumber: (num) => `Issue #${num}`,
+        status: {
+          success: 'Erfolgrich g\'löist',
+          failed: 'Fehler gabbd',
+          pending: 'No am machn'
+        },
+        columns: {
+          issue: 'Issue',
+          title: 'Titel',
+          summary: 'Zsammafassung',
+          status: 'Status'
+        },
+        summaryPlaceholder: 'Zsammafassung kummd...',
+        summaryError: 'Zsammafassung ned da',
+        aiSummaryNote: 'KI-Zsammafassung gehd, wenn a OpenAI-Schlüssl do is.',
+        cachedNote: 'Daten werdn 5 Minud gspeicherd.',
+        joke: {
+          title: 'Derber Witz vom Dog',
+          jokes: [
+            'Warum mög Programmiera die Natur ned? Z\'vui Bugs.',
+            'A Entwickla is gstorbn. Letzde Wort: "Auf meiner Maschin gehd\'s..."',
+            'Wie vui Programmiera brauchd\'s für a Glühbirn? Koi. Is Hardware.',
+            'Der schlimmsde Bug is der, dennd scho gfixd ghabt hosd... in am annarn Branch.',
+            'A SQL-Query gehd in a Bar, sieht zwa Tabellen: "Darf i joinen?"',
+            'Debuggn is wia a Krimi, wo\'d selba Mörder un Kommissar bischd.',
+            'Es gebbd nua zwa harte Problems: Cache invalidiern, Namen gebm un Off-by-One.',
+            'Des ei\'zig schlimmer wie Legacy-Code is dei eigana vo vor 6 Monatn.',
+            '"Is nur a kloana Fix" – berühmd letzte Wort vorm 3-Daach-Debuggn.',
+            'Manch Leit träum von Albtraum. Entwickla träum vom Friday-Deploy.'
+          ]
+        }
+      }
+    }
   }
 };
 
@@ -483,7 +781,8 @@ const translations = Object.freeze({
   sxu: createDialect(dialectConfigs.sxu),
   ber: createDialect(dialectConfigs.ber),
   rhe: createDialect(dialectConfigs.rhe),
-  snoe: createDialect(dialectConfigs.snoe)
+  snoe: createDialect(dialectConfigs.snoe),
+  fra: createDialect(dialectConfigs.fra)
 });
 
 function getTranslation(trans, path) {
