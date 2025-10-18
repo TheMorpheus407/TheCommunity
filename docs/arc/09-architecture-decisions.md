@@ -377,8 +377,8 @@ Monolithic app.js needs refactoring, but must not break production.
 ### Decision
 
 Refactor incrementally in phases:
-1. Phase 1: Extract modules (no integration yet)
-2. Phase 2: Extract managers
+1. Phase 1: Extract modules (no integration yet) ✅
+2. Phase 2: Extract managers ✅
 3. Phase 3: Extract components
 4. Phase 4: Switch to modular entry point
 
@@ -414,7 +414,7 @@ Refactor incrementally in phases:
 
 ### Status
 
-Accepted. Phase 1 complete, Phase 2 planned.
+Accepted. Phase 1 and 2 complete, Phase 3 planned.
 
 ---
 

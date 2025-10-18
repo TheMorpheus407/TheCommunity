@@ -85,11 +85,11 @@ This section identifies known risks and technical debt in the system.
 | **Probability** | High (current reality) |
 | **Impact** | Medium (slows development, hinders contributions) |
 | **Detection** | Developer complaints, slow PR velocity |
-| **Mitigation** | Progressive refactoring (Phase 1 complete, Phase 2 planned) |
+| **Mitigation** | Progressive refactoring (Phase 1 and 2 complete, Phase 3 planned) |
 
 **Progress**:
 - ✅ Phase 1: Modules extracted (constants, utils, components)
-- 🔄 Phase 2: Manager extraction (planned)
+- ✅ Phase 2: Manager extraction (complete)
 - 📅 Phase 3: Component extraction (planned)
 - 📅 Phase 4: Complete migration (planned)
 
@@ -175,13 +175,13 @@ This section identifies known risks and technical debt in the system.
 
 **Plan to Address**:
 - ✅ Phase 1: Extract modules (constants, utils) - **COMPLETE**
-- 🔄 Phase 2: Extract managers (WebRTC, chat, etc.) - **PLANNED**
+- ✅ Phase 2: Extract managers (WebRTC, chat, etc.) - **COMPLETE**
 - 📅 Phase 3: Extract components - **FUTURE**
 - 📅 Phase 4: Complete migration - **FUTURE**
 
 **Estimated Effort**: 4 PRs, ~40 hours total (across all phases)
 
-**Progress**: 25% complete (Phase 1 done)
+**Progress**: 50% complete (Phase 1 and 2 done)
 
 ### DEBT-2: Limited Test Coverage
 
@@ -390,7 +390,7 @@ This section identifies known risks and technical debt in the system.
 - Maintain backward compatibility
 - Test after each phase
 
-**Progress**: Phase 1 complete, Phase 2 planned
+**Progress**: Phase 1 and 2 complete, Phase 3 planned
 
 ### Strategy 2: Increase Test Coverage
 
@@ -461,11 +461,11 @@ These are **conscious decisions**, not oversights.
 
 - ✅ Complete arc42 documentation (DEBT-1 related)
 
-### Phase 2 (Next 1-2 months)
+### Phase 2 (Complete)
 
-- 🔄 Extract manager classes (DEBT-1)
-- 🔄 Add unit tests for modules (DEBT-2)
-- 🔄 Mock WebRTC APIs (DEBT-2)
+- ✅ Extract manager classes (DEBT-1)
+- 📅 Add unit tests for modules (DEBT-2) - moved to Phase 3
+- 📅 Mock WebRTC APIs (DEBT-2) - moved to Phase 3
 
 ### Phase 3 (Next 3-6 months)
 
