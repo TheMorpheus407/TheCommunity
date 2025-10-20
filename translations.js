@@ -994,6 +994,323 @@ const dialectConfigs = {
       }
     }
   },
+  ale: {
+    name: 'Alemannisch',
+    replacements: [
+      [/\bNicht\b/g, 'Nit'],
+      [/\bnicht\b/g, 'nit'],
+      [/\bIch\b/g, 'I'],
+      [/\bich\b/g, 'i'],
+      [/\bist\b/g, 'isch'],
+      [/\bIst\b/g, 'Isch'],
+      [/\bdas\b/g, 'des'],
+      [/\bDas\b/g, 'Des'],
+      [/\bdein\b/g, 'di'],
+      [/\bDein\b/g, 'Di'],
+      [/\bdeine\b/g, 'dini'],
+      [/\bDeine\b/g, 'Dini'],
+      [/\bauch\b/g, 'au'],
+      [/\bAuch\b/g, 'Au'],
+      [/\bfür\b/g, 'fer'],
+      [/\bFür\b/g, 'Fer'],
+      [/\bPeer\b/g, 'Gsell'],
+      [/\bpeer\b/g, 'gsell']
+    ],
+    overrides: {
+      mascot: {
+        ariaLabel: 'Würschts Tux-Maskottli, schweb drüber, denn wird\'r arg wüescht'
+      },
+      app: {
+        title: 'PodTalk'
+      },
+      about: {
+        button: 'Über',
+        buttonAriaLabel: 'Über des Projäkt',
+        title: 'Über TheCommunity',
+        description: 'Des isch e Peer-to-Peer-WebRTC-Chat-Awendig ohni Backend. D\'Community stüürt alles über GitHub-Issues.',
+        contributorsTitle: 'Mitschaffer',
+        contributorsIntro: 'Vergält\'s Gott allne, wo mit Issues mitgholfe hän:',
+        loadingContributors: 'Lade Mitschaffer...',
+        contributorsError: 'Mitschaffer-Lischt het nit chönne glade werde. Bitte später nomol probiere.',
+        noIssues: 'No kei Issues. Mach eis uf, denn stohsch au bi de Credits.',
+        issueCount: (count) => (count === 1 ? '1 Issue' : `${count} Issues`),
+        close: 'Zueche',
+        closeAriaLabel: 'Über-Dialog zueche'
+      },
+      signaling: {
+        title: 'Händischs Signalisiere',
+        collapseAriaLabel: (collapsed) => (collapsed ? 'Signalisierig uufchlappe' : 'Signalisierig zueche'),
+        securityNotice: 'Sicherheits-Hinwis:',
+        securityWarning: 'S\'Teile vo WebRTC-Signal zeigt dini Netzwärk-Adrässe. Teil Aagebot numme mit Lüt, wo\'de vertrausch.',
+        step1: 'Schritt 1: Eini Person druckt uf „Aagebot mache" und teilt des Signal, wo denn chunnt.',
+        step2: 'Schritt 2: Di ander Person füegt\'s bi „Fremds Signal" ii, druckt uf „Remote aawände", denn uf „Antwort mache" und teilt ihri Antwort.',
+        step3: 'Schritt 3: Di erscht Person füegt d\'Antwort bi „Fremds Signal" ii und wendet si aa. Dr Chat goht los, sobald „verbunde" aazeigt wird.',
+        createOffer: 'Aagebot mache',
+        createAnswer: 'Antwort mache',
+        applyRemote: 'Remote aawände',
+        disconnect: 'Tränne',
+        disconnectAriaLabel: 'Verbindig zum Gsell tränne',
+        working: 'Am schaffe...',
+        localSignalLabel: 'Eigets Signal (des teile)',
+        localSignalPlaceholder: 'S\'lokal SDP erschiint do, sobald\'s bereit isch.',
+        remoteSignalLabel: 'Fremds Signal (überchunnets JSON do iifüege)',
+        remoteSignalPlaceholder: 'Füeg s\'JSON vo dim Gsell ii. Druck Strg+Enter (Cmd+Enter uf em Mac) oder klick uf Remote aawände.',
+        copyButton: 'Kopiere',
+        copied: 'Kopiert!',
+        copyFailed: 'Fählgschlage',
+        copyAriaLabel: 'Eigets Signal i d\'Zwüscheablag kopiere'
+      },
+      chat: {
+        title: 'Schwätze',
+        addApiKey: 'OpenAI-Schlüssel hinzuefüege',
+        updateApiKey: 'OpenAI-Schlüssel aktualisiere',
+        themeToggle: (nextTheme) => {
+          switch (nextTheme) {
+            case 'light':
+              return '🌞 Helle Modus';
+            case 'rgb':
+              return '🌈 RGB-Modus';
+            case 'dark':
+            default:
+              return '🌙 Dungle Modus';
+          }
+        },
+        themeToggleTitle: (nextTheme) => {
+          switch (nextTheme) {
+            case 'light':
+              return 'Zum helle Theme wächsle';
+            case 'rgb':
+              return 'Zum RGB-Gaming-Modus wächsle';
+            case 'dark':
+            default:
+              return 'Zum dungle Theme wächsle';
+          }
+        },
+        clear: 'Leere',
+        clearAriaLabel: 'Alli Chat-Nachrichta lösche',
+        emptyState: 'No kei Nachrichta. Verbind di mit eme Gsell zum Schwätze.',
+        roleLabels: {
+          local: 'Du',
+          remote: 'Gsell',
+          system: 'Hinwis'
+        },
+        inputPlaceholder: 'Nachricht iigä...',
+        inputAriaLabel: 'Nachricht-Iigab',
+        aiButton: 'Mit KI umschriibe',
+        aiButtonBusy: 'Am Umschriibe...',
+        aiButtonNoKey: 'OpenAI-Schlüssel hinzuefüege zum KI aktiviere',
+        aiButtonTitle: 'Los OpenAI e chlare Vorschlag fer dini Nachricht mache.',
+        aiButtonTitleNoKey: 'Füeg di OpenAI-Schlüssel hinzue zum KI-Unterstützig aktiviere.',
+        send: 'Schicke',
+        sendAriaLabel: 'Nachricht schicke',
+        sendTitle: 'Nachricht schicke',
+        charCount: (current, max) => `${current} / ${max}`
+      },
+      apiKeyModal: {
+        title: 'OpenAI-Integratschon',
+        close: 'Zueche',
+        closeAriaLabel: 'API-Schlüssel-Dialog zueche',
+        description: 'Gib di persönliche OpenAI-API-Schlüssel ii zum optionali KI-Unterstützig aktiviere. Dr Schlüssel bliibt numme in däre Sitzig gspicheret und wird usschliesslich aa api.openai.com gschickt.',
+        label: 'OpenAI-API-Schlüssel',
+        placeholder: 'sk-...',
+        hint: 'Gib API-Schlüssel nie uf nit vertrauenswürdige Grät ii. Aktualisier d\'Sitte oder deaktiviere d\'KI zum dr Schlüssel z\'entferne.',
+        save: 'Schlüssel spichere',
+        disable: 'KI deaktiviere',
+        continueWithout: 'Ohni KI witerfahre'
+      },
+      status: {
+        waiting: 'Warte uf Verbindig...',
+        signalReady: 'Signal bereit zum Teile',
+        ice: (state) => `ICE: ${state}`,
+        connection: (state) => `Verbindig: ${state}`,
+        creatingOffer: 'Am Aagebot mache...',
+        creatingAnswer: 'Am Antwort mache...',
+        remoteApplied: (type) => `Fremds ${type} aagwendet`,
+        disconnected: 'Gtrännt',
+        channelOpen: 'Kanal offe',
+        channelClosed: 'Kanal zue',
+        answerApplied: 'Antwort aagwendet, warte uf Kanal...'
+      },
+      systemMessages: {
+        themeSwitch: (theme) => {
+          switch (theme) {
+            case 'dark':
+              return 'Theme gwächselt zum dungle Modus.';
+            case 'light':
+              return 'Theme gwächselt zum helle Modus.';
+            case 'rgb':
+              return 'Theme gwächselt zum RGB-Gaming-Modus.';
+            default:
+              return `Theme gwächselt zu ${theme}.`;
+          }
+        },
+        continueWithoutAi: 'Ohni KI-Unterstützig witerfahre. Du chasch später im Chat-Beriich e Schlüssel hinzuefüege.',
+        apiKeyStored: 'OpenAI-Schlüssel numme i däre Browser-Sitzig gspicheret. Aktualisier d\'Sitte zum ne z\'entferne.',
+        aiDisabled: 'KI-Unterstützig deaktiviert. Nachrichta werde ohni KI gschickt.',
+        aiReady: 'OpenAI-Unterstützig bereit. Prüef Vorschläg vor em Schicke.',
+        securityBlocked: 'Sicherheitsnotiz: Nit-textuelli Nachricht blockiert.',
+        messageTooLong: (max) => `Nachricht blockiert: überschriitet s\'Limit vo ${max} Zeiche.`,
+        rateLimit: 'Rate-Limit aktiv: Gsell schickt Nachrichta z\'schnäll.',
+        channelBlocked: (label) => `Sicherheitsnotiz: Unerwartet Datekanal „${label || 'unbenannt'}" blockiert.`,
+        createOfferFailed: 'Aagebot het nit chönne gmacht werde. Prüef Browser-Berechtigunge und WebRTC-Unterstützig.',
+        remoteEmpty: 'Fremds Signal isch leer. Füeg s\'überchunne JSON ii.',
+        remoteInvalidJson: 'Fremds Signal isch kei gültigs JSON. Kopier s\'vollständig Signal nomol.',
+        remoteMissingData: 'Em fremde Signal fähle erforderlichi Date. Stell sicher, dass Aagebot oder Antwort unveränderet iigfüegt worde sind.',
+        createAnswerFailed: 'Antwort het nit chönne gmacht werde. Wend zerscht e gültigs Aagebot aa und prüef d\'WebRTC-Unterstützig.',
+        needOfferForAnswer: 'Zum e Antwort mache wird vorhär e Aagebot benötigt.',
+        messageInputTooLong: (max, current) => `Nachricht z\'lang: Limit ${max} Zeiche (aktuell ${current}).`,
+        disconnectNotice: 'Verbindig gtrännt. Mach e neus Aagebot zum erneut verbinde.',
+        aiRewriteFailed: (error) => `KI-Umschriibig fählgschlage: ${error || 'Aafrog isch zruckgwiese worde.'}`,
+        aiTruncated: 'KI-Vorschlag gchürzt zum s\'Zeichelimit iizhalte.',
+        aiSuggestionApplied: 'KI-Vorschlag übernumme. Prüef vor em Schicke.',
+        chatCleared: 'Chatverlauf glöscht.',
+        aiRewriteNotAttempted: (max) => `KI-Umschriibig nit mögli: Entwürf müend unter ${max} Zeiche bliibe.`,
+        languageChanged: (name) => `Sproch uf ${name} umgstellt.`
+      },
+      aiErrors: {
+        emptyKey: 'Gib e OpenAI-API-Schlüssel ii zum d\'KI-Umschriibig aktiviere.',
+        unauthorized: 'OpenAI het d\'Aafrog zruckgwiese. Prüef Schlüssel und Berechtigunge.',
+        requestFailed: (status) => `OpenAI-Aafrog fählgschlage (Status ${status}).`,
+        missingContent: 'Antwort vo OpenAI enthält kei Text.',
+        emptySuggestion: 'OpenAI het kei Vorschlag glieferet.'
+      },
+      language: {
+        label: 'Sproch',
+        ariaLabel: 'Sproch uuswähle'
+      },
+      screenShare: {
+        header: 'Bildschirm-Friigab',
+        actions: {
+          start: 'Friigab starte',
+          startAria: 'Bildschirm friigä',
+          sharing: 'Friigab lauft...',
+          stop: 'Friigab beände',
+          stopAria: 'Bildschirm-Friigab stoppe'
+        },
+        includeAudio: 'Systemaudio au iibzieh',
+        status: {
+          sharing: 'Teilt di Bildschirm',
+          ready: 'Bereit zur Friigab',
+          connect: 'Verbind di zum Bildschirm-Friigab aktiviere'
+        },
+        remote: {
+          receiving: 'Am Bildschirm vom Gsell empfange',
+          idle: 'Gsell teilt grad kei Bildschirm',
+          title: 'Bildschirm vom Gsell',
+          ariaInteractive: 'Vorschau vom Gsell-Bildschirm. Fokus setze zum schtüüre.',
+          aria: 'Vorschau vom Gsell-Bildschirm',
+          streamAria: 'Bildschirm-Stream vom Gsell',
+          peerStarted: 'Gsell het d\'Bildschirm-Friigab gstartet.',
+          peerStopped: 'Gsell het d\'Bildschirm-Friigab beändet.'
+        },
+        local: {
+          title: 'Di Bildschirm',
+          aria: 'Eigeti Bildschirm-Vorschau',
+          placeholderReady: 'Start d\'Friigab zum di Bildschirm z\'schicke.',
+          placeholderDisconnected: 'Verbind di mit eme Gsell zum Bildschirm-Friigab aktiviere.'
+        },
+        messages: {
+          stopped: 'Bildschirm-Friigab beändet.',
+          notSupported: 'Bildschirm-Friigab wird i dem Browser nit unterstützt.',
+          started: 'Bildschirm-Friigab aktiv. Acht uf sensibli Inhalt.'
+        },
+        errors: {
+          peerNotReady: 'Gsell-Verbindig isch no nit bereit.',
+          noVideoTrack: 'Kei Videospur us dr Bildschirm-Ufnahm überchunne.',
+          permissionDenied: 'Berechtigung isch verweigeret worde.',
+          failed: (reason) => `Bildschirm-Friigab fählgschlage: ${reason}`
+        },
+        footnote: 'Bildschirm-Friigab isch rein Peer-to-Peer. Teil Zuegriff numme mit Lüt, wo\'de vertrausch.'
+      },
+      remoteControl: {
+        label: 'Fernschteuerig:',
+        actions: {
+          allow: 'Fernschteuerig erlaube',
+          disable: 'Fernschteuerig beände'
+        },
+        statusDisabled: 'Fernschteuerig deaktiviert',
+        statusGranted: 'Fernschteuerig erlaubt – mit Bildschirm interagiere',
+        statusDisabledByPeer: 'Fernschteuerig vom Gsell beändet',
+        statusChannelClosed: 'Fernschteuerigs-Kanal gschlosse',
+        statusDisabledInputLimit: 'Fernschteuerig deaktiviert (Iigabelimit erreicht)',
+        statusEnabled: 'Fernschteuerig aktiv – Gsell derf schtüüre',
+        statusUnavailable: 'Fernschteuerigs-Kanal nit verfüegbar',
+        hints: {
+          active: 'Fernschteuerig aktiv – beweg dr Cursor do zum interagiere.'
+        },
+        system: {
+          disabledOnScreenStop: 'Fernschteuerig deaktiviert, will d\'Bildschirm-Friigab beändet worde isch.',
+          revokeFailed: 'Gsell het nit chönne über di beändet Fernschteuerig informiert werde.',
+          payloadTooLarge: 'Fernschteuerigs-Nachricht ignoriert: Nutzlast z\'gross.',
+          rateLimited: 'Fernschteuerigs-Kanal gedrosslet. Z\'vieli Iigabe.',
+          peerEnabled: 'Gsell het d\'Fernschteuerig erlaubt. Nutz d\'Vorschau zum Interagiere.',
+          peerDisabled: 'Gsell het d\'Fernschteuerig deaktiviert.',
+          deliveryFailed: 'Fernschteuerigs-Nachricht het nit chönne zuegstellt werde. Verbindig prüefe.',
+          typingDisabled: 'Remote-Iigabe deaktiviert: Iigabelimit erreicht.',
+          unavailable: 'Fernschteuerig isch erscht mögli, wenn dr Schteuerkanal bereit isch.',
+          negotiating: 'Fernschteuerigs-Kanal verhandlet no. Bitte churz warte.',
+          requiresScreenShare: 'Start zerscht d\'Bildschirm-Friigab zum Fernschteuerig aktiviere.',
+          updateFailed: 'Fernschteuerigs-Status het nit chönne aktualisiert werde. Bitte erneut versuche.',
+          peerCanControl: 'Di Gsell cha jetz di Bildschirm schtüüre. Bhalte d\'Aktivitäte im Aug.',
+          controlRevokedLocal: 'Fernschteuerig fer di Bildschirm isch beändet worde.'
+        }
+      },
+      imageShare: {
+        selectImage: 'Bild uuswähle',
+        sendImage: 'Bild schicke',
+        sendImageTitle: 'Bild zum Schicke uuswähle',
+        channelReady: 'Bildfriigab bereit.',
+        channelNotReady: 'Bildfriigab no nit bereit. Warte uf Verbindig.',
+        invalidType: 'Ungültige Bildtyp. Numme JPEG, PNG, GIF und WebP sind erlaubt.',
+        tooLarge: 'Bild isch z\'gross. Maximali Gröss isch 5 MB.',
+        rateLimitSend: 'Z\'vieli Bilder gschickt. Bitte wart e Minute.',
+        rateLimitReceive: 'Z\'vieli Bilder empfange. Gsell schickt z\'schnäll.',
+        tooManyConcurrent: 'Z\'vieli glychziitigi Bildübertraigunge.',
+        sendFailed: 'Bild het nit chönne gschickt werde.',
+        receiveFailed: 'Bild het nit chönne empfange werde.',
+        sentImage: (fileName) => `Bild gschickt: ${fileName}`,
+        receivedImage: (fileName) => `Bild empfange: ${fileName}`
+      },
+      statistics: {
+        title: 'KI-Statistik',
+        header: 'Vo KI glösti Issues',
+        loading: 'Am Statistike lade...',
+        error: 'Statistike hän nit chönne glade werde.',
+        noIssues: 'No kei vo KI glösti Issues gfunde.',
+        issueNumber: (num) => `Issue #${num}`,
+        status: {
+          success: 'Erfolgriich glöst',
+          failed: 'Probleem uufgtrete',
+          pending: 'Am Bearbeite'
+        },
+        columns: {
+          issue: 'Issue',
+          title: 'Titel',
+          summary: 'Zämmefassig',
+          status: 'Status'
+        },
+        summaryPlaceholder: 'Zämmefassig wird glade...',
+        summaryError: 'Zämmefassig nit verfüegbar',
+        aiSummaryNote: 'KI-Zämmefassige werde generiert, wenn e OpenAI-Schlüssel verfüegbar isch.',
+        cachedNote: 'Date werde 5 Minute zwüschegspicheret.',
+        joke: {
+          title: 'Makabere Witz vom Tag',
+          jokes: [
+            'Wurum möge Programmierer d\'Natur nit? Z\'vieli Bugs.',
+            'E Entwickler isch gstorbe. Si letscht Wort: "Es funktioniert uf minere Maschine..."',
+            'Wie vieli Programmierer brucht\'s zum e Glüehbirne wächsle? Kei. Des isch e Hardware-Problem.',
+            'Dr schlimmst Bug isch dä, wo\'de scho behobbe hesch... i eme andere Branch.',
+            'E SQL-Query goht i e Bar, gseht zwei Tabelle und frogt: "Derf i joinen?"',
+            'Debugge isch wie e Detektivfilm, wo\'de gliichzitig Mörder und Detektiv bisch.',
+            'Es git numme zwei hert Problem i dr Informatik: Cache-Invalidierig, Name vergä und Off-by-One-Fähler.',
+            'S\'einzig, wo schlimmer isch als Legacy-Code, isch Code, wo\'de sälber vor 6 Mönet gschriibe hesch.',
+            '"Es isch numme e chline Fix" - Berüehmti letschti Wort vor 3 Täg Debugge.',
+            'Manchi Lüt hän Alpträum. Entwickler träume vo Production-Deployments am Fritignochmittag.'
+          ]
+        }
+      }
+    }
+  },
   fra: {
     name: 'Fränggisch',
     replacements: [],
@@ -1302,6 +1619,7 @@ const translations = Object.freeze({
   ber: createDialect(dialectConfigs.ber),
   rhe: createDialect(dialectConfigs.rhe),
   snoe: createDialect(dialectConfigs.snoe),
+  ale: createDialect(dialectConfigs.ale),
   fra: createDialect(dialectConfigs.fra)
 });
 
