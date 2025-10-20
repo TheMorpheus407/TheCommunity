@@ -616,7 +616,7 @@ const dialectConfigs = {
     overrides: {
       language: {
         label: 'Sproche',
-        ariaLabel: 'Sproche auswähl'n'
+        ariaLabel: 'Sproche auswähl\'n'
       },
       chat: {
         themeToggleTitle: (nextTheme) => {
@@ -674,7 +674,7 @@ const dialectConfigs = {
           title: 'Deine Glotzbüchse',
           aria: 'Eigene Glotzbüchse-Vorschau',
           placeholderReady: 'Start die Freigabe, um deine Glotzbüchse zu senden.',
-          placeholderDisconnected: 'Verbind disch mit 'nem Kumpel, um Glotzbüchse-Freigabe zu aktiviern.'
+          placeholderDisconnected: 'Verbind disch mit \'nem Kumpel, um Glotzbüchse-Freigabe zu aktiviern.'
         },
         messages: {
           stopped: 'Glotzbüchse-Freigabe beendet.',
@@ -797,7 +797,7 @@ const dialectConfigs = {
           title: 'Deine Flimmerkiste',
           aria: 'Eigene Flimmerkiste-Vorschau',
           placeholderReady: 'Start die Freigabe, um deine Flimmerkiste zu senden.',
-          placeholderDisconnected: 'Verbind dir mit 'nem Kumpel, um Flimmerkiste-Freigabe zu aktivieren.'
+          placeholderDisconnected: 'Verbind dir mit \'nem Kumpel, um Flimmerkiste-Freigabe zu aktivieren.'
         },
         messages: {
           stopped: 'Flimmerkiste-Freigabe beendet.',
@@ -922,7 +922,7 @@ const dialectConfigs = {
           title: 'Dinge Kiekkasten',
           aria: 'Eigene Kiekkasten-Vorschau',
           placeholderReady: 'Start die Freigabe, um dinge Kiekkasten zu sende.',
-          placeholderDisconnected: 'Verbind dich mit 'nem Kumpel, um Kiekkasten-Freigabe zu aktiviere.'
+          placeholderDisconnected: 'Verbind dich mit \'nem Kumpel, um Kiekkasten-Freigabe zu aktiviere.'
         },
         messages: {
           stopped: 'Kiekkasten-Freigabe beendet.',
