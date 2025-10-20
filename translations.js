@@ -370,6 +370,110 @@ const dialectConfigs = {
       language: {
         label: 'Sproch',
         ariaLabel: 'Sproch aussuacha'
+      },
+      chat: {
+        themeToggleTitle: (nextTheme) => {
+          switch (nextTheme) {
+            case 'light':
+              return 'Zum hellen Gsichtl wechseln';
+            case 'rgb':
+              return 'Zum RGB-Gaming-Modus wechseln';
+            case 'dark':
+            default:
+              return 'Zum dunklen Gsichtl wechseln';
+          }
+        }
+      },
+      systemMessages: {
+        themeSwitch: (theme) => {
+          switch (theme) {
+            case 'dark':
+              return 'Gsichtl gwechselt zu dunklem Modus.';
+            case 'light':
+              return 'Gsichtl gwechselt zu hellem Modus.';
+            case 'rgb':
+              return 'Gsichtl gwechselt zu RGB-Gaming-Modus.';
+            default:
+              return `Gsichtl gwechselt zu ${theme}.`;
+          }
+        }
+      },
+      screenShare: {
+        header: 'Glotznkastn-Freigabe',
+        actions: {
+          start: 'Freigabe starten',
+          startAria: 'Glotznkastn freigeben',
+          sharing: 'Freigabe lafft...',
+          stop: 'Freigabe beenden',
+          stopAria: 'Glotznkastn-Freigabe stoppen'
+        },
+        includeAudio: 'Systemaudio einbeziehen',
+        status: {
+          sharing: 'Teilt dein Glotznkastn',
+          ready: 'Bereit zur Freigabe',
+          connect: 'Verbind di, um Glotznkastn-Freigabe zu aktivieren'
+        },
+        remote: {
+          receiving: 'Empfang Glotznkastn vom Spezi',
+          idle: 'Spezi teilt aktuell koan Glotznkastn',
+          title: 'Glotznkastn vom Spezi',
+          ariaInteractive: 'Vorschau vom Spezi-Glotznkastn. Fokus setzen, um zu steuern.',
+          aria: 'Vorschau vom Spezi-Glotznkastn',
+          streamAria: 'Glotznkastn-Stream vom Spezi',
+          peerStarted: 'Spezi hat die Glotznkastn-Freigabe gstartet.',
+          peerStopped: 'Spezi hat die Glotznkastn-Freigabe beendet.'
+        },
+        local: {
+          title: 'Dei Glotznkastn',
+          aria: 'Eigene Glotznkastn-Vorschau',
+          placeholderReady: 'Start die Freigabe, um dein Glotznkastn zu senden.',
+          placeholderDisconnected: 'Verbind di mit am Spezi, um Glotznkastn-Freigabe zu aktivieren.'
+        },
+        messages: {
+          stopped: 'Glotznkastn-Freigabe beendet.',
+          notSupported: 'Glotznkastn-Freigabe wird in dem Browser ned unterstützt.',
+          started: 'Glotznkastn-Freigabe aktiv. Acht auf sensible Inhalte.'
+        },
+        errors: {
+          peerNotReady: 'Spezi-Verbindung is no ned bereit.',
+          noVideoTrack: 'Koa Videospur aus der Glotznkastn-Aufnahme erhalten.',
+          permissionDenied: 'Berechtigung wurde verweigert.',
+          failed: (reason) => `Glotznkastn-Freigabe fehlgschlagen: ${reason}`
+        },
+        footnote: 'Glotznkastn-Freigabe is rein Spezi-to-Spezi. Teil Zugriff nur mit Leit, dene du vertraust.'
+      },
+      remoteControl: {
+        label: 'Fernsteuerung:',
+        actions: {
+          allow: 'Fernsteuerung erlauben',
+          disable: 'Fernsteuerung beenden'
+        },
+        statusDisabled: 'Fernsteuerung deaktiviert',
+        statusGranted: 'Fernsteuerung erlaubt – mit Glotznkastn interagieren',
+        statusDisabledByPeer: 'Fernsteuerung vom Spezi beendet',
+        statusChannelClosed: 'Fernsteuerungskanal gschlossen',
+        statusDisabledInputLimit: 'Fernsteuerung deaktiviert (Eingabelimit erreicht)',
+        statusEnabled: 'Fernsteuerung aktiv – Spezi derf steuern',
+        statusUnavailable: 'Fernsteuerungskanal ned verfügbar',
+        hints: {
+          active: 'Fernsteuerung aktiv – beweg den Cursor da, um zu interagieren.'
+        },
+        system: {
+          disabledOnScreenStop: 'Fernsteuerung deaktiviert, weil die Glotznkastn-Freigabe beendet wurde.',
+          revokeFailed: 'Spezi konnte ned über die beendete Fernsteuerung informiert werden.',
+          payloadTooLarge: 'Fernsteuerungsnachricht ignoriert: Nutzlast zu groß.',
+          rateLimited: 'Fernsteuerungskanal gedrosselt. Zu viele Eingaben.',
+          peerEnabled: 'Spezi hat die Fernsteuerung erlaubt. Nutz die Vorschau zum Interagieren.',
+          peerDisabled: 'Spezi hat die Fernsteuerung deaktiviert.',
+          deliveryFailed: 'Fernsteuerungsnachricht konnte ned zugestellt werden. Verbindung prüfen.',
+          typingDisabled: 'Remote-Eingaben deaktiviert: Eingabelimit erreicht.',
+          unavailable: 'Fernsteuerung is erst möglich, wenn der Steuerkanal bereit is.',
+          negotiating: 'Fernsteuerungskanal verhandelt no. Bitte kurz warten.',
+          requiresScreenShare: 'Start zuerst die Glotznkastn-Freigabe, um Fernsteuerung zu aktivieren.',
+          updateFailed: 'Fernsteuerungsstatus konnte ned aktualisiert werden. Bitte erneut versuchen.',
+          peerCanControl: 'Dei Spezi kann jetzt dein Glotznkastn steuern. Behalt die Aktivitäten im Blick.',
+          controlRevokedLocal: 'Fernsteuerung fia dein Glotznkastn wurde beendet.'
+        }
       }
     }
   },
@@ -390,6 +494,110 @@ const dialectConfigs = {
       language: {
         label: 'Dialect',
         ariaLabel: 'Dialect aussuacha'
+      },
+      chat: {
+        themeToggleTitle: (nextTheme) => {
+          switch (nextTheme) {
+            case 'light':
+              return 'Zum helle Uussehe wechsle';
+            case 'rgb':
+              return 'Zum RGB-Gaming-Modus wechsle';
+            case 'dark':
+            default:
+              return 'Zum dunkle Uussehe wechsle';
+          }
+        }
+      },
+      systemMessages: {
+        themeSwitch: (theme) => {
+          switch (theme) {
+            case 'dark':
+              return 'Uussehe gwechselt zu dunklem Modus.';
+            case 'light':
+              return 'Uussehe gwechselt zu hellem Modus.';
+            case 'rgb':
+              return 'Uussehe gwechselt zu RGB-Gaming-Modus.';
+            default:
+              return `Uussehe gwechselt zu ${theme}.`;
+          }
+        }
+      },
+      screenShare: {
+        header: 'Glotzkaschdle-Freigabe',
+        actions: {
+          start: 'Freigabe starte',
+          startAria: 'Glotzkaschdle freigebe',
+          sharing: 'Freigabe lauft...',
+          stop: 'Freigabe beende',
+          stopAria: 'Glotzkaschdle-Freigabe stoppe'
+        },
+        includeAudio: 'Systemaudio au dazunemme',
+        status: {
+          sharing: 'Teilt dei Glotzkaschdle',
+          ready: 'Bereit zur Freigabe',
+          connect: 'Verbind di, um Glotzkaschdle-Freigabe zu aktiviere'
+        },
+        remote: {
+          receiving: 'Empfang Glotzkaschdle vom Kumpel',
+          idle: 'Kumpel teilt grad koi Glotzkaschdle',
+          title: 'Glotzkaschdle vom Kumpel',
+          ariaInteractive: 'Vorschau vom Kumpel-Glotzkaschdle. Fokus setze, um zu steuere.',
+          aria: 'Vorschau vom Kumpel-Glotzkaschdle',
+          streamAria: 'Glotzkaschdle-Stream vom Kumpel',
+          peerStarted: 'Kumpel hat die Glotzkaschdle-Freigabe gstartet.',
+          peerStopped: 'Kumpel hat die Glotzkaschdle-Freigabe beendet.'
+        },
+        local: {
+          title: 'Dei Glotzkaschdle',
+          aria: 'Eigenes Glotzkaschdle-Vorschau',
+          placeholderReady: 'Start die Freigabe, um dei Glotzkaschdle zu sende.',
+          placeholderDisconnected: 'Verbind di mit am Kumpel, um Glotzkaschdle-Freigabe zu aktiviere.'
+        },
+        messages: {
+          stopped: 'Glotzkaschdle-Freigabe beendet.',
+          notSupported: 'Glotzkaschdle-Freigabe wird in dem Browser net unterstützt.',
+          started: 'Glotzkaschdle-Freigabe aktiv. Aufpasse bei sensible Inhalte.'
+        },
+        errors: {
+          peerNotReady: 'Kumpel-Verbindung isch no net bereit.',
+          noVideoTrack: 'Koi Videospur aus der Glotzkaschdle-Aufnahme erhalte.',
+          permissionDenied: 'Berechtigung isch verweigert worde.',
+          failed: (reason) => `Glotzkaschdle-Freigabe isch fehlgschlage: ${reason}`
+        },
+        footnote: 'Glotzkaschdle-Freigabe isch rein Kumpel-to-Kumpel. Teil Zugriff nur mit Leut, dene du vertraust.'
+      },
+      remoteControl: {
+        label: 'Fernsteuerung:',
+        actions: {
+          allow: 'Fernsteuerung erlaube',
+          disable: 'Fernsteuerung beende'
+        },
+        statusDisabled: 'Fernsteuerung deaktiviert',
+        statusGranted: 'Fernsteuerung erlaubt – mit Glotzkaschdle interagiere',
+        statusDisabledByPeer: 'Fernsteuerung vom Kumpel beendet',
+        statusChannelClosed: 'Fernsteuerungskanal gschlossen',
+        statusDisabledInputLimit: 'Fernsteuerung deaktiviert (Eingabelimit erreicht)',
+        statusEnabled: 'Fernsteuerung aktiv – Kumpel darf steuere',
+        statusUnavailable: 'Fernsteuerungskanal net verfügbar',
+        hints: {
+          active: 'Fernsteuerung aktiv – beweg de Cursor da, um zu interagiere.'
+        },
+        system: {
+          disabledOnScreenStop: 'Fernsteuerung deaktiviert, weil die Glotzkaschdle-Freigabe beendet isch.',
+          revokeFailed: 'Kumpel konnte net über die beendete Fernsteuerung informiert werde.',
+          payloadTooLarge: 'Fernsteuerungsnachricht ignoriert: Nutzlast zu groß.',
+          rateLimited: 'Fernsteuerungskanal gedrosselt. Zu viele Eingabe.',
+          peerEnabled: 'Kumpel hat die Fernsteuerung erlaubt. Nutz die Vorschau zum Interagiere.',
+          peerDisabled: 'Kumpel hat die Fernsteuerung deaktiviert.',
+          deliveryFailed: 'Fernsteuerungsnachricht konnte net zugestellt werde. Verbindung prüfe.',
+          typingDisabled: 'Remote-Eingabe deaktiviert: Eingabelimit erreicht.',
+          unavailable: 'Fernsteuerung isch erst möglich, wenn der Steuerkanal bereit isch.',
+          negotiating: 'Fernsteuerungskanal verhandelt no. Bitte kurz warte.',
+          requiresScreenShare: 'Start zuerst die Glotzkaschdle-Freigabe, um Fernsteuerung zu aktiviere.',
+          updateFailed: 'Fernsteuerungsstatus konnte net aktualisiert werde. Bitte erneut versuche.',
+          peerCanControl: 'Dei Kumpel kann jetzt dei Glotzkaschdle steuere. Behalt die Aktivitäte im Blick.',
+          controlRevokedLocal: 'Fernsteuerung für dei Glotzkaschdle isch beendet worde.'
+        }
       }
     }
   },
@@ -408,7 +616,111 @@ const dialectConfigs = {
     overrides: {
       language: {
         label: 'Sproche',
-        ariaLabel: 'Sproche auswähl’n'
+        ariaLabel: 'Sproche auswähl'n'
+      },
+      chat: {
+        themeToggleTitle: (nextTheme) => {
+          switch (nextTheme) {
+            case 'light':
+              return 'Zur hellen Offmachung wechseln';
+            case 'rgb':
+              return 'Zum RGB-Gaming-Modus wechseln';
+            case 'dark':
+            default:
+              return 'Zur dunklen Offmachung wechseln';
+          }
+        }
+      },
+      systemMessages: {
+        themeSwitch: (theme) => {
+          switch (theme) {
+            case 'dark':
+              return 'Offmachung gewechselt zu dunklem Modus.';
+            case 'light':
+              return 'Offmachung gewechselt zu hellem Modus.';
+            case 'rgb':
+              return 'Offmachung gewechselt zu RGB-Gaming-Modus.';
+            default:
+              return `Offmachung gewechselt zu ${theme}.`;
+          }
+        }
+      },
+      screenShare: {
+        header: 'Glotzbüchse-Freigabe',
+        actions: {
+          start: 'Freigabe starten',
+          startAria: 'Glotzbüchse freigeben',
+          sharing: 'Freigabe läuft...',
+          stop: 'Freigabe beenden',
+          stopAria: 'Glotzbüchse-Freigabe stoppen'
+        },
+        includeAudio: 'Systemaudio ooch einbeziehen',
+        status: {
+          sharing: 'Teilt deine Glotzbüchse',
+          ready: 'Bereit zur Freigabe',
+          connect: 'Verbind disch, um Glotzbüchse-Freigabe zu aktiviern'
+        },
+        remote: {
+          receiving: 'Empfange Glotzbüchse vom Kumpel',
+          idle: 'Kumpel teilt aktuell keene Glotzbüchse',
+          title: 'Glotzbüchse vom Kumpel',
+          ariaInteractive: 'Vorschau von Kumpel-Glotzbüchse. Fokus setzen, um zu steuern.',
+          aria: 'Vorschau von Kumpel-Glotzbüchse',
+          streamAria: 'Glotzbüchse-Stream vom Kumpel',
+          peerStarted: 'Kumpel hat die Glotzbüchse-Freigabe gestartet.',
+          peerStopped: 'Kumpel hat die Glotzbüchse-Freigabe beendet.'
+        },
+        local: {
+          title: 'Deine Glotzbüchse',
+          aria: 'Eigene Glotzbüchse-Vorschau',
+          placeholderReady: 'Start die Freigabe, um deine Glotzbüchse zu senden.',
+          placeholderDisconnected: 'Verbind disch mit 'nem Kumpel, um Glotzbüchse-Freigabe zu aktiviern.'
+        },
+        messages: {
+          stopped: 'Glotzbüchse-Freigabe beendet.',
+          notSupported: 'Glotzbüchse-Freigabe wird in dem Browser ni unterstützt.',
+          started: 'Glotzbüchse-Freigabe aktiv. Acht auf sensible Inhalte.'
+        },
+        errors: {
+          peerNotReady: 'Kumpel-Verbindung is noch ni bereit.',
+          noVideoTrack: 'Keene Videospur aus der Glotzbüchse-Aufnahme erhalten.',
+          permissionDenied: 'Berechtigung wurde verweigert.',
+          failed: (reason) => `Glotzbüchse-Freigabe fehlgeschlagen: ${reason}`
+        },
+        footnote: 'Glotzbüchse-Freigabe is rein Kumpel-to-Kumpel. Teil Zugriff nur mit Leuten, denen du vertraust.'
+      },
+      remoteControl: {
+        label: 'Fernsteuerung:',
+        actions: {
+          allow: 'Fernsteuerung erlauben',
+          disable: 'Fernsteuerung beenden'
+        },
+        statusDisabled: 'Fernsteuerung deaktiviert',
+        statusGranted: 'Fernsteuerung erlaubt – mit Glotzbüchse interagiern',
+        statusDisabledByPeer: 'Fernsteuerung vom Kumpel beendet',
+        statusChannelClosed: 'Fernsteuerungskanal geschlossen',
+        statusDisabledInputLimit: 'Fernsteuerung deaktiviert (Eingabelimit erreicht)',
+        statusEnabled: 'Fernsteuerung aktiv – Kumpel darf steuern',
+        statusUnavailable: 'Fernsteuerungskanal ni verfügbar',
+        hints: {
+          active: 'Fernsteuerung aktiv – beweg den Cursor hier, um zu interagiern.'
+        },
+        system: {
+          disabledOnScreenStop: 'Fernsteuerung deaktiviert, weil die Glotzbüchse-Freigabe beendet wurde.',
+          revokeFailed: 'Kumpel konnte ni über die beendete Fernsteuerung informiert werden.',
+          payloadTooLarge: 'Fernsteuerungsnachricht ignoriert: Nutzlast zu groß.',
+          rateLimited: 'Fernsteuerungskanal gedrosselt. Zu viele Eingaben.',
+          peerEnabled: 'Kumpel hat die Fernsteuerung erlaubt. Nutz die Vorschau zum Interagiern.',
+          peerDisabled: 'Kumpel hat die Fernsteuerung deaktiviert.',
+          deliveryFailed: 'Fernsteuerungsnachricht konnte ni zugestellt werden. Verbindung prüfen.',
+          typingDisabled: 'Remote-Eingaben deaktiviert: Eingabelimit erreicht.',
+          unavailable: 'Fernsteuerung is erst möglich, wenn der Steuerkanal bereit is.',
+          negotiating: 'Fernsteuerungskanal verhandelt noch. Bitte kurz warten.',
+          requiresScreenShare: 'Start zuerst die Glotzbüchse-Freigabe, um Fernsteuerung zu aktiviern.',
+          updateFailed: 'Fernsteuerungsstatus konnte ni aktualisiert werden. Bitte erneut versuchen.',
+          peerCanControl: 'Dein Kumpel kann jetzt deine Glotzbüchse steuern. Behalt die Aktivitäten im Blick.',
+          controlRevokedLocal: 'Fernsteuerung für deine Glotzbüchse wurde beendet.'
+        }
       }
     }
   },
@@ -428,6 +740,110 @@ const dialectConfigs = {
       language: {
         label: 'Sprache',
         ariaLabel: 'Sprache aussuchen'
+      },
+      chat: {
+        themeToggleTitle: (nextTheme) => {
+          switch (nextTheme) {
+            case 'light':
+              return 'Zur hellen Maske wechseln';
+            case 'rgb':
+              return 'Zum RGB-Gaming-Modus wechseln';
+            case 'dark':
+            default:
+              return 'Zur dunklen Maske wechseln';
+          }
+        }
+      },
+      systemMessages: {
+        themeSwitch: (theme) => {
+          switch (theme) {
+            case 'dark':
+              return 'Maske gewechselt zu dunklem Modus.';
+            case 'light':
+              return 'Maske gewechselt zu hellem Modus.';
+            case 'rgb':
+              return 'Maske gewechselt zu RGB-Gaming-Modus.';
+            default:
+              return `Maske gewechselt zu ${theme}.`;
+          }
+        }
+      },
+      screenShare: {
+        header: 'Flimmerkiste-Freigabe',
+        actions: {
+          start: 'Freigabe starten',
+          startAria: 'Flimmerkiste freigeben',
+          sharing: 'Freigabe läuft...',
+          stop: 'Freigabe beenden',
+          stopAria: 'Flimmerkiste-Freigabe stoppen'
+        },
+        includeAudio: 'Systemaudio ooch einbeziehen',
+        status: {
+          sharing: 'Teilt deine Flimmerkiste',
+          ready: 'Bereit zur Freigabe',
+          connect: 'Verbind dir, um Flimmerkiste-Freigabe zu aktivieren'
+        },
+        remote: {
+          receiving: 'Empfange Flimmerkiste vom Kumpel',
+          idle: 'Kumpel teilt aktuell keene Flimmerkiste',
+          title: 'Flimmerkiste vom Kumpel',
+          ariaInteractive: 'Vorschau von Kumpel-Flimmerkiste. Fokus setzen, um zu steuern.',
+          aria: 'Vorschau von Kumpel-Flimmerkiste',
+          streamAria: 'Flimmerkiste-Stream vom Kumpel',
+          peerStarted: 'Kumpel hat die Flimmerkiste-Freigabe gestartet.',
+          peerStopped: 'Kumpel hat die Flimmerkiste-Freigabe beendet.'
+        },
+        local: {
+          title: 'Deine Flimmerkiste',
+          aria: 'Eigene Flimmerkiste-Vorschau',
+          placeholderReady: 'Start die Freigabe, um deine Flimmerkiste zu senden.',
+          placeholderDisconnected: 'Verbind dir mit 'nem Kumpel, um Flimmerkiste-Freigabe zu aktivieren.'
+        },
+        messages: {
+          stopped: 'Flimmerkiste-Freigabe beendet.',
+          notSupported: 'Flimmerkiste-Freigabe wird in dem Browser nich unterstützt.',
+          started: 'Flimmerkiste-Freigabe aktiv. Acht uff sensible Inhalte.'
+        },
+        errors: {
+          peerNotReady: 'Kumpel-Verbindung is noch nich bereit.',
+          noVideoTrack: 'Keene Videospur aus der Flimmerkiste-Aufnahme erhalten.',
+          permissionDenied: 'Berechtigung wurde verweigert.',
+          failed: (reason) => `Flimmerkiste-Freigabe fehlgeschlagen: ${reason}`
+        },
+        footnote: 'Flimmerkiste-Freigabe is rein Kumpel-to-Kumpel. Teil Zugriff nur mit Leuten, denen du vertraust.'
+      },
+      remoteControl: {
+        label: 'Fernsteuerung:',
+        actions: {
+          allow: 'Fernsteuerung erlauben',
+          disable: 'Fernsteuerung beenden'
+        },
+        statusDisabled: 'Fernsteuerung deaktiviert',
+        statusGranted: 'Fernsteuerung erlaubt – mit Flimmerkiste interagieren',
+        statusDisabledByPeer: 'Fernsteuerung vom Kumpel beendet',
+        statusChannelClosed: 'Fernsteuerungskanal geschlossen',
+        statusDisabledInputLimit: 'Fernsteuerung deaktiviert (Eingabelimit erreicht)',
+        statusEnabled: 'Fernsteuerung aktiv – Kumpel darf steuern',
+        statusUnavailable: 'Fernsteuerungskanal nich verfügbar',
+        hints: {
+          active: 'Fernsteuerung aktiv – beweg den Cursor hier, um zu interagieren.'
+        },
+        system: {
+          disabledOnScreenStop: 'Fernsteuerung deaktiviert, weil die Flimmerkiste-Freigabe beendet wurde.',
+          revokeFailed: 'Kumpel konnte nich über die beendete Fernsteuerung informiert werden.',
+          payloadTooLarge: 'Fernsteuerungsnachricht ignoriert: Nutzlast zu groß.',
+          rateLimited: 'Fernsteuerungskanal gedrosselt. Zu viele Eingaben.',
+          peerEnabled: 'Kumpel hat die Fernsteuerung erlaubt. Nutz die Vorschau zum Interagieren.',
+          peerDisabled: 'Kumpel hat die Fernsteuerung deaktiviert.',
+          deliveryFailed: 'Fernsteuerungsnachricht konnte nich zugestellt werden. Verbindung prüfen.',
+          typingDisabled: 'Remote-Eingaben deaktiviert: Eingabelimit erreicht.',
+          unavailable: 'Fernsteuerung is erst möglich, wenn der Steuerkanal bereit is.',
+          negotiating: 'Fernsteuerungskanal verhandelt noch. Bitte kurz warten.',
+          requiresScreenShare: 'Start zuerst die Flimmerkiste-Freigabe, um Fernsteuerung zu aktivieren.',
+          updateFailed: 'Fernsteuerungsstatus konnte nich aktualisiert werden. Bitte erneut versuchen.',
+          peerCanControl: 'Dein Kumpel kann jetzt deine Flimmerkiste steuern. Behalt die Aktivitäten im Blick.',
+          controlRevokedLocal: 'Fernsteuerung für deine Flimmerkiste wurde beendet.'
+        }
       }
     }
   },
@@ -449,6 +865,110 @@ const dialectConfigs = {
       language: {
         label: 'Sprooch',
         ariaLabel: 'Sprooch ussöke'
+      },
+      chat: {
+        themeToggleTitle: (nextTheme) => {
+          switch (nextTheme) {
+            case 'light':
+              return 'Zum helle Ussjohn wechsele';
+            case 'rgb':
+              return 'Zum RGB-Gaming-Modus wechsele';
+            case 'dark':
+            default:
+              return 'Zum dunkle Ussjohn wechsele';
+          }
+        }
+      },
+      systemMessages: {
+        themeSwitch: (theme) => {
+          switch (theme) {
+            case 'dark':
+              return 'Ussjohn gewechselt zu dunklem Modus.';
+            case 'light':
+              return 'Ussjohn gewechselt zu hellem Modus.';
+            case 'rgb':
+              return 'Ussjohn gewechselt zu RGB-Gaming-Modus.';
+            default:
+              return `Ussjohn gewechselt zu ${theme}.`;
+          }
+        }
+      },
+      screenShare: {
+        header: 'Kiekkasten-Freigabe',
+        actions: {
+          start: 'Freigabe starte',
+          startAria: 'Kiekkasten freigebe',
+          sharing: 'Freigabe läuft...',
+          stop: 'Freigabe beende',
+          stopAria: 'Kiekkasten-Freigabe stoppe'
+        },
+        includeAudio: 'Systemaudio och einbeziehe',
+        status: {
+          sharing: 'Teilt dinge Kiekkasten',
+          ready: 'Bereit zur Freigabe',
+          connect: 'Verbind dich, um Kiekkasten-Freigabe zu aktiviere'
+        },
+        remote: {
+          receiving: 'Empfang Kiekkasten vom Kumpel',
+          idle: 'Kumpel teilt aktuell keine Kiekkasten',
+          title: 'Kiekkasten vom Kumpel',
+          ariaInteractive: 'Vorschau vom Kumpel-Kiekkasten. Fokus setze, um zu steuere.',
+          aria: 'Vorschau vom Kumpel-Kiekkasten',
+          streamAria: 'Kiekkasten-Stream vom Kumpel',
+          peerStarted: 'Kumpel hat die Kiekkasten-Freigabe gestartet.',
+          peerStopped: 'Kumpel hat die Kiekkasten-Freigabe beendet.'
+        },
+        local: {
+          title: 'Dinge Kiekkasten',
+          aria: 'Eigene Kiekkasten-Vorschau',
+          placeholderReady: 'Start die Freigabe, um dinge Kiekkasten zu sende.',
+          placeholderDisconnected: 'Verbind dich mit 'nem Kumpel, um Kiekkasten-Freigabe zu aktiviere.'
+        },
+        messages: {
+          stopped: 'Kiekkasten-Freigabe beendet.',
+          notSupported: 'Kiekkasten-Freigabe wird in dem Browser nit unterstützt.',
+          started: 'Kiekkasten-Freigabe aktiv. Acht op sensible Inhalte.'
+        },
+        errors: {
+          peerNotReady: 'Kumpel-Verbindung is noch nit bereit.',
+          noVideoTrack: 'Keine Videospur aus der Kiekkasten-Aufnahme erhalte.',
+          permissionDenied: 'Berechtigung wurde verweigert.',
+          failed: (reason) => `Kiekkasten-Freigabe fehlgeschlage: ${reason}`
+        },
+        footnote: 'Kiekkasten-Freigabe is rein Kumpel-to-Kumpel. Teil Zugriff nur mit Leute, dene du vertraust.'
+      },
+      remoteControl: {
+        label: 'Fernsteuerung:',
+        actions: {
+          allow: 'Fernsteuerung erlaube',
+          disable: 'Fernsteuerung beende'
+        },
+        statusDisabled: 'Fernsteuerung deaktiviert',
+        statusGranted: 'Fernsteuerung erlaubt – mit Kiekkasten interagiere',
+        statusDisabledByPeer: 'Fernsteuerung vom Kumpel beendet',
+        statusChannelClosed: 'Fernsteuerungskanal geschlosse',
+        statusDisabledInputLimit: 'Fernsteuerung deaktiviert (Eingabelimit erreicht)',
+        statusEnabled: 'Fernsteuerung aktiv – Kumpel darf steuere',
+        statusUnavailable: 'Fernsteuerungskanal nit verfügbar',
+        hints: {
+          active: 'Fernsteuerung aktiv – beweg de Cursor da, um zu interagiere.'
+        },
+        system: {
+          disabledOnScreenStop: 'Fernsteuerung deaktiviert, weil die Kiekkasten-Freigabe beendet wurde.',
+          revokeFailed: 'Kumpel konnte nit über die beendete Fernsteuerung informiert werde.',
+          payloadTooLarge: 'Fernsteuerungsnachricht ignoriert: Nutzlast zu groß.',
+          rateLimited: 'Fernsteuerungskanal gedrosselt. Zu viele Eingabe.',
+          peerEnabled: 'Kumpel hat die Fernsteuerung erlaubt. Nutz die Vorschau zum Interagiere.',
+          peerDisabled: 'Kumpel hat die Fernsteuerung deaktiviert.',
+          deliveryFailed: 'Fernsteuerungsnachricht konnte nit zugestellt werde. Verbindung prüfe.',
+          typingDisabled: 'Remote-Eingabe deaktiviert: Eingabelimit erreicht.',
+          unavailable: 'Fernsteuerung is erst möglich, wenn der Steuerkanal bereit is.',
+          negotiating: 'Fernsteuerungskanal verhandelt noch. Bitte kurz warte.',
+          requiresScreenShare: 'Start zuerst die Kiekkasten-Freigabe, um Fernsteuerung zu aktiviere.',
+          updateFailed: 'Fernsteuerungsstatus konnte nit aktualisiert werde. Bitte erneut versuche.',
+          peerCanControl: 'Dinge Kumpel kann jetzt dinge Kiekkasten steuere. Behalt die Aktivitäte im Blick.',
+          controlRevokedLocal: 'Fernsteuerung für dinge Kiekkasten wurde beendet.'
+        }
       }
     }
   },
