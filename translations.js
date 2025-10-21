@@ -317,6 +317,35 @@ const baseTranslation = Object.freeze({
     lives: 'Leben',
     waitingForPeer: 'Warte auf Peer, um Pong zu spielen...',
     closeGame: 'Spiel beenden'
+  },
+  dangerZone: {
+    title: 'Gefahrenzone',
+    warning: '⚠️ Achtung: Die folgenden Aktionen sind nicht rückgängig zu machen!',
+    description: 'Diese Funktionen dienen als Notfall-Datenschutz. Verwende sie nur, wenn nötig.',
+    clearLocalData: 'Alle lokalen Daten löschen',
+    clearLocalDataDesc: 'Löscht Theme-Einstellungen, Sprachpräferenzen und Cache',
+    clearSession: 'Sitzungsdaten löschen',
+    clearSessionDesc: 'Löscht API-Schlüssel und trennt aktive Verbindungen',
+    nuclearOption: 'Alles löschen & neu laden',
+    nuclearOptionDesc: 'Löscht alle Daten und lädt die Seite neu (vollständiger Reset)',
+    confirmModal: {
+      title: 'Bestätigung erforderlich',
+      clearLocalDataTitle: 'Alle lokalen Daten löschen?',
+      clearLocalDataMessage: 'Dies wird unwiderruflich löschen:\n• Theme-Einstellungen\n• Sprachpräferenz\n• GitHub-Mitwirkenden-Cache\n\nAktive Verbindungen und API-Schlüssel bleiben erhalten.',
+      clearSessionTitle: 'Sitzung löschen?',
+      clearSessionMessage: 'Dies wird:\n• Alle API-Schlüssel entfernen\n• Aktive WebRTC-Verbindungen trennen\n• Sitzungsspezifische Daten löschen\n\nDeine gespeicherten Einstellungen bleiben erhalten.',
+      nuclearTitle: 'Alles löschen?',
+      nuclearMessage: 'WARNUNG: Dies ist der Notfall-Kill-Switch!\n\nDies wird ALLES löschen:\n• Alle lokalen Daten\n• Alle Sitzungsdaten\n• Alle Verbindungen\n• Alle Einstellungen\n\nDie Seite wird automatisch neu geladen.\n\nGib "LÖSCHEN" ein, um zu bestätigen:',
+      confirmPlaceholder: 'Gib LÖSCHEN ein',
+      confirmButton: 'Bestätigen',
+      cancelButton: 'Abbrechen',
+      typeMismatch: 'Bitte gib "LÖSCHEN" ein, um zu bestätigen'
+    },
+    systemMessages: {
+      localDataCleared: 'Alle lokalen Daten wurden gelöscht. Einstellungen wurden zurückgesetzt.',
+      sessionCleared: 'Sitzung wurde beendet. API-Schlüssel entfernt und Verbindungen getrennt.',
+      nuclearExecuted: 'Vollständiger Reset durchgeführt. Seite wird neu geladen...'
+    }
   }
 });
 

@@ -386,6 +386,9 @@
     const [isPongActive, setIsPongActive] = useState(false);
     const [pongScore, setPongScore] = useState({ left: 0, right: 0 });
     const [pongLives, setPongLives] = useState({ left: 3, right: 3 });
+    const [isDangerZoneModalOpen, setIsDangerZoneModalOpen] = useState(false);
+    const [dangerZoneAction, setDangerZoneAction] = useState(null);
+    const [dangerZoneConfirmInput, setDangerZoneConfirmInput] = useState('');
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -1733,6 +1736,52 @@
       setAiError('');
     }, [appendSystemMessage, cancelPendingPointerFrame, handleStopPong, t]);
 
+    const handleOpenDangerZoneModal = useCallback((action) => {
+      setDangerZoneAction(action);
+      setDangerZoneConfirmInput('');
+      setIsDangerZoneModalOpen(true);
+    }, []);
+
+    const handleCloseDangerZoneModal = useCallback(() => {
+      setIsDangerZoneModalOpen(false);
+      setDangerZoneAction(null);
+      setDangerZoneConfirmInput('');
+    }, []);
+
+    const handleConfirmDangerZoneAction = useCallback(() => {
+      if (dangerZoneAction === 'nuclear' && dangerZoneConfirmInput !== 'LÖSCHEN') {
+        return;
+      }
+
+      try {
+        if (dangerZoneAction === 'clearLocalData' || dangerZoneAction === 'nuclear') {
+          localStorage.clear();
+          console.log('[DangerZone] localStorage cleared');
+          appendSystemMessage(t.dangerZone.systemMessages.localDataCleared);
+        }
+
+        if (dangerZoneAction === 'clearSession' || dangerZoneAction === 'nuclear') {
+          setOpenAiKey('');
+          setApiKeyInput('');
+          handleDisconnect();
+          console.log('[DangerZone] Session cleared');
+          appendSystemMessage(t.dangerZone.systemMessages.sessionCleared);
+        }
+
+        if (dangerZoneAction === 'nuclear') {
+          console.log('[DangerZone] Nuclear option executed - reloading page');
+          appendSystemMessage(t.dangerZone.systemMessages.nuclearExecuted);
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
+      } catch (error) {
+        console.error('[DangerZone] Error executing action:', error);
+      }
+
+      handleCloseDangerZoneModal();
+    }, [dangerZoneAction, dangerZoneConfirmInput, handleCloseDangerZoneModal, handleDisconnect, appendSystemMessage, t]);
+
     const handleAiRewrite = useCallback(async () => {
       const draft = inputText.trim();
       if (!draft) {
@@ -2981,6 +3030,94 @@
                   onClick: handleStopPong
                 }, t.pong.closeGame),
                 !isPongActive && !channelReady && React.createElement('p', { className: 'hint' }, t.pong.waitingForPeer)
+              )
+            )
+          ),
+          React.createElement('section', { id: 'danger-zone', className: 'danger-zone' },
+            React.createElement('header', null,
+              React.createElement('div', { className: 'header-content' },
+                React.createElement('h2', null, t.dangerZone.title),
+                React.createElement('p', { className: 'danger-zone-warning' }, t.dangerZone.warning)
+              )
+            ),
+            React.createElement('div', { className: 'danger-zone-content' },
+              React.createElement('p', { className: 'danger-zone-description' }, t.dangerZone.description),
+              React.createElement('div', { className: 'danger-zone-actions' },
+                React.createElement('div', { className: 'danger-zone-action-item' },
+                  React.createElement('button', {
+                    className: 'danger-zone-button',
+                    onClick: () => handleOpenDangerZoneModal('clearLocalData'),
+                    disabled: isApiKeyModalOpen
+                  }, t.dangerZone.clearLocalData),
+                  React.createElement('p', { className: 'danger-zone-action-desc' }, t.dangerZone.clearLocalDataDesc)
+                ),
+                React.createElement('div', { className: 'danger-zone-action-item' },
+                  React.createElement('button', {
+                    className: 'danger-zone-button',
+                    onClick: () => handleOpenDangerZoneModal('clearSession'),
+                    disabled: isApiKeyModalOpen
+                  }, t.dangerZone.clearSession),
+                  React.createElement('p', { className: 'danger-zone-action-desc' }, t.dangerZone.clearSessionDesc)
+                ),
+                React.createElement('div', { className: 'danger-zone-action-item' },
+                  React.createElement('button', {
+                    className: 'danger-zone-button danger-zone-button-nuclear',
+                    onClick: () => handleOpenDangerZoneModal('nuclear'),
+                    disabled: isApiKeyModalOpen
+                  }, t.dangerZone.nuclearOption),
+                  React.createElement('p', { className: 'danger-zone-action-desc' }, t.dangerZone.nuclearOptionDesc)
+                )
+              )
+            )
+          ),
+          isDangerZoneModalOpen && React.createElement('div', { className: 'modal-overlay', role: 'presentation' },
+            React.createElement('div', {
+              className: 'modal-content danger-zone-modal',
+              role: 'dialog',
+              'aria-modal': 'true',
+              'aria-labelledby': 'danger-zone-dialog-title',
+              onClick: (event) => event.stopPropagation()
+            },
+              React.createElement('div', { className: 'modal-header' },
+                React.createElement('h2', { id: 'danger-zone-dialog-title' },
+                  dangerZoneAction === 'clearLocalData' ? t.dangerZone.confirmModal.clearLocalDataTitle :
+                  dangerZoneAction === 'clearSession' ? t.dangerZone.confirmModal.clearSessionTitle :
+                  t.dangerZone.confirmModal.nuclearTitle
+                ),
+                React.createElement('button', {
+                  className: 'modal-close',
+                  onClick: handleCloseDangerZoneModal,
+                  'aria-label': t.dangerZone.confirmModal.cancelButton
+                }, '×')
+              ),
+              React.createElement('div', { className: 'modal-body' },
+                React.createElement('p', { className: 'danger-zone-modal-message', style: { whiteSpace: 'pre-line' } },
+                  dangerZoneAction === 'clearLocalData' ? t.dangerZone.confirmModal.clearLocalDataMessage :
+                  dangerZoneAction === 'clearSession' ? t.dangerZone.confirmModal.clearSessionMessage :
+                  t.dangerZone.confirmModal.nuclearMessage
+                ),
+                dangerZoneAction === 'nuclear' && React.createElement('input', {
+                  type: 'text',
+                  value: dangerZoneConfirmInput,
+                  onChange: (event) => setDangerZoneConfirmInput(event.target.value),
+                  placeholder: t.dangerZone.confirmModal.confirmPlaceholder,
+                  className: 'danger-zone-confirm-input',
+                  autoFocus: true
+                }),
+                dangerZoneAction === 'nuclear' && dangerZoneConfirmInput && dangerZoneConfirmInput !== 'LÖSCHEN' &&
+                  React.createElement('p', { className: 'modal-error', role: 'alert' }, t.dangerZone.confirmModal.typeMismatch),
+                React.createElement('div', { className: 'modal-actions' },
+                  React.createElement('button', {
+                    type: 'button',
+                    className: 'danger-zone-confirm-button',
+                    onClick: handleConfirmDangerZoneAction,
+                    disabled: dangerZoneAction === 'nuclear' && dangerZoneConfirmInput !== 'LÖSCHEN'
+                  }, t.dangerZone.confirmModal.confirmButton),
+                  React.createElement('button', {
+                    type: 'button',
+                    onClick: handleCloseDangerZoneModal
+                  }, t.dangerZone.confirmModal.cancelButton)
+                )
               )
             )
           )
