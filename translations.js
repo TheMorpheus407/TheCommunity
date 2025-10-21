@@ -48,7 +48,9 @@ const baseTranslation = Object.freeze({
     copyButton: 'Kopieren',
     copied: 'Kopiert!',
     copyFailed: 'Fehlgeschlagen',
-    copyAriaLabel: 'Lokales Signal in die Zwischenablage kopieren'
+    copyAriaLabel: 'Lokales Signal in die Zwischenablage kopieren',
+    qrCodeLabel: 'QR-Code zum Verbinden',
+    qrCodeDescription: 'Scanne diesen QR-Code mit dem entfernten Gerät, um direkt zu verbinden'
   },
   chat: {
     title: 'Chat',
@@ -1123,7 +1125,9 @@ const dialectConfigs = {
         copyButton: 'Kopiere',
         copied: 'Kopiert!',
         copyFailed: 'Fählgschlage',
-        copyAriaLabel: 'Eigets Signal i d\'Zwüscheablag kopiere'
+        copyAriaLabel: 'Eigets Signal i d\'Zwüscheablag kopiere',
+        qrCodeLabel: 'QR-Code zum Verbinde',
+        qrCodeDescription: 'Scann dä QR-Code mit em fremde Grät, zum direkt z\'verbinde'
       },
       chat: {
         title: 'Schwätze',
@@ -1438,7 +1442,9 @@ const dialectConfigs = {
         copyButton: 'Kopiern',
         copied: 'Kopierd!',
         copyFailed: 'Fehlschlogn',
-        copyAriaLabel: 'Eigns Signal in Zwischenspeicha kopiern'
+        copyAriaLabel: 'Eigns Signal in Zwischenspeicha kopiern',
+        qrCodeLabel: 'QR-Code zum Verbindn',
+        qrCodeDescription: 'Scann den QR-Code mit dem fremdn Grät, zum direkt z\'verbindn'
       },
       chat: {
         title: 'Gschwätz',

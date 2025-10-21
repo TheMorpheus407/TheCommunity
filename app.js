@@ -441,6 +441,7 @@
     const controlWarningsRef = useRef({ rate: false, size: false });
     const remoteKeyBudgetRef = useRef(CONTROL_TOTAL_TEXT_BUDGET);
     const pointerFramePendingRef = useRef(false);
+    const qrCodeRef = useRef(null);
     const pointerFrameIdRef = useRef(null);
     const pointerQueuedPositionRef = useRef(null);
     const imageTransfersRef = useRef(new Map());
@@ -1991,6 +1992,64 @@
       }
     }, [localSignal, t]);
 
+    /**
+     * Handle URL parameter on page load to auto-populate remote signal.
+     */
+    useEffect(() => {
+      if (typeof window === 'undefined' || typeof URLSearchParams === 'undefined') {
+        return;
+      }
+      const params = new URLSearchParams(window.location.search);
+      const offerParam = params.get('offer');
+      if (offerParam) {
+        try {
+          const decodedOffer = decodeURIComponent(offerParam);
+          // Validate that it's valid JSON before auto-populating
+          JSON.parse(decodedOffer);
+          setRemoteSignal(decodedOffer);
+          // Clear URL parameter after populating to keep URL clean
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (err) {
+          console.error('Failed to decode or parse offer from URL:', err);
+        }
+      }
+    }, []);
+
+    /**
+     * Generate QR code when localSignal is available.
+     */
+    useEffect(() => {
+      const container = qrCodeRef.current;
+      if (!container || typeof QRCode === 'undefined') {
+        return;
+      }
+
+      // Clear previous QR code
+      container.innerHTML = '';
+
+      if (!localSignal) {
+        return;
+      }
+
+      try {
+        // Create URL with offer parameter
+        const baseUrl = window.location.origin + window.location.pathname;
+        const offerUrl = `${baseUrl}?offer=${encodeURIComponent(localSignal)}`;
+
+        // Generate QR code
+        new QRCode(container, {
+          text: offerUrl,
+          width: 200,
+          height: 200,
+          colorDark: '#000000',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch (err) {
+        console.error('Failed to generate QR code:', err);
+      }
+    }, [localSignal]);
+
     useEffect(() => {
       if (!isApiKeyModalOpen) {
         if (apiKeyButtonRef.current) {
@@ -2778,7 +2837,20 @@
                   readOnly: true,
                   value: localSignal,
                   placeholder: t.signaling.localSignalPlaceholder
-                })
+                }),
+                localSignal && React.createElement('div', { className: 'qr-code-container' },
+                  React.createElement('div', { className: 'qr-code-heading' },
+                    React.createElement('strong', null, t.signaling.qrCodeLabel)
+                  ),
+                  React.createElement('p', { className: 'qr-code-description' },
+                    t.signaling.qrCodeDescription
+                  ),
+                  React.createElement('div', {
+                    ref: qrCodeRef,
+                    className: 'qr-code',
+                    'aria-label': t.signaling.qrCodeLabel
+                  })
+                )
               ),
               React.createElement('label', null,
                 React.createElement('strong', null, t.signaling.remoteSignalLabel),

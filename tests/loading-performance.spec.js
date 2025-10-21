@@ -124,7 +124,8 @@ test.describe('Loading Performance', () => {
       'translations.js',
       'styles.css',
       'react.production.min.js',
-      'react-dom.production.min.js'
+      'react-dom.production.min.js',
+      'qrcode.min.js'
     ];
 
     for (const resource of criticalResources) {

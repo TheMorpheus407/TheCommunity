@@ -975,6 +975,40 @@ textarea[readonly] {
   opacity: 0.6;
   cursor: not-allowed;
 }
+.qr-code-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 8px;
+}
+.qr-code-heading {
+  text-align: center;
+  color: var(--color-text-primary);
+}
+.qr-code-description {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+.qr-code {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.75rem;
+  background: #ffffff;
+  border-radius: 8px;
+}
+.qr-code img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
 .clear-chat-button {
   min-width: 90px;
   padding: 0.45rem 1rem;
