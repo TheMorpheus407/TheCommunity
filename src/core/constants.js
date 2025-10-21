@@ -124,6 +124,12 @@ export const OPENAI_MODEL = 'gpt-4o-mini';
 export const THEME_STORAGE_KEY = 'thecommunity.theme-preference';
 
 /**
+ * Local storage key for AI preference.
+ * @constant {string}
+ */
+export const AI_PREFERENCE_STORAGE_KEY = 'thecommunity.ai-preference';
+
+/**
  * Available theme options.
  * @enum {string}
  */

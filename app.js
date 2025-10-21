@@ -25,6 +25,7 @@
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   const OPENAI_MODEL = 'gpt-4o-mini';
   const THEME_STORAGE_KEY = 'thecommunity.theme-preference';
+  const AI_PREFERENCE_STORAGE_KEY = 'thecommunity.ai-preference';
   const THEME_OPTIONS = {
     LIGHT: 'light',
     DARK: 'dark',
@@ -336,6 +337,25 @@
   }
 
   /**
+   * Checks if the AI modal should be shown based on stored user preference.
+   * @returns {boolean} true if modal should be shown, false if user previously dismissed it
+   */
+  function shouldShowAiModal() {
+    if (typeof window === 'undefined') {
+      return true;
+    }
+    try {
+      const aiPreference = window.localStorage.getItem(AI_PREFERENCE_STORAGE_KEY);
+      // Don't show modal if user previously dismissed it
+      return aiPreference !== 'dismissed';
+    } catch (error) {
+      console.warn('AI preference could not be read from storage.', error);
+      // On error, show modal (fail-safe to allow user to interact)
+      return true;
+    }
+  }
+
+  /**
    * Root React component that coordinates WebRTC setup and the user interface.
    * @returns {React.ReactElement}
    */
@@ -364,7 +384,7 @@
     const [isLoadingContributors, setIsLoadingContributors] = useState(false);
     const [copyButtonText, setCopyButtonText] = useState(t.signaling.copyButton);
     const [openAiKey, setOpenAiKey] = useState('');
-    const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(true);
+    const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(shouldShowAiModal());
     const [apiKeyInput, setApiKeyInput] = useState('');
     const [apiKeyError, setApiKeyError] = useState('');
     const [isAiBusy, setIsAiBusy] = useState(false);
@@ -526,6 +546,15 @@
       setApiKeyError('');
       setIsApiKeyModalOpen(true);
       setIsAboutOpen(false);
+
+      // Clear dismissed preference when user explicitly opens modal
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.removeItem(AI_PREFERENCE_STORAGE_KEY);
+        }
+      } catch (error) {
+        console.warn('AI preference could not be cleared from localStorage.', error);
+      }
     }, [openAiKey, setIsAboutOpen]);
 
     const handleCloseApiKeyModal = useCallback(() => {
@@ -539,6 +568,15 @@
       setAiStatus('');
       setAiError('');
       appendSystemMessage(t.systemMessages.continueWithoutAi);
+
+      // Save preference to localStorage
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(AI_PREFERENCE_STORAGE_KEY, 'dismissed');
+        }
+      } catch (error) {
+        console.warn('AI preference could not be saved to localStorage.', error);
+      }
     }, [appendSystemMessage, handleCloseApiKeyModal, t]);
 
     const handleSaveApiKey = useCallback((event) => {
