@@ -389,6 +389,7 @@
     const [isDangerZoneModalOpen, setIsDangerZoneModalOpen] = useState(false);
     const [dangerZoneAction, setDangerZoneAction] = useState(null);
     const [dangerZoneConfirmInput, setDangerZoneConfirmInput] = useState('');
+    const [isSoundboardOpen, setIsSoundboardOpen] = useState(false);
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -1343,6 +1344,25 @@
     }, [applyRemoteInputTransform]);
 
     /**
+     * Close soundboard dropdown when clicking outside of it.
+     */
+    useEffect(() => {
+      if (!isSoundboardOpen) {
+        return;
+      }
+      const handleClickOutside = (event) => {
+        const soundboardContainer = event.target.closest('.soundboard-container');
+        if (!soundboardContainer) {
+          setIsSoundboardOpen(false);
+        }
+      };
+      document.addEventListener('click', handleClickOutside);
+      return () => {
+        document.removeEventListener('click', handleClickOutside);
+      };
+    }, [isSoundboardOpen]);
+
+    /**
      * Sends the typed message across the data channel after validation.
      */
     const handleSend = useCallback(() => {
@@ -1441,6 +1461,28 @@
         imageFileInputRef.current.click();
       }
     }, []);
+
+    /**
+     * Toggles the soundboard dropdown visibility.
+     */
+    const handleSoundboardToggle = useCallback(() => {
+      setIsSoundboardOpen((prev) => !prev);
+    }, []);
+
+    /**
+     * Sends a sound message when a sound is selected from the soundboard.
+     */
+    const handleSoundSelect = useCallback((soundKey) => {
+      const channel = channelRef.current;
+      if (!channel || channel.readyState !== 'open') {
+        return;
+      }
+      const soundName = t.soundboard.sounds[soundKey];
+      const soundMessage = `🔊 ${soundName}`;
+      channel.send(soundMessage);
+      appendMessage(soundMessage, 'local');
+      setIsSoundboardOpen(false);
+    }, [appendMessage, t]);
 
     const handleRemoteKeyboardInput = useCallback((message) => {
       if (!remoteControlAllowedRef.current) {
@@ -2897,6 +2939,30 @@
                 'aria-label': t.imageShare.sendImage,
                 title: t.imageShare.sendImageTitle
               }, '📷'),
+              React.createElement('div', { className: 'soundboard-container' },
+                React.createElement('button', {
+                  type: 'button',
+                  className: 'soundboard-button',
+                  onClick: handleSoundboardToggle,
+                  disabled: !channelReady,
+                  'aria-label': t.soundboard.button,
+                  title: t.soundboard.buttonTitle,
+                  'aria-expanded': isSoundboardOpen
+                }, '🔊'),
+                isSoundboardOpen && React.createElement('div', { className: 'soundboard-dropdown' },
+                  React.createElement('div', { className: 'soundboard-header' }, t.soundboard.selectSound),
+                  React.createElement('div', { className: 'soundboard-grid' },
+                    Object.keys(t.soundboard.sounds).map((soundKey) =>
+                      React.createElement('button', {
+                        key: soundKey,
+                        type: 'button',
+                        className: 'soundboard-item',
+                        onClick: () => handleSoundSelect(soundKey)
+                      }, t.soundboard.sounds[soundKey])
+                    )
+                  )
+                )
+              ),
               React.createElement('input', {
                 id: 'outgoing',
                 type: 'text',
