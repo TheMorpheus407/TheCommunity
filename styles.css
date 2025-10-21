@@ -1847,3 +1847,115 @@ textarea[readonly] {
     padding: 1.5rem;
   }
 }
+
+/* ===== Pong Game Section ===== */
+
+#pong {
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-panel-border);
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow: var(--shadow-panel);
+}
+
+#pong header {
+  margin-bottom: 1.5rem;
+}
+
+.pong-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.pong-canvas-container {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  background: #0a0a0f;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid var(--color-border-strong);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.pong-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+}
+
+.pong-controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.pong-controls button {
+  min-width: 200px;
+}
+
+.pong-instructions {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.pong-score-display {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  padding: 1rem;
+  background: var(--color-surface-alt);
+  border-radius: 10px;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.pong-score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pong-score-item h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pong-score-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--color-text-primary);
+}
+
+.pong-lives {
+  font-size: 1.5rem;
+}
+
+[data-theme='rgb'] .pong-canvas-container {
+  border: 2px solid;
+  border-image: linear-gradient(135deg, #ff00ff, #00ffff, #ff00ff) 1;
+  box-shadow: 0 0 30px rgba(255, 0, 255, 0.4), 0 0 60px rgba(0, 255, 255, 0.3);
+}
+
+@media (max-width: 768px) {
+  .pong-controls button {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .pong-score-value {
+    font-size: 1.5rem;
+  }
+}

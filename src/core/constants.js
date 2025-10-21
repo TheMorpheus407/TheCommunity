@@ -22,6 +22,12 @@ export const CONTROL_CHANNEL_LABEL = 'control';
 export const IMAGE_CHANNEL_LABEL = 'image';
 
 /**
+ * Label for the Pong game data channel.
+ * @constant {string}
+ */
+export const PONG_CHANNEL_LABEL = 'pong';
+
+/**
  * Maximum allowed length for a chat message in characters.
  * @constant {number}
  */

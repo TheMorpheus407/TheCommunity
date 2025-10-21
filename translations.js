@@ -298,6 +298,25 @@ const baseTranslation = Object.freeze({
         'Manche Menschen haben Albträume. Entwickler träumen von Production-Deployments am Freitagnachmittag.'
       ]
     }
+  },
+  pong: {
+    challengeButton: 'Pong-Herausforderung starten',
+    challengeButtonBusy: 'Pong läuft...',
+    challengeButtonDisabled: 'Verbinde dich, um Pong zu spielen',
+    title: 'Pong',
+    gameStarted: 'Pong-Spiel gestartet! Nutze Pfeiltasten ↑/↓ um zu spielen.',
+    challengeSent: 'Pong-Herausforderung gesendet! Warte auf Peer...',
+    victory: 'Du hast gewonnen! Glückwunsch!',
+    defeat: 'Du hast verloren! Besser beim nächsten Mal.',
+    defeatMessage: 'Du hast mich geschlagen! Deine Pong-Fähigkeiten sind überlegen. Gut gespielt!',
+    channelReady: 'Pong-Kanal bereit.',
+    channelClosed: 'Pong-Kanal geschlossen.',
+    channelError: 'Pong-Kanal Fehler aufgetreten.',
+    instructions: 'Benutze ↑ und ↓ Pfeiltasten, um deinen Schläger zu bewegen. Jeder Spieler hat 3 Leben.',
+    score: 'Punkte',
+    lives: 'Leben',
+    waitingForPeer: 'Warte auf Peer, um Pong zu spielen...',
+    closeGame: 'Spiel beenden'
   }
 });
 
