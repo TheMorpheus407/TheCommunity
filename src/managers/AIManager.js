@@ -15,7 +15,7 @@
  * - Token limits on API requests
  */
 
-import { OPENAI_MODEL, MAX_MESSAGE_LENGTH } from '../core/constants.js';
+import { OPENAI_MODEL, MAX_MESSAGE_LENGTH, AI_PREFERENCE_STORAGE_KEY } from '../core/constants.js';
 
 /**
  * Creates a factory for AI operations
@@ -103,7 +103,7 @@ export function createAIManager(deps) {
   }
 
   /**
-   * Continues without AI setup
+   * Continues without AI setup and saves preference to localStorage
    * @returns {void}
    */
   function continueWithoutAi() {
@@ -111,6 +111,15 @@ export function createAIManager(deps) {
     setAiStatus('');
     setAiError('');
     appendSystemMessage(t.systemMessages.continueWithoutAi);
+
+    // Save preference to localStorage
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(AI_PREFERENCE_STORAGE_KEY, 'dismissed');
+      }
+    } catch (error) {
+      console.warn('AI preference could not be saved to localStorage.', error);
+    }
   }
 
   /**
