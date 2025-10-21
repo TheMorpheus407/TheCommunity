@@ -261,6 +261,23 @@ const baseTranslation = Object.freeze({
     sentImage: (fileName) => `Bild gesendet: ${fileName}`,
     receivedImage: (fileName) => `Bild empfangen: ${fileName}`
   },
+  soundboard: {
+    button: 'Soundboard',
+    buttonTitle: 'Sound aus Soundboard senden',
+    selectSound: 'Sound auswählen...',
+    sounds: {
+      fanfare: '🎺 Fanfare',
+      drumroll: '🥁 Trommelwirbel',
+      horn: '📯 Signalhorn',
+      circus: '🎪 Zirkusmusik',
+      jingle: '🎵 Erkennungsmelodie',
+      bell: '🔔 Klingel',
+      applause: '📢 Applaus',
+      laugh: '😂 Lachkonserve',
+      alarm: '⚠️ Alarmton',
+      cheer: '🎉 Jubelschrei'
+    }
+  },
   statistics: {
     title: 'KI-Statistik',
     header: 'Von KI gelöste Issues',
@@ -1319,6 +1336,23 @@ const dialectConfigs = {
         sentImage: (fileName) => `Bild gschickt: ${fileName}`,
         receivedImage: (fileName) => `Bild empfange: ${fileName}`
       },
+      soundboard: {
+        button: 'Soundboard',
+        buttonTitle: 'Sound us em Soundboard schicke',
+        selectSound: 'Sound uuswähle...',
+        sounds: {
+          fanfare: '🎺 Fanfare',
+          drumroll: '🥁 Trommelwirbel',
+          horn: '📯 Signalhorn',
+          circus: '🎪 Zirkusmusig',
+          jingle: '🎵 Erkennigsmalodie',
+          bell: '🔔 Glogge',
+          applause: '📢 Applaus',
+          laugh: '😂 Lachkonserve',
+          alarm: '⚠️ Alarmton',
+          cheer: '🎉 Jubelschrei'
+        }
+      },
       statistics: {
         title: 'KI-Statistik',
         header: 'Vo KI glösti Issues',
@@ -1616,6 +1650,23 @@ const dialectConfigs = {
         receiveFailed: 'Bild konnt ned emfpangd werdn.',
         sentImage: (fileName) => `Bild gschickd: ${fileName}`,
         receivedImage: (fileName) => `Bild kriagt: ${fileName}`
+      },
+      soundboard: {
+        button: 'Soundboard',
+        buttonTitle: 'Sound vom Soundboard schickn',
+        selectSound: 'Sound aussuchn...',
+        sounds: {
+          fanfare: '🎺 Tusch',
+          drumroll: '🥁 Trommelwirbel',
+          horn: '📯 Signalhorn',
+          circus: '🎪 Zirkusmusi',
+          jingle: '🎵 Erkennungsmelodie',
+          bell: '🔔 Glocke',
+          applause: '📢 Applaus',
+          laugh: '😂 Lachkonserve',
+          alarm: '⚠️ Alarmton',
+          cheer: '🎉 Jubelschrei'
+        }
       },
       statistics: {
         title: 'KI-Statistik',
