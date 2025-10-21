@@ -1959,3 +1959,204 @@ textarea[readonly] {
     font-size: 1.5rem;
   }
 }
+
+/* Danger Zone Section */
+#danger-zone {
+  border: 2px solid var(--color-text-error);
+  background: var(--color-surface-strong);
+  margin-top: 2rem;
+}
+
+#danger-zone header {
+  background: linear-gradient(135deg, rgba(255, 50, 50, 0.15), rgba(255, 100, 100, 0.1));
+  border-bottom: 2px solid var(--color-text-error);
+}
+
+.danger-zone-warning {
+  color: var(--color-text-error);
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.danger-zone-content {
+  padding: 1.5rem;
+}
+
+.danger-zone-description {
+  color: var(--color-text-muted);
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.danger-zone-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.danger-zone-action-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--color-surface-muted);
+  border-radius: 8px;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.danger-zone-button {
+  padding: 0.75rem 1.5rem;
+  background: var(--color-text-error);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.danger-zone-button:hover:not(:disabled) {
+  background: #c0352b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 50, 50, 0.3);
+}
+
+.danger-zone-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.danger-zone-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.danger-zone-button-nuclear {
+  background: #8b0000;
+  font-size: 1rem;
+  padding: 1rem 1.5rem;
+}
+
+.danger-zone-button-nuclear:hover:not(:disabled) {
+  background: #a00000;
+  box-shadow: 0 6px 12px rgba(139, 0, 0, 0.4);
+}
+
+.danger-zone-action-desc {
+  color: var(--color-text-subtle);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.danger-zone-modal .modal-header {
+  background: linear-gradient(135deg, rgba(255, 50, 50, 0.15), rgba(255, 100, 100, 0.1));
+  border-bottom: 2px solid var(--color-text-error);
+}
+
+.danger-zone-modal-message {
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  white-space: pre-line;
+}
+
+.danger-zone-confirm-input {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--color-input-bg);
+  border: 2px solid var(--color-input-border);
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-family: monospace;
+  margin-bottom: 1rem;
+}
+
+.danger-zone-confirm-input:focus {
+  outline: none;
+  border-color: var(--color-text-error);
+  box-shadow: 0 0 0 3px rgba(255, 50, 50, 0.1);
+}
+
+.danger-zone-confirm-button {
+  background: var(--color-text-error);
+  color: white;
+}
+
+.danger-zone-confirm-button:hover:not(:disabled) {
+  background: #c0352b;
+}
+
+.danger-zone-confirm-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+[data-theme='light'] #danger-zone {
+  border-color: #c0352b;
+}
+
+[data-theme='light'] #danger-zone header {
+  background: linear-gradient(135deg, rgba(192, 53, 43, 0.1), rgba(192, 53, 43, 0.05));
+  border-bottom-color: #c0352b;
+}
+
+[data-theme='light'] .danger-zone-warning {
+  color: #c0352b;
+}
+
+[data-theme='light'] .danger-zone-button {
+  background: #c0352b;
+}
+
+[data-theme='light'] .danger-zone-button:hover:not(:disabled) {
+  background: #a02f26;
+}
+
+[data-theme='rgb'] #danger-zone {
+  border-color: #ff0080;
+  box-shadow: 0 0 20px rgba(255, 0, 128, 0.3);
+}
+
+[data-theme='rgb'] #danger-zone header {
+  background: linear-gradient(135deg, rgba(255, 0, 128, 0.2), rgba(255, 0, 0, 0.1));
+  border-bottom-color: #ff0080;
+}
+
+[data-theme='rgb'] .danger-zone-warning {
+  color: #ff0080;
+  text-shadow: 0 0 10px rgba(255, 0, 128, 0.5);
+}
+
+[data-theme='rgb'] .danger-zone-button {
+  background: linear-gradient(135deg, #ff0080, #ff0040);
+  box-shadow: 0 0 15px rgba(255, 0, 128, 0.4);
+}
+
+[data-theme='rgb'] .danger-zone-button:hover:not(:disabled) {
+  box-shadow: 0 0 25px rgba(255, 0, 128, 0.6);
+}
+
+[data-theme='rgb'] .danger-zone-button-nuclear {
+  background: linear-gradient(135deg, #8b0000, #ff0000);
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+}
+
+[data-theme='rgb'] .danger-zone-button-nuclear:hover:not(:disabled) {
+  box-shadow: 0 0 35px rgba(255, 0, 0, 0.7);
+}
+
+@media (max-width: 768px) {
+  .danger-zone-actions {
+    gap: 1rem;
+  }
+
+  .danger-zone-action-item {
+    padding: 0.75rem;
+  }
+
+  .danger-zone-button {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+}
