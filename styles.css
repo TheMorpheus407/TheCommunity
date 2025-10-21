@@ -336,6 +336,89 @@ h1 {
 .app-title-text {
   white-space: nowrap;
 }
+.title-room-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.current-room {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  padding: 0.25rem 0.75rem;
+  background: var(--color-surface-alt);
+  border-radius: 12px;
+  border: 1px solid var(--color-border-subtle);
+}
+.room-label {
+  opacity: 0.7;
+}
+.room-id {
+  font-weight: 600;
+  color: var(--color-text-accent);
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.random-room-button {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 200ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+}
+.random-room-button:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-outline);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.random-room-button:active {
+  transform: translateY(0);
+}
+.random-room-svg {
+  width: 100%;
+  height: 100%;
+}
+.random-room-button:hover .dice-cube {
+  animation: dice-rotate 600ms ease-in-out;
+}
+@keyframes dice-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.dice-face {
+  fill: var(--color-surface-strong);
+  stroke: var(--color-border-strong);
+  stroke-width: 1;
+}
+.dice-top {
+  fill: var(--color-chip-bg);
+}
+.dice-left {
+  fill: var(--color-surface-alt);
+}
+.dice-right {
+  fill: var(--color-surface-muted);
+}
+.dice-dot {
+  fill: var(--color-text-primary);
+}
 .tux-mascot {
   position: absolute;
   top: 50%;

@@ -365,6 +365,21 @@ const baseTranslation = Object.freeze({
       sessionCleared: 'Sitzung wurde beendet. API-Schlüssel entfernt und Verbindungen getrennt.',
       nuclearExecuted: 'Vollständiger Reset durchgeführt. Seite wird neu geladen...'
     }
+  },
+  rooms: {
+    randomButton: 'Zufälliger Raum',
+    randomButtonTitle: 'Zufälligen öffentlichen Raum beitreten',
+    randomButtonAria: 'Einen zufälligen öffentlichen Chatroom beitreten',
+    currentRoom: 'Aktueller Raum:',
+    noRoom: 'Kein Raum',
+    roomId: (id) => `Raum: ${id}`,
+    publicRoomJoined: (roomId) => `Öffentlichem Raum "${roomId}" beigetreten. Erstelle ein Angebot oder warte auf eine Verbindung.`,
+    createRoom: {
+      title: 'Raum-Einstellungen',
+      allowRandom: 'Zufällige Nutzer dürfen beitreten',
+      linkOnly: 'Nur mit Link beitreten',
+      description: 'Bestimme, ob dieser Raum im "Zufällige Räume"-Feature auftauchen soll.'
+    }
   }
 });
 
