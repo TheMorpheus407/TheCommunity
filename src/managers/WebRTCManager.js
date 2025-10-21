@@ -19,7 +19,8 @@
 import {
   EXPECTED_CHANNEL_LABEL,
   CONTROL_CHANNEL_LABEL,
-  IMAGE_CHANNEL_LABEL
+  IMAGE_CHANNEL_LABEL,
+  PONG_CHANNEL_LABEL
 } from '../core/constants.js';
 
 /**
@@ -34,6 +35,7 @@ import {
  * @param {React.MutableRefObject} deps.channelRef - Chat channel reference
  * @param {React.MutableRefObject} deps.controlChannelRef - Control channel reference
  * @param {React.MutableRefObject} deps.imageChannelRef - Image channel reference
+ * @param {React.MutableRefObject} deps.pongChannelRef - Pong channel reference
  * @param {React.MutableRefObject} deps.incomingTimestampsRef - Rate limiting timestamps
  * @param {React.MutableRefObject} deps.canControlPeerRef - Remote control permission ref
  * @param {Function} deps.setStatus - Status setter
@@ -48,6 +50,7 @@ import {
  * @param {Function} deps.setupChatChannel - Chat channel setup function
  * @param {Function} deps.setupControlChannel - Control channel setup function
  * @param {Function} deps.setupImageChannel - Image channel setup function
+ * @param {Function} deps.setupPongChannel - Pong channel setup function
  * @param {Object} deps.t - Translation object
  * @returns {Object} WebRTC operations
  * @export
@@ -63,6 +66,7 @@ export function createWebRTCManager(deps) {
     channelRef,
     controlChannelRef,
     imageChannelRef,
+    pongChannelRef,
     incomingTimestampsRef,
     canControlPeerRef,
     setStatus,
@@ -77,6 +81,7 @@ export function createWebRTCManager(deps) {
     setupChatChannel,
     setupControlChannel,
     setupImageChannel,
+    setupPongChannel,
     t
   } = deps;
 
@@ -179,6 +184,10 @@ export function createWebRTCManager(deps) {
         setupImageChannel(incomingChannel);
         return;
       }
+      if (incomingChannel.label === PONG_CHANNEL_LABEL) {
+        setupPongChannel(incomingChannel);
+        return;
+      }
 
       // Security: Close unexpected channels
       appendSystemMessage(t.systemMessages.channelBlocked(incomingChannel.label || ''));
@@ -272,6 +281,10 @@ export function createWebRTCManager(deps) {
     const imageChannel = pc.createDataChannel(IMAGE_CHANNEL_LABEL);
     imageChannelRef.current = imageChannel;
     setupImageChannel(imageChannel);
+
+    const pongChannel = pc.createDataChannel(PONG_CHANNEL_LABEL);
+    pongChannelRef.current = pongChannel;
+    setupPongChannel(pongChannel);
 
     // Reset state
     incomingTimestampsRef.current = [];
@@ -388,6 +401,10 @@ export function createWebRTCManager(deps) {
     if (imageChannelRef.current) {
       imageChannelRef.current.close();
       imageChannelRef.current = null;
+    }
+    if (pongChannelRef.current) {
+      pongChannelRef.current.close();
+      pongChannelRef.current = null;
     }
 
     // Close peer connection

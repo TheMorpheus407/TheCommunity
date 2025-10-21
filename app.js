@@ -8,6 +8,7 @@
   const EXPECTED_CHANNEL_LABEL = 'chat';
   const CONTROL_CHANNEL_LABEL = 'control';
   const IMAGE_CHANNEL_LABEL = 'image';
+  const PONG_CHANNEL_LABEL = 'pong';
   const MAX_MESSAGE_LENGTH = 2000;
   const MAX_MESSAGES_PER_INTERVAL = 30;
   const MESSAGE_INTERVAL_MS = 5000;
@@ -382,11 +383,15 @@
     const [statisticsError, setStatisticsError] = useState('');
     const [randomJoke, setRandomJoke] = useState('');
     const [tuxAnimation, setTuxAnimation] = useState(null);
+    const [isPongActive, setIsPongActive] = useState(false);
+    const [pongScore, setPongScore] = useState({ left: 0, right: 0 });
+    const [pongLives, setPongLives] = useState({ left: 3, right: 3 });
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
     const controlChannelRef = useRef(null);
     const imageChannelRef = useRef(null);
+    const pongChannelRef = useRef(null);
     const iceDoneRef = useRef(false);
     const screenSenderRef = useRef(null);
     const screenAudioSenderRef = useRef(null);
@@ -419,6 +424,9 @@
     const imageReceiveTimestampsRef = useRef([]);
     const imageFileInputRef = useRef(null);
     const tuxAnimationTimeoutRef = useRef(null);
+    const pongCanvasRef = useRef(null);
+    const pongGameStateRef = useRef(null);
+    const pongAnimationFrameRef = useRef(null);
 
     /**
      * Triggers a Tux animation based on keywords detected in chat messages.
@@ -854,6 +862,36 @@
     }, [handleIncomingImageMessage, t]);
 
     /**
+     * Configures event handlers for the Pong data channel.
+     * @param {RTCDataChannel} channel - The Pong data channel
+     */
+    const setupPongChannel = useCallback((channel) => {
+      channel.onopen = () => {
+        pongChannelRef.current = channel;
+        appendSystemMessageRef.current(t.pong.channelReady);
+      };
+      channel.onclose = () => {
+        if (pongChannelRef.current === channel) {
+          pongChannelRef.current = null;
+        }
+        appendSystemMessageRef.current(t.pong.channelClosed);
+        // Clean up Pong game if active
+        if (pongGameStateRef.current) {
+          if (pongGameStateRef.current.destroy) {
+            pongGameStateRef.current.destroy();
+          }
+          pongGameStateRef.current = null;
+          setIsPongActive(false);
+          setPongScore({ left: 0, right: 0 });
+          setPongLives({ left: 3, right: 3 });
+        }
+      };
+      channel.onerror = () => {
+        appendSystemMessageRef.current(t.pong.channelError);
+      };
+    }, [t]);
+
+    /**
      * Lazily creates (or returns) the RTCPeerConnection instance.
      * @returns {RTCPeerConnection}
      */
@@ -933,12 +971,17 @@
           setupImageChannel(incomingChannel);
           return;
         }
+        if (incomingChannel.label === PONG_CHANNEL_LABEL) {
+          pongChannelRef.current = incomingChannel;
+          setupPongChannel(incomingChannel);
+          return;
+        }
         appendSystemMessage(t.systemMessages.channelBlocked(incomingChannel.label || ''));
         incomingChannel.close();
       };
 
       return pc;
-    }, [appendSystemMessage, setupChatChannel, setupControlChannel, setupImageChannel, t]);
+    }, [appendSystemMessage, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, t]);
 
     /**
      * Resolves once ICE gathering finishes for the current connection.
@@ -1013,6 +1056,10 @@
       imageChannelRef.current = imageChannel;
       setupImageChannel(imageChannel);
 
+      const pongChannel = pc.createDataChannel(PONG_CHANNEL_LABEL);
+      pongChannelRef.current = pongChannel;
+      setupPongChannel(pongChannel);
+
       incomingTimestampsRef.current = [];
       iceDoneRef.current = false;
       setLocalSignal('');
@@ -1032,7 +1079,7 @@
       } finally {
         setIsCreatingOffer(false);
       }
-    }, [appendSystemMessage, ensurePeerConnection, setupChatChannel, setupControlChannel, setupImageChannel, waitForIce, t]);
+    }, [appendSystemMessage, ensurePeerConnection, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, waitForIce, t]);
 
     /**
      * Applies the pasted remote offer or answer to the peer connection.
@@ -1522,6 +1569,72 @@
     }, [appendSystemMessage, t]);
 
     /**
+     * Stops the Pong game and cleans up resources.
+     */
+    const handleStopPong = useCallback(() => {
+      if (pongGameStateRef.current) {
+        pongGameStateRef.current.destroy();
+        pongGameStateRef.current = null;
+      }
+      if (pongAnimationFrameRef.current) {
+        cancelAnimationFrame(pongAnimationFrameRef.current);
+        pongAnimationFrameRef.current = null;
+      }
+      setIsPongActive(false);
+      setPongScore({ left: 0, right: 0 });
+      setPongLives({ left: 3, right: 3 });
+    }, []);
+
+    /**
+     * Starts a Pong game challenge.
+     */
+    const handleStartPong = useCallback(() => {
+      if (!pongChannelRef.current || pongChannelRef.current.readyState !== 'open') {
+        appendSystemMessage(t.pong.waitingForPeer);
+        return;
+      }
+      if (!pongCanvasRef.current) {
+        return;
+      }
+
+      // Stop any existing game
+      handleStopPong();
+
+      // Create new Pong game instance
+      const pongGame = new window.PongGame(
+        pongCanvasRef.current,
+        pongChannelRef.current,
+        {
+          onGameStarted: () => {
+            setIsPongActive(true);
+            appendSystemMessage(t.pong.gameStarted);
+          },
+          onChallengeSent: () => {
+            appendSystemMessage(t.pong.challengeSent);
+          },
+          onScoreUpdate: (score, lives) => {
+            setPongScore(score);
+            setPongLives(lives);
+          },
+          onGameOver: (iWon) => {
+            if (iWon) {
+              appendSystemMessage(t.pong.victory);
+            } else {
+              appendSystemMessage(t.pong.defeat);
+            }
+            setTimeout(() => {
+              handleStopPong();
+            }, 3000);
+          }
+        }
+      );
+
+      pongGameStateRef.current = pongGame;
+      pongGame.startGame(true);
+      setIsPongActive(true);
+    }, [appendSystemMessage, handleStopPong, t]);
+
+    /**
      * Terminates the current peer connection and resets signaling state.
      */
     const handleDisconnect = useCallback(() => {
@@ -1537,6 +1650,11 @@
         imageChannelRef.current.close();
         imageChannelRef.current = null;
       }
+      if (pongChannelRef.current) {
+        pongChannelRef.current.close();
+        pongChannelRef.current = null;
+      }
+      handleStopPong();
       if (pcRef.current) {
         pcRef.current.close();
         pcRef.current = null;
@@ -1613,7 +1731,7 @@
       appendSystemMessage(t.systemMessages.disconnectNotice);
       setAiStatus('');
       setAiError('');
-    }, [appendSystemMessage, cancelPendingPointerFrame, t]);
+    }, [appendSystemMessage, cancelPendingPointerFrame, handleStopPong, t]);
 
     const handleAiRewrite = useCallback(async () => {
       const draft = inputText.trim();
@@ -2507,7 +2625,12 @@
                   onClick: handleDisconnect,
                   disabled: !channelReady,
                   'aria-label': t.signaling.disconnectAriaLabel
-                }, t.signaling.disconnect)
+                }, t.signaling.disconnect),
+                React.createElement('button', {
+                  id: 'pong-challenge',
+                  onClick: handleStartPong,
+                  disabled: !channelReady
+                }, isPongActive ? t.pong.challengeButtonBusy : t.pong.challengeButton)
               ),
               React.createElement('div', { className: 'signal-block' },
                 React.createElement('div', { className: 'signal-heading' },
@@ -2822,6 +2945,42 @@
               randomJoke && React.createElement('div', { className: 'statistics-joke' },
                 React.createElement('h3', null, t.statistics.joke.title),
                 React.createElement('p', null, randomJoke)
+              )
+            )
+          ),
+          React.createElement('section', { id: 'pong' },
+            React.createElement('header', null,
+              React.createElement('div', { className: 'header-content' },
+                React.createElement('h2', null, t.pong.title)
+              )
+            ),
+            React.createElement('div', { className: 'pong-content' },
+              isPongActive && React.createElement('div', { className: 'pong-canvas-container' },
+                React.createElement('canvas', {
+                  ref: pongCanvasRef,
+                  className: 'pong-canvas',
+                  width: 800,
+                  height: 600
+                })
+              ),
+              isPongActive && React.createElement('div', { className: 'pong-score-display' },
+                React.createElement('div', { className: 'pong-score-item' },
+                  React.createElement('h3', null, t.pong.score),
+                  React.createElement('div', { className: 'pong-score-value' }, pongScore.left),
+                  React.createElement('div', { className: 'pong-lives' }, '❤️'.repeat(pongLives.left))
+                ),
+                React.createElement('div', { className: 'pong-score-item' },
+                  React.createElement('h3', null, t.pong.score),
+                  React.createElement('div', { className: 'pong-score-value' }, pongScore.right),
+                  React.createElement('div', { className: 'pong-lives' }, '❤️'.repeat(pongLives.right))
+                )
+              ),
+              isPongActive && React.createElement('p', { className: 'pong-instructions' }, t.pong.instructions),
+              React.createElement('div', { className: 'pong-controls' },
+                isPongActive && React.createElement('button', {
+                  onClick: handleStopPong
+                }, t.pong.closeGame),
+                !isPongActive && !channelReady && React.createElement('p', { className: 'hint' }, t.pong.waitingForPeer)
               )
             )
           )
