@@ -9,7 +9,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Utility Module Tests', () => {
   test.describe('contributors.js', () => {
     test('fetchContributors validates repo format', async ({ page }) => {
-      await page.goto('/index.html');
+      await page.goto('/index.html?noredirect');
 
       // Test with valid repo format
       const validResult = await page.evaluate(async () => {
@@ -29,7 +29,7 @@ test.describe('Utility Module Tests', () => {
     });
 
     test('fetchContributors rejects invalid repo formats', async ({ page }) => {
-      await page.goto('/index.html');
+      await page.goto('/index.html?noredirect');
 
       const testCases = [
         { input: '', description: 'empty string' },
@@ -64,7 +64,7 @@ test.describe('Utility Module Tests', () => {
     });
 
     test('fetchStatistics validates repo format', async ({ page }) => {
-      await page.goto('/index.html');
+      await page.goto('/index.html?noredirect');
 
       // Test with invalid format
       const result = await page.evaluate(async () => {
@@ -88,7 +88,7 @@ test.describe('Utility Module Tests', () => {
 
   test.describe('helpers.js', () => {
     test('resolveInitialTheme returns valid theme object', async ({ page }) => {
-      await page.goto('/index.html');
+      await page.goto('/index.html?noredirect');
 
       const result = await page.evaluate(async () => {
         const { resolveInitialTheme } = await import('../src/utils/helpers.js');
@@ -103,7 +103,7 @@ test.describe('Utility Module Tests', () => {
     });
 
     test('resolveInitialTheme respects localStorage', async ({ page }) => {
-      await page.goto('/index.html');
+      await page.goto('/index.html?noredirect');
 
       // Test with stored theme
       const resultWithStored = await page.evaluate(async () => {
@@ -128,7 +128,7 @@ test.describe('Utility Module Tests', () => {
 
   test.describe('constants.js', () => {
     test('exports expected constant values', async ({ page }) => {
-      await page.goto('/index.html');
+      await page.goto('/index.html?noredirect');
 
       const constants = await page.evaluate(async () => {
         const module = await import('../src/core/constants.js');
@@ -151,7 +151,7 @@ test.describe('Utility Module Tests', () => {
     });
 
     test('getNextThemeValue cycles through themes correctly', async ({ page }) => {
-      await page.goto('/index.html');
+      await page.goto('/index.html?noredirect');
 
       const results = await page.evaluate(async () => {
         const { getNextThemeValue } = await import('../src/core/constants.js');
@@ -170,7 +170,7 @@ test.describe('Utility Module Tests', () => {
 
   test.describe('TuxMascot.js', () => {
     test('TuxMascot component exports and has expected structure', async ({ page }) => {
-      await page.goto('/index.html');
+      await page.goto('/index.html?noredirect');
 
       const componentInfo = await page.evaluate(async () => {
         const module = await import('../src/components/TuxMascot.js');
@@ -185,7 +185,7 @@ test.describe('Utility Module Tests', () => {
     });
 
     test('TuxMascot renders with translations', async ({ page }) => {
-      await page.goto('/index.html');
+      await page.goto('/index.html?noredirect');
 
       await page.evaluate(async () => {
         const { TuxMascot } = await import('../src/components/TuxMascot.js');
