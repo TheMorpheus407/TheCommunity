@@ -1,21 +1,60 @@
 /**
- * @fileoverview AI Manager - Handles OpenAI API integration for chat rewriting
+ * @fileoverview AI Manager - Handles AI API integration for chat rewriting
  * @module managers/AIManager
  *
  * This manager handles:
- * - OpenAI API key management
- * - Chat message rewriting via GPT-4o-mini
+ * - AI provider selection (OpenAI, Ollama)
+ * - API key/endpoint management
+ * - Chat message rewriting via GPT-4o-mini or Ollama models
  * - API request/response handling
  * - Error handling and validation
  *
  * Security features:
- * - API key stored in memory only (not localStorage)
+ * - API key/endpoint stored in memory only (not localStorage)
  * - Message length validation
  * - Error handling for unauthorized responses
  * - Token limits on API requests
  */
 
-import { OPENAI_MODEL, MAX_MESSAGE_LENGTH, AI_PREFERENCE_STORAGE_KEY } from '../core/constants.js';
+import {
+  OPENAI_MODEL,
+  OLLAMA_MODEL,
+  OLLAMA_DEFAULT_ENDPOINT,
+  AI_PROVIDERS,
+  MAX_MESSAGE_LENGTH,
+  AI_PREFERENCE_STORAGE_KEY,
+  AI_PROVIDER_STORAGE_KEY
+} from '../core/constants.js';
+
+/**
+ * Gets the appropriate API endpoint and model based on provider
+ * @param {string} provider - AI provider (openai or ollama)
+ * @param {string} ollamaEndpoint - Custom Ollama endpoint (optional)
+ * @returns {Object} Configuration object with endpoint and model
+ */
+function getApiConfig(provider, ollamaEndpoint = '') {
+  if (provider === AI_PROVIDERS.OLLAMA) {
+    const endpoint = ollamaEndpoint.trim() || OLLAMA_DEFAULT_ENDPOINT;
+    // Ensure endpoint ends with /v1/chat/completions
+    const baseUrl = endpoint.replace(/\/+$/, '');
+    const fullEndpoint = baseUrl.includes('/v1/chat/completions')
+      ? baseUrl
+      : `${baseUrl}/v1/chat/completions`;
+
+    return {
+      endpoint: fullEndpoint,
+      model: OLLAMA_MODEL,
+      requiresAuth: false
+    };
+  }
+
+  // Default to OpenAI
+  return {
+    endpoint: 'https://api.openai.com/v1/chat/completions',
+    model: OPENAI_MODEL,
+    requiresAuth: true
+  };
+}
 
 /**
  * Creates a factory for AI operations
@@ -123,20 +162,23 @@ export function createAIManager(deps) {
   }
 
   /**
-   * Rewrites the current input text using OpenAI API
+   * Rewrites the current input text using the selected AI provider
    * @param {string} inputText - Current input text
-   * @param {string} openAiKey - OpenAI API key
+   * @param {string} openAiKey - OpenAI API key or Ollama endpoint
+   * @param {string} aiProvider - Selected AI provider
+   * @param {string} ollamaEndpoint - Custom Ollama endpoint (optional)
    * @returns {Promise<void>}
    */
-  async function rewriteMessage(inputText, openAiKey) {
+  async function rewriteMessage(inputText, openAiKey, aiProvider = AI_PROVIDERS.OPENAI, ollamaEndpoint = '') {
     const draft = inputText.trim();
 
     if (!draft) {
       return;
     }
 
-    // Check if API key is set
-    if (!openAiKey) {
+    // Check if credentials are set based on provider
+    const needsKey = aiProvider === AI_PROVIDERS.OPENAI;
+    if (needsKey && !openAiKey) {
       setApiKeyInput(openAiKey);
       setApiKeyError(t.aiErrors.emptyKey);
       setIsApiKeyModalOpen(true);
@@ -155,15 +197,23 @@ export function createAIManager(deps) {
     setAiError('');
 
     try {
-      // Call OpenAI API
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const config = getApiConfig(aiProvider, ollamaEndpoint);
+
+      // Build headers
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (config.requiresAuth && openAiKey) {
+        headers['Authorization'] = `Bearer ${openAiKey}`;
+      }
+
+      // Call AI API
+      const response = await fetch(config.endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${openAiKey}`
-        },
+        headers,
         body: JSON.stringify({
-          model: OPENAI_MODEL,
+          model: config.model,
           messages: [
             {
               role: 'system',
@@ -230,25 +280,41 @@ export function createAIManager(deps) {
    * Generates AI summaries for an array of issues
    * @param {Array} issues - Array of issue objects
    * @param {string} openAiKey - OpenAI API key
+   * @param {string} aiProvider - Selected AI provider
+   * @param {string} ollamaEndpoint - Custom Ollama endpoint (optional)
    * @returns {Promise<Array>} Issues with AI summaries added
    */
-  async function generateSummaries(issues, openAiKey) {
-    if (!openAiKey || !Array.isArray(issues) || issues.length === 0) {
+  async function generateSummaries(issues, openAiKey, aiProvider = AI_PROVIDERS.OPENAI, ollamaEndpoint = '') {
+    if (!Array.isArray(issues) || issues.length === 0) {
       return issues;
     }
+
+    // For OpenAI, we need a key. For Ollama, we don't
+    const needsKey = aiProvider === AI_PROVIDERS.OPENAI;
+    if (needsKey && !openAiKey) {
+      return issues;
+    }
+
+    const config = getApiConfig(aiProvider, ollamaEndpoint);
 
     const summariesPromises = issues.map(async (issue) => {
       try {
         const prompt = `Summarize this GitHub issue in 1-2 concise sentences:\nTitle: ${issue.title}\nBody: ${issue.body || 'No description'}`;
 
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        // Build headers
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+
+        if (config.requiresAuth && openAiKey) {
+          headers['Authorization'] = `Bearer ${openAiKey}`;
+        }
+
+        const response = await fetch(config.endpoint, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${openAiKey}`
-          },
+          headers,
           body: JSON.stringify({
-            model: OPENAI_MODEL,
+            model: config.model,
             messages: [
               {
                 role: 'system',
