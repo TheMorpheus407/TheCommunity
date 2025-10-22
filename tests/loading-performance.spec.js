@@ -17,8 +17,8 @@ test.describe('Loading Performance', () => {
   test('original app loads within acceptable time', async ({ page }) => {
     const startTime = Date.now();
 
-    // Navigate and wait for load events
-    const response = await page.goto('/index.html');
+    // Navigate and wait for load events (skip redirect for testing)
+    const response = await page.goto('/index.html?noredirect');
     expect(response.status()).toBe(200);
 
     // Measure DOMContentLoaded
@@ -50,7 +50,7 @@ test.describe('Loading Performance', () => {
   });
 
   test('collects detailed performance metrics', async ({ page }) => {
-    await page.goto('/index.html');
+    await page.goto('/index.html?noredirect');
     await page.waitForLoadState('networkidle');
 
     // Get detailed performance timing
@@ -115,12 +115,13 @@ test.describe('Loading Performance', () => {
       });
     });
 
-    await page.goto('/index.html');
+    await page.goto('/index.html?noredirect');
     await page.waitForLoadState('networkidle');
 
     // Check that critical resources loaded successfully
     const criticalResources = [
       'app.js',
+      'redirect.js',
       'translations.js',
       'styles.css',
       'react.production.min.js',
@@ -136,7 +137,7 @@ test.describe('Loading Performance', () => {
   });
 
   test('app remains responsive after load', async ({ page }) => {
-    await page.goto('/index.html');
+    await page.goto('/index.html?noredirect');
     await page.waitForLoadState('networkidle');
 
     // Test responsiveness by measuring click response time
@@ -178,7 +179,7 @@ test.describe('Loading Performance', () => {
 
 test.describe('Functionality Verification', () => {
   test('essential UI elements are present', async ({ page }) => {
-    await page.goto('/index.html');
+    await page.goto('/index.html?noredirect');
     await page.waitForLoadState('networkidle');
 
     // Verify mascot is rendered
@@ -195,7 +196,7 @@ test.describe('Functionality Verification', () => {
   });
 
   test('translations system works', async ({ page }) => {
-    await page.goto('/index.html');
+    await page.goto('/index.html?noredirect');
     await page.waitForLoadState('networkidle');
 
     // Check that German translations are loaded (default)
@@ -204,7 +205,7 @@ test.describe('Functionality Verification', () => {
   });
 
   test('React is properly loaded and initialized', async ({ page }) => {
-    await page.goto('/index.html');
+    await page.goto('/index.html?noredirect');
     await page.waitForLoadState('networkidle');
 
     const reactLoaded = await page.evaluate(() => {
