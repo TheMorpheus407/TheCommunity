@@ -124,6 +124,27 @@ export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'ima
 export const OPENAI_MODEL = 'gpt-4o-mini';
 
 /**
+ * Default Ollama model to use for AI message rewriting.
+ * @constant {string}
+ */
+export const OLLAMA_MODEL = 'llama3.2';
+
+/**
+ * Default Ollama endpoint URL.
+ * @constant {string}
+ */
+export const OLLAMA_DEFAULT_ENDPOINT = 'http://localhost:11434';
+
+/**
+ * Available AI provider options.
+ * @enum {string}
+ */
+export const AI_PROVIDERS = {
+  OPENAI: 'openai',
+  OLLAMA: 'ollama'
+};
+
+/**
  * Local storage key for theme preference.
  * @constant {string}
  */
@@ -134,6 +155,12 @@ export const THEME_STORAGE_KEY = 'thecommunity.theme-preference';
  * @constant {string}
  */
 export const AI_PREFERENCE_STORAGE_KEY = 'thecommunity.ai-preference';
+
+/**
+ * Local storage key for AI provider selection.
+ * @constant {string}
+ */
+export const AI_PROVIDER_STORAGE_KEY = 'thecommunity.ai-provider';
 
 /**
  * Available theme options.

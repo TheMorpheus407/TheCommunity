@@ -25,8 +25,15 @@
   const IMAGE_MAX_CONCURRENT = 3;
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   const OPENAI_MODEL = 'gpt-4o-mini';
+  const OLLAMA_MODEL = 'llama3.2';
+  const OLLAMA_DEFAULT_ENDPOINT = 'http://localhost:11434';
+  const AI_PROVIDERS = {
+    OPENAI: 'openai',
+    OLLAMA: 'ollama'
+  };
   const THEME_STORAGE_KEY = 'thecommunity.theme-preference';
   const AI_PREFERENCE_STORAGE_KEY = 'thecommunity.ai-preference';
+  const AI_PROVIDER_STORAGE_KEY = 'thecommunity.ai-provider';
   const COOKIE_CONSENT_STORAGE_KEY = 'thecommunity.cookie-consent';
   const WHISPER_MODEL_STORAGE_KEY = 'thecommunity.whisper-model';
   const THEME_OPTIONS = {
@@ -558,6 +565,25 @@
   }
 
   /**
+   * Gets the saved AI provider preference from localStorage.
+   * @returns {string} The saved provider or default (OpenAI)
+   */
+  function getSavedAiProvider() {
+    if (typeof window === 'undefined') {
+      return AI_PROVIDERS.OPENAI;
+    }
+    try {
+      const savedProvider = window.localStorage.getItem(AI_PROVIDER_STORAGE_KEY);
+      if (savedProvider === AI_PROVIDERS.OLLAMA || savedProvider === AI_PROVIDERS.OPENAI) {
+        return savedProvider;
+      }
+    } catch (error) {
+      console.warn('AI provider preference could not be read from storage.', error);
+    }
+    return AI_PROVIDERS.OPENAI;
+  }
+
+  /**
    * Root React component that coordinates WebRTC setup and the user interface.
    * @returns {React.ReactElement}
    */
@@ -592,6 +618,8 @@
     const [isAiBusy, setIsAiBusy] = useState(false);
     const [aiStatus, setAiStatus] = useState('');
     const [aiError, setAiError] = useState('');
+    const [aiProvider, setAiProvider] = useState(getSavedAiProvider());
+    const [ollamaEndpoint, setOllamaEndpoint] = useState('');
     const [isScreenSharing, setIsScreenSharing] = useState(false);
     const [shareSystemAudio, setShareSystemAudio] = useState(false);
     const [isRemoteScreenActive, setIsRemoteScreenActive] = useState(false);
@@ -826,25 +854,48 @@
       if (event && typeof event.preventDefault === 'function') {
         event.preventDefault();
       }
-      const trimmed = apiKeyInput.trim();
-      if (!trimmed) {
-        setApiKeyError(t.aiErrors.emptyKey);
-        return;
+
+      // For OpenAI, require API key
+      if (aiProvider === AI_PROVIDERS.OPENAI) {
+        const trimmed = apiKeyInput.trim();
+        if (!trimmed) {
+          setApiKeyError(t.aiErrors.emptyKey);
+          return;
+        }
+        setOpenAiKey(trimmed);
+      } else {
+        // For Ollama, no API key needed, but save the endpoint
+        setOpenAiKey(''); // Clear any existing OpenAI key
       }
-      setOpenAiKey(trimmed);
+
+      // Save provider preference to localStorage
+      try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(AI_PROVIDER_STORAGE_KEY, aiProvider);
+        }
+      } catch (error) {
+        console.warn('AI provider preference could not be saved to localStorage.', error);
+      }
+
       setAiStatus(t.systemMessages.aiReady);
       setAiError('');
       appendSystemMessage(t.systemMessages.apiKeyStored);
       handleCloseApiKeyModal();
-    }, [apiKeyInput, appendSystemMessage, handleCloseApiKeyModal, t]);
+    }, [apiKeyInput, aiProvider, appendSystemMessage, handleCloseApiKeyModal, t]);
 
     const handleDisableAi = useCallback(() => {
       setOpenAiKey('');
+      setOllamaEndpoint('');
       setAiStatus('');
       setAiError('');
       appendSystemMessage(t.systemMessages.aiDisabled);
       handleCloseApiKeyModal();
     }, [appendSystemMessage, handleCloseApiKeyModal, t]);
+
+    const handleProviderChange = useCallback((provider) => {
+      setAiProvider(provider);
+      setApiKeyError('');
+    }, []);
 
     /**
      * Configures event handlers on the reliable chat channel.
@@ -2246,12 +2297,36 @@
       }));
     }, []);
 
+    /**
+     * Gets the appropriate API endpoint and model based on provider
+     */
+    const getApiConfig = useCallback((provider, endpoint) => {
+      if (provider === AI_PROVIDERS.OLLAMA) {
+        const baseUrl = (endpoint || OLLAMA_DEFAULT_ENDPOINT).replace(/\/+$/, '');
+        const fullEndpoint = baseUrl.includes('/v1/chat/completions')
+          ? baseUrl
+          : `${baseUrl}/v1/chat/completions`;
+        return {
+          endpoint: fullEndpoint,
+          model: OLLAMA_MODEL,
+          requiresAuth: false
+        };
+      }
+      return {
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        model: OPENAI_MODEL,
+        requiresAuth: true
+      };
+    }, []);
+
     const handleAiRewrite = useCallback(async () => {
       const draft = inputText.trim();
       if (!draft) {
         return;
       }
-      if (!openAiKey) {
+      // Check if credentials are needed based on provider
+      const needsKey = aiProvider === AI_PROVIDERS.OPENAI;
+      if (needsKey && !openAiKey) {
         setApiKeyInput(openAiKey);
         setApiKeyError(t.aiErrors.emptyKey);
         setIsApiKeyModalOpen(true);
@@ -2266,14 +2341,21 @@
       setAiStatus(t.systemMessages.aiReady);
       setAiError('');
       try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        const config = getApiConfig(aiProvider, ollamaEndpoint);
+
+        // Build headers
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+        if (config.requiresAuth && openAiKey) {
+          headers['Authorization'] = `Bearer ${openAiKey}`;
+        }
+
+        const response = await fetch(config.endpoint, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${openAiKey}`
-          },
+          headers,
           body: JSON.stringify({
-            model: OPENAI_MODEL,
+            model: config.model,
             messages: [
               {
                 role: 'system',
@@ -2325,7 +2407,7 @@
       } finally {
         setIsAiBusy(false);
       }
-    }, [appendSystemMessage, inputText, openAiKey, setIsAboutOpen, t]);
+    }, [appendSystemMessage, inputText, openAiKey, setIsAboutOpen, t, aiProvider, ollamaEndpoint, getApiConfig]);
 
     /**
      * Handles voice recording toggle - starts or stops audio recording
@@ -2778,7 +2860,7 @@
                   status: status,
                   url: item.html_url,
                   summary: summary,
-                  needsAiSummary: bodyText.length > 200 && openAiKey
+                  needsAiSummary: bodyText.length > 200 && (openAiKey || aiProvider === AI_PROVIDERS.OLLAMA)
                 });
               }
             }
@@ -2819,15 +2901,22 @@
           }
 
           try {
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            const config = getApiConfig(aiProvider, ollamaEndpoint);
+
+            // Build headers
+            const headers = {
+              'Content-Type': 'application/json'
+            };
+            if (config.requiresAuth && openAiKey) {
+              headers['Authorization'] = `Bearer ${openAiKey}`;
+            }
+
+            const response = await fetch(config.endpoint, {
               method: 'POST',
               signal: signal,
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${openAiKey}`
-              },
+              headers,
               body: JSON.stringify({
-                model: OPENAI_MODEL,
+                model: config.model,
                 messages: [
                   {
                     role: 'system',
@@ -3148,23 +3237,62 @@
               React.createElement('p', { className: 'modal-description' },
                 t.apiKeyModal.description
               ),
-              React.createElement('label', { className: 'modal-label', htmlFor: 'openai-api-key' }, t.apiKeyModal.label),
-              React.createElement('input', {
-                id: 'openai-api-key',
-                type: 'password',
-                value: apiKeyInput,
-                onChange: (event) => setApiKeyInput(event.target.value),
-                ref: apiKeyInputRef,
-                placeholder: t.apiKeyModal.placeholder,
-                autoComplete: 'off',
-                'aria-describedby': apiKeyError ? 'api-key-error' : undefined
-              }),
+              // Provider selection
+              React.createElement('label', { className: 'modal-label' }, 'AI Provider'),
+              React.createElement('div', { className: 'model-options' },
+                React.createElement('label', { className: 'model-option' },
+                  React.createElement('input', {
+                    type: 'radio',
+                    name: 'ai-provider',
+                    value: AI_PROVIDERS.OPENAI,
+                    checked: aiProvider === AI_PROVIDERS.OPENAI,
+                    onChange: (e) => handleProviderChange(e.target.value)
+                  }),
+                  React.createElement('span', null, 'OpenAI')
+                ),
+                React.createElement('label', { className: 'model-option' },
+                  React.createElement('input', {
+                    type: 'radio',
+                    name: 'ai-provider',
+                    value: AI_PROVIDERS.OLLAMA,
+                    checked: aiProvider === AI_PROVIDERS.OLLAMA,
+                    onChange: (e) => handleProviderChange(e.target.value)
+                  }),
+                  React.createElement('span', null, 'Ollama (Local)')
+                )
+              ),
+              // Conditional fields based on provider
+              aiProvider === AI_PROVIDERS.OPENAI && React.createElement(React.Fragment, null,
+                React.createElement('label', { className: 'modal-label', htmlFor: 'openai-api-key' }, t.apiKeyModal.label),
+                React.createElement('input', {
+                  id: 'openai-api-key',
+                  type: 'password',
+                  value: apiKeyInput,
+                  onChange: (event) => setApiKeyInput(event.target.value),
+                  ref: apiKeyInputRef,
+                  placeholder: t.apiKeyModal.placeholder,
+                  autoComplete: 'off',
+                  'aria-describedby': apiKeyError ? 'api-key-error' : undefined
+                }),
+                React.createElement('p', { className: 'modal-hint' }, t.apiKeyModal.hint)
+              ),
+              aiProvider === AI_PROVIDERS.OLLAMA && React.createElement(React.Fragment, null,
+                React.createElement('label', { className: 'modal-label', htmlFor: 'ollama-endpoint' }, 'Ollama Endpoint (Optional)'),
+                React.createElement('input', {
+                  id: 'ollama-endpoint',
+                  type: 'text',
+                  value: ollamaEndpoint,
+                  onChange: (event) => setOllamaEndpoint(event.target.value),
+                  placeholder: OLLAMA_DEFAULT_ENDPOINT,
+                  autoComplete: 'off'
+                }),
+                React.createElement('p', { className: 'modal-hint' }, `Default: ${OLLAMA_DEFAULT_ENDPOINT}. Ollama runs locally on your machine. No API key needed.`)
+              ),
               apiKeyError && React.createElement('p', {
                 id: 'api-key-error',
                 className: 'modal-error',
                 role: 'alert'
               }, apiKeyError),
-              React.createElement('p', { className: 'modal-hint' }, t.apiKeyModal.hint),
               React.createElement('div', { className: 'modal-actions' },
                 React.createElement('button', { type: 'submit' }, t.apiKeyModal.save),
                 React.createElement('button', { type: 'button', onClick: handleDisableAi }, t.apiKeyModal.disable),
