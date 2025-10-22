@@ -96,7 +96,30 @@ const baseTranslation = Object.freeze({
     send: 'Senden',
     sendAriaLabel: 'Nachricht senden',
     sendTitle: 'Nachricht senden',
-    charCount: (current, max) => `${current} / ${max}`
+    charCount: (current, max) => `${current} / ${max}`,
+    voiceButton: '🎤',
+    voiceButtonRecording: '⏹',
+    voiceButtonAriaLabel: 'Sprachnachricht aufnehmen',
+    voiceButtonAriaLabelRecording: 'Aufnahme stoppen',
+    voiceButtonTitle: 'Klicke, um Sprachnachricht aufzunehmen',
+    voiceButtonTitleRecording: 'Klicke, um Aufnahme zu stoppen',
+    settingsButton: '⚙️',
+    settingsButtonAriaLabel: 'Einstellungen öffnen',
+    settingsButtonTitle: 'Sprachmodell-Einstellungen'
+  },
+  voiceSettings: {
+    title: 'Sprachmodell-Einstellungen',
+    close: 'Schließen',
+    closeAriaLabel: 'Einstellungen schließen',
+    description: 'Wähle das Whisper-Modell für Spracherkennung. Kleinere Modelle sind schneller, größere sind genauer.',
+    modelLabel: 'Whisper-Modell',
+    models: {
+      tinyEn: 'Tiny Englisch (schnell, ~75MB)',
+      base: 'Base Multilingual (ausgewogen, ~150MB)'
+    },
+    loadingModel: 'Lade Modell...',
+    modelLoaded: 'Modell geladen',
+    modelError: 'Fehler beim Laden des Modells'
   },
   apiKeyModal: {
     title: 'OpenAI-Integration',
