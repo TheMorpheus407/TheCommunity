@@ -290,12 +290,14 @@ body {
   padding: 1.5rem;
   padding-top: calc(75px + 1.5rem);
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 #root {
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow-x: hidden;
 }
 main {
   width: min(920px, 100%);
@@ -305,6 +307,8 @@ main {
   border-radius: 18px;
   background: var(--color-panel-bg);
   box-shadow: var(--shadow-panel);
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 h1 {
   margin: 0;
@@ -335,6 +339,8 @@ h1 {
 }
 .app-title-text {
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .title-room-container {
   display: flex;
@@ -1017,6 +1023,8 @@ textarea {
   min-height: 110px;
   resize: vertical;
   white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
   transition: border-color 200ms ease, background-color 200ms ease;
 }
 textarea:focus {
@@ -1340,6 +1348,8 @@ textarea[readonly] {
 }
 .chat-line span {
   font-size: 1rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 .chat-input {
   display: flex;
@@ -1771,6 +1781,20 @@ textarea[readonly] {
 
 /* ===== Mobile Responsive Design ===== */
 
+/* Improved touch target accessibility */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  .chat-input input,
+  .collapse-toggle,
+  .random-room-button,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
 /* Small phones and narrow screens (< 400px) */
 @media (max-width: 399px) {
   body {
@@ -1780,6 +1804,9 @@ textarea[readonly] {
   main {
     padding: 1.25rem;
     gap: 1.25rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   .statistics-table-wrapper {
     overflow-x: auto;
@@ -1916,6 +1943,22 @@ textarea[readonly] {
   .modal-body {
     padding: 1.5rem;
   }
+  .screen-share-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .qr-code-container {
+    padding: 0.75rem;
+  }
+  .qr-code {
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .image-button,
+  .soundboard-button {
+    padding: 0.8rem 1rem;
+    min-width: 44px;
+  }
 }
 
 /* Phones (400px - 599px) */
@@ -1927,6 +1970,13 @@ textarea[readonly] {
   main {
     padding: 1.5rem;
     gap: 1.25rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .screen-share-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
   .statistics-table-wrapper {
     overflow-x: auto;
@@ -2021,9 +2071,18 @@ textarea[readonly] {
     left: auto;
     right: 0;
     min-width: 260px;
+    max-width: calc(100vw - 2rem);
   }
   .soundboard-grid {
     grid-template-columns: 1fr;
+  }
+  .qr-code-container {
+    padding: 0.75rem;
+  }
+  .image-button,
+  .soundboard-button {
+    padding: 0.8rem 1rem;
+    min-width: 44px;
   }
 }
 
@@ -2035,6 +2094,12 @@ textarea[readonly] {
   }
   main {
     padding: 1.75rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .screen-share-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
   }
   .header-with-about {
     flex-direction: column;
@@ -2083,6 +2148,12 @@ textarea[readonly] {
   }
   main {
     padding: 1.75rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .screen-share-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.25rem;
   }
   .controls button {
     min-width: 160px; /* Slightly smaller than desktop */

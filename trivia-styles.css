@@ -404,6 +404,8 @@
 
   .trivia-question-text {
     font-size: 1.1rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
   .trivia-score-value {
@@ -416,5 +418,69 @@
 
   .trivia-winner-text {
     font-size: 1.2rem;
+  }
+
+  .trivia-setup {
+    padding: 1.5rem 1rem;
+  }
+
+  .trivia-question-display {
+    padding: 1.5rem 1rem;
+  }
+
+  .trivia-answer-button {
+    padding: 1rem;
+    font-size: 0.95rem;
+    min-height: 44px;
+  }
+
+  .trivia-start-button,
+  #trivia-challenge {
+    padding: 0.9rem 1.5rem;
+    font-size: 1rem;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .trivia-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .trivia-stop-button {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 399px) {
+  .trivia-question-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .trivia-scores {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .trivia-question-text {
+    font-size: 1rem;
+  }
+
+  .trivia-answer-button {
+    padding: 0.9rem;
+    font-size: 0.9rem;
+  }
+
+  .trivia-winner-announcement h2 {
+    font-size: 1.5rem;
+  }
+
+  .trivia-winner-text {
+    font-size: 1rem;
   }
 }
