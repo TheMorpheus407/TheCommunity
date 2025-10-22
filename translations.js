@@ -401,6 +401,12 @@ const baseTranslation = Object.freeze({
     tieGame: 'UNENTSCHIEDEN!',
     wellPlayed: 'Gut gespielt!'
   },
+  brainsPlan: {
+    title: 'Brains Plan zur Weltherrschaft',
+    newPlan: 'Neuer Plan',
+    collapse: 'Einklappen',
+    expand: 'Ausklappen'
+  },
   dangerZone: {
     title: 'Gefahrenzone',
     warning: '⚠️ Achtung: Die folgenden Aktionen sind nicht rückgängig zu machen!',
