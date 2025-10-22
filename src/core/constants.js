@@ -28,6 +28,12 @@ export const IMAGE_CHANNEL_LABEL = 'image';
 export const PONG_CHANNEL_LABEL = 'pong';
 
 /**
+ * Label for the Trivia quiz game data channel.
+ * @constant {string}
+ */
+export const TRIVIA_CHANNEL_LABEL = 'trivia';
+
+/**
  * Maximum allowed length for a chat message in characters.
  * @constant {number}
  */

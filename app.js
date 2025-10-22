@@ -9,6 +9,7 @@
   const CONTROL_CHANNEL_LABEL = 'control';
   const IMAGE_CHANNEL_LABEL = 'image';
   const PONG_CHANNEL_LABEL = 'pong';
+  const TRIVIA_CHANNEL_LABEL = 'trivia';
   const MAX_MESSAGE_LENGTH = 2000;
   const MAX_MESSAGES_PER_INTERVAL = 30;
   const MESSAGE_INTERVAL_MS = 5000;
@@ -601,6 +602,9 @@
     const [isPongActive, setIsPongActive] = useState(false);
     const [pongScore, setPongScore] = useState({ left: 0, right: 0 });
     const [pongLives, setPongLives] = useState({ left: 3, right: 3 });
+    const [isTriviaActive, setIsTriviaActive] = useState(false);
+    const [triviaGameState, setTriviaGameState] = useState(null);
+    const [triviaQuestionCount, setTriviaQuestionCount] = useState(5);
     const [isDangerZoneModalOpen, setIsDangerZoneModalOpen] = useState(false);
     const [dangerZoneAction, setDangerZoneAction] = useState(null);
     const [dangerZoneConfirmInput, setDangerZoneConfirmInput] = useState('');
@@ -615,6 +619,7 @@
     const controlChannelRef = useRef(null);
     const imageChannelRef = useRef(null);
     const pongChannelRef = useRef(null);
+    const triviaChannelRef = useRef(null);
     const iceDoneRef = useRef(false);
     const screenSenderRef = useRef(null);
     const screenAudioSenderRef = useRef(null);
@@ -651,6 +656,7 @@
     const pongCanvasRef = useRef(null);
     const pongGameStateRef = useRef(null);
     const pongAnimationFrameRef = useRef(null);
+    const triviaManagerRef = useRef(null);
 
     /**
      * Triggers a Tux animation based on keywords detected in chat messages.
@@ -1152,6 +1158,36 @@
     }, [t]);
 
     /**
+     * Configures event handlers for the Trivia data channel.
+     * @param {RTCDataChannel} channel - The Trivia data channel
+     */
+    const setupTriviaChannel = useCallback((channel) => {
+      triviaChannelRef.current = channel;
+
+      // Lazy-load TriviaManager when channel is ready
+      if (!triviaManagerRef.current) {
+        import('./src/managers/TriviaManager.js').then((module) => {
+          triviaManagerRef.current = module.createTriviaManager({
+            triviaChannelRef,
+            setTriviaGameActive: setIsTriviaActive,
+            setTriviaGameState,
+            appendSystemMessage: appendSystemMessageRef.current,
+            t
+          });
+
+          // Setup channel with manager
+          if (triviaManagerRef.current) {
+            triviaManagerRef.current.setupTriviaChannel(channel);
+          }
+        }).catch((err) => {
+          console.error('Failed to load TriviaManager:', err);
+        });
+      } else if (triviaManagerRef.current) {
+        triviaManagerRef.current.setupTriviaChannel(channel);
+      }
+    }, [t]);
+
+    /**
      * Lazily creates (or returns) the RTCPeerConnection instance.
      * @returns {RTCPeerConnection}
      */
@@ -1236,12 +1272,16 @@
           setupPongChannel(incomingChannel);
           return;
         }
+        if (incomingChannel.label === TRIVIA_CHANNEL_LABEL) {
+          setupTriviaChannel(incomingChannel);
+          return;
+        }
         appendSystemMessage(t.systemMessages.channelBlocked(incomingChannel.label || ''));
         incomingChannel.close();
       };
 
       return pc;
-    }, [appendSystemMessage, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, t]);
+    }, [appendSystemMessage, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, setupTriviaChannel, t]);
 
     /**
      * Resolves once ICE gathering finishes for the current connection.
@@ -1320,6 +1360,9 @@
       pongChannelRef.current = pongChannel;
       setupPongChannel(pongChannel);
 
+      const triviaChannel = pc.createDataChannel(TRIVIA_CHANNEL_LABEL);
+      setupTriviaChannel(triviaChannel);
+
       incomingTimestampsRef.current = [];
       iceDoneRef.current = false;
       setLocalSignal('');
@@ -1339,7 +1382,7 @@
       } finally {
         setIsCreatingOffer(false);
       }
-    }, [appendSystemMessage, ensurePeerConnection, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, waitForIce, t]);
+    }, [appendSystemMessage, ensurePeerConnection, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, setupTriviaChannel, waitForIce, t]);
 
     /**
      * Applies the pasted remote offer or answer to the peer connection.
@@ -1936,6 +1979,40 @@
     }, [appendSystemMessage, handleStopPong, t]);
 
     /**
+     * Starts a Trivia quiz game challenge.
+     */
+    const handleStartTrivia = useCallback(() => {
+      if (!triviaChannelRef.current || triviaChannelRef.current.readyState !== 'open') {
+        appendSystemMessage(t.trivia.waitingForPeer || 'Warte auf Peer, um Quiz zu spielen...');
+        return;
+      }
+
+      if (triviaManagerRef.current) {
+        triviaManagerRef.current.startGame(true, triviaQuestionCount);
+      }
+    }, [appendSystemMessage, triviaQuestionCount, t]);
+
+    /**
+     * Stops the Trivia game and cleans up resources.
+     */
+    const handleStopTrivia = useCallback(() => {
+      if (triviaManagerRef.current) {
+        triviaManagerRef.current.stopGame();
+      }
+      setIsTriviaActive(false);
+      setTriviaGameState(null);
+    }, []);
+
+    /**
+     * Handles answer submission in trivia game.
+     */
+    const handleTriviaAnswer = useCallback((answerIndex) => {
+      if (triviaManagerRef.current) {
+        triviaManagerRef.current.submitAnswer(answerIndex);
+      }
+    }, []);
+
+    /**
      * Terminates the current peer connection and resets signaling state.
      */
     const handleDisconnect = useCallback(() => {
@@ -1955,7 +2032,14 @@
         pongChannelRef.current.close();
         pongChannelRef.current = null;
       }
+      if (triviaChannelRef.current) {
+        triviaChannelRef.current.close();
+        triviaChannelRef.current = null;
+      }
       handleStopPong();
+      if (triviaManagerRef.current && triviaManagerRef.current.stopGame) {
+        triviaManagerRef.current.stopGame();
+      }
       if (pcRef.current) {
         pcRef.current.close();
         pcRef.current = null;
@@ -3259,7 +3343,12 @@
                   id: 'pong-challenge',
                   onClick: handleStartPong,
                   disabled: !channelReady
-                }, isPongActive ? t.pong.challengeButtonBusy : t.pong.challengeButton)
+                }, isPongActive ? t.pong.challengeButtonBusy : t.pong.challengeButton),
+                React.createElement('button', {
+                  id: 'trivia-challenge',
+                  onClick: handleStartTrivia,
+                  disabled: !channelReady
+                }, isTriviaActive ? t.trivia.challengeButtonBusy : t.trivia.challengeButton)
               ),
               React.createElement('div', { className: 'signal-block' },
                 React.createElement('div', { className: 'signal-heading' },
@@ -3650,6 +3739,18 @@
               )
             )
           ),
+          // Trivia game section
+          window.renderTriviaSection && window.renderTriviaSection({
+            isTriviaActive,
+            triviaGameState,
+            triviaQuestionCount,
+            setTriviaQuestionCount,
+            channelReady,
+            handleStartTrivia,
+            handleStopTrivia,
+            handleTriviaAnswer,
+            t
+          }),
           React.createElement('section', { id: 'danger-zone', className: 'danger-zone' },
             React.createElement('header', null,
               React.createElement('div', { className: 'header-content' },
