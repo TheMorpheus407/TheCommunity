@@ -33,9 +33,55 @@
   };
   const THEME_SEQUENCE = [THEME_OPTIONS.DARK, THEME_OPTIONS.LIGHT, THEME_OPTIONS.RGB];
 
+  // Room system constants
+  const PUBLIC_ROOMS = [
+    'lobby',
+    'random-1',
+    'random-2',
+    'random-3',
+    'community',
+    'deutsch',
+    'gaming',
+    'tech-talk',
+    'casual'
+  ];
+
   function getNextThemeValue(currentTheme) {
     const index = THEME_SEQUENCE.indexOf(currentTheme);
     return THEME_SEQUENCE[(index + 1) % THEME_SEQUENCE.length];
+  }
+
+  /**
+   * Gets the current room ID from the URL hash
+   * @returns {string|null} Room ID or null if no room
+   */
+  function getRoomFromHash() {
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#room/')) {
+      return hash.substring(6); // Remove '#room/'
+    }
+    return null;
+  }
+
+  /**
+   * Sets the room in the URL hash
+   * @param {string|null} roomId - Room ID to set, or null to clear
+   */
+  function setRoomInHash(roomId) {
+    if (roomId) {
+      window.location.hash = `#room/${roomId}`;
+    } else {
+      window.location.hash = '';
+    }
+  }
+
+  /**
+   * Gets a random public room ID
+   * @returns {string} Random public room ID
+   */
+  function getRandomPublicRoom() {
+    const randomIndex = Math.floor(Math.random() * PUBLIC_ROOMS.length);
+    return PUBLIC_ROOMS[randomIndex];
   }
 
   const CONTROL_MESSAGE_TYPES = {
@@ -309,6 +355,80 @@
   }
 
   /**
+   * Random room button component showing Tux with a rotating dice
+   * @param {Object} props
+   * @param {Object} props.t - Translation object
+   * @param {Function} props.onClick - Click handler
+   * @returns {React.ReactElement}
+   */
+  function RandomRoomButton({ t, onClick }) {
+    return React.createElement(
+      'button',
+      {
+        className: 'random-room-button',
+        onClick: onClick,
+        title: t.rooms.randomButtonTitle,
+        'aria-label': t.rooms.randomButtonAria
+      },
+      React.createElement(
+        'svg',
+        {
+          className: 'random-room-svg',
+          viewBox: '0 0 140 120',
+          xmlns: 'http://www.w3.org/2000/svg',
+          'aria-hidden': 'true',
+          focusable: 'false'
+        },
+        // Tux penguin (simplified, sitting pose)
+        React.createElement('ellipse', { className: 'tux-shadow', cx: '40', cy: '112', rx: '20', ry: '6' }),
+        React.createElement('ellipse', { className: 'tux-body', cx: '40', cy: '65', rx: '28', ry: '40' }),
+        React.createElement('ellipse', { className: 'tux-belly', cx: '40', cy: '80', rx: '18', ry: '24' }),
+        React.createElement('ellipse', { className: 'tux-head', cx: '40', cy: '42', rx: '22', ry: '20' }),
+        React.createElement('ellipse', { className: 'tux-face', cx: '40', cy: '50', rx: '16', ry: '12' }),
+        // Wings
+        React.createElement('ellipse', { className: 'tux-wing', cx: '18', cy: '72', rx: '9', ry: '20' }),
+        React.createElement('ellipse', { className: 'tux-wing', cx: '62', cy: '72', rx: '9', ry: '20' }),
+        // Feet
+        React.createElement('path', { className: 'tux-foot', d: 'M28 98 C25 104 28 108 34 108 L38 108 C42 108 44 104 41 98 Z' }),
+        React.createElement('path', { className: 'tux-foot', d: 'M52 98 C49 104 52 108 58 108 L62 108 C66 108 68 104 65 98 Z' }),
+        // Beak
+        React.createElement('polygon', { className: 'tux-beak-upper', points: '40,48 32,52 48,52' }),
+        React.createElement('ellipse', { className: 'tux-beak-lower', cx: '40', cy: '54', rx: '8', ry: '3' }),
+        // Eyes
+        React.createElement('circle', { className: 'tux-eye', cx: '34', cy: '42', r: '5' }),
+        React.createElement('circle', { className: 'tux-eye', cx: '46', cy: '42', r: '5' }),
+        React.createElement('circle', { className: 'tux-pupil', cx: '35', cy: '43', r: '2' }),
+        React.createElement('circle', { className: 'tux-pupil', cx: '47', cy: '43', r: '2' }),
+
+        // Dice (in front of Tux) - 3D cube representation
+        React.createElement('g', { className: 'dice-cube' },
+          // Top face
+          React.createElement('path', {
+            className: 'dice-face dice-top',
+            d: 'M85 50 L105 40 L125 50 L105 60 Z'
+          }),
+          // Left face
+          React.createElement('path', {
+            className: 'dice-face dice-left',
+            d: 'M85 50 L85 85 L105 95 L105 60 Z'
+          }),
+          // Right face
+          React.createElement('path', {
+            className: 'dice-face dice-right',
+            d: 'M105 60 L105 95 L125 85 L125 50 Z'
+          }),
+          // Dots on visible faces
+          React.createElement('circle', { className: 'dice-dot', cx: '105', cy: '50', r: '2' }), // Top center
+          React.createElement('circle', { className: 'dice-dot', cx: '95', cy: '68', r: '2' }), // Left
+          React.createElement('circle', { className: 'dice-dot', cx: '95', cy: '77', r: '2' }), // Left
+          React.createElement('circle', { className: 'dice-dot', cx: '115', cy: '68', r: '2' }), // Right
+          React.createElement('circle', { className: 'dice-dot', cx: '115', cy: '77', r: '2' })  // Right
+        )
+      )
+    );
+  }
+
+  /**
    * Determines the initial theme, preferring stored settings, then system preference.
    * @returns {{theme: 'light'|'dark'|'rgb', isStored: boolean}}
    */
@@ -410,6 +530,7 @@
     const [dangerZoneAction, setDangerZoneAction] = useState(null);
     const [dangerZoneConfirmInput, setDangerZoneConfirmInput] = useState('');
     const [isSoundboardOpen, setIsSoundboardOpen] = useState(false);
+    const [currentRoom, setCurrentRoom] = useState(getRoomFromHash());
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -520,6 +641,17 @@
       appendSystemMessageRef.current = appendSystemMessage;
     }, [appendSystemMessage]);
 
+    // Sync room from URL hash
+    useEffect(() => {
+      const handleHashChange = () => {
+        const roomFromHash = getRoomFromHash();
+        setCurrentRoom(roomFromHash);
+      };
+
+      window.addEventListener('hashchange', handleHashChange);
+      return () => window.removeEventListener('hashchange', handleHashChange);
+    }, []);
+
     const handleToggleTheme = useCallback(() => {
       setTheme((prevTheme) => {
         const nextTheme = getNextThemeValue(prevTheme);
@@ -541,6 +673,13 @@
       setCopyButtonText(newT.signaling.copyButton);
       setRemoteControlStatus(newT.remoteControl.statusDisabled);
     }, [appendSystemMessage]);
+
+    const handleRandomRoom = useCallback(() => {
+      const randomRoom = getRandomPublicRoom();
+      setRoomInHash(randomRoom);
+      setCurrentRoom(randomRoom);
+      appendSystemMessage(t.rooms.publicRoomJoined(randomRoom));
+    }, [appendSystemMessage, t.rooms]);
 
     const handleOpenApiKeyModal = useCallback(() => {
       setApiKeyInput(openAiKey);
@@ -2687,22 +2826,31 @@
         React.createElement('main', null,
           React.createElement('div', { className: 'header-with-about' },
             React.createElement(TuxMascot, { t: t, animation: tuxAnimation }),
-            React.createElement('h1', { className: 'app-title' },
-              React.createElement('span', {
-                className: 'app-title-icon',
-                'aria-hidden': 'true'
-              }, '🐬'),
-              React.createElement('span', { className: 'app-title-text' }, t.app.title)
+            React.createElement('div', { className: 'title-room-container' },
+              React.createElement('h1', { className: 'app-title' },
+                React.createElement('span', {
+                  className: 'app-title-icon',
+                  'aria-hidden': 'true'
+                }, '🐬'),
+                React.createElement('span', { className: 'app-title-text' }, t.app.title)
+              ),
+              currentRoom && React.createElement('div', { className: 'current-room' },
+                React.createElement('span', { className: 'room-label' }, t.rooms.currentRoom),
+                React.createElement('span', { className: 'room-id' }, currentRoom)
+              )
             ),
-            React.createElement('button', {
-              className: 'about-button',
-              onClick: toggleAbout,
-              'aria-label': t.about.buttonAriaLabel,
-              'aria-expanded': isAboutOpen,
-              'aria-controls': 'about-dialog',
-              ref: aboutButtonRef,
-              disabled: isApiKeyModalOpen
-            }, t.about.button)
+            React.createElement('div', { className: 'header-actions' },
+              React.createElement(RandomRoomButton, { t: t, onClick: handleRandomRoom }),
+              React.createElement('button', {
+                className: 'about-button',
+                onClick: toggleAbout,
+                'aria-label': t.about.buttonAriaLabel,
+                'aria-expanded': isAboutOpen,
+                'aria-controls': 'about-dialog',
+                ref: aboutButtonRef,
+                disabled: isApiKeyModalOpen
+              }, t.about.button)
+            )
           ),
           isRemoteControlAllowed && remotePointerState.visible && React.createElement('div', {
             className: 'remote-pointer-indicator',
