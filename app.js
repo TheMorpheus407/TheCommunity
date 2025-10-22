@@ -26,12 +26,87 @@
   const OPENAI_MODEL = 'gpt-4o-mini';
   const THEME_STORAGE_KEY = 'thecommunity.theme-preference';
   const AI_PREFERENCE_STORAGE_KEY = 'thecommunity.ai-preference';
+  const COOKIE_CONSENT_STORAGE_KEY = 'thecommunity.cookie-consent';
   const THEME_OPTIONS = {
     LIGHT: 'light',
     DARK: 'dark',
     RGB: 'rgb'
   };
   const THEME_SEQUENCE = [THEME_OPTIONS.DARK, THEME_OPTIONS.LIGHT, THEME_OPTIONS.RGB];
+
+  // Cookie consent categories
+  const CONSENT_CATEGORIES = {
+    ESSENTIAL: 'essential',
+    PREFERENCES: 'preferences',
+    STATISTICS: 'statistics',
+    EASTER_EGG: 'easterEgg',
+    AI_PREFERENCE: 'aiPreference'
+  };
+
+  /**
+   * Gets the current cookie consent state from localStorage
+   * @returns {Object} Consent state object with categories
+   */
+  function getCookieConsent() {
+    try {
+      const stored = window.localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.warn('Could not read cookie consent from localStorage', error);
+    }
+    // Return null if no consent has been given yet
+    return null;
+  }
+
+  /**
+   * Saves cookie consent preferences to localStorage
+   * @param {Object} consent - Consent state object
+   */
+  function saveCookieConsent(consent) {
+    try {
+      window.localStorage.setItem(COOKIE_CONSENT_STORAGE_KEY, JSON.stringify(consent));
+    } catch (error) {
+      console.warn('Could not save cookie consent to localStorage', error);
+    }
+  }
+
+  /**
+   * Checks if a specific consent category is allowed
+   * @param {string} category - Category to check
+   * @returns {boolean} True if category is consented or essential
+   */
+  function hasConsentFor(category) {
+    // Essential is always allowed
+    if (category === CONSENT_CATEGORIES.ESSENTIAL) {
+      return true;
+    }
+
+    const consent = getCookieConsent();
+    // If no consent given yet, return false (show banner)
+    if (!consent) {
+      return false;
+    }
+
+    return consent[category] === true;
+  }
+
+  /**
+   * Creates a default consent object with all categories set to a value
+   * @param {boolean} value - Default value for all categories
+   * @returns {Object} Consent object
+   */
+  function createConsentObject(value) {
+    return {
+      [CONSENT_CATEGORIES.ESSENTIAL]: true, // Always true
+      [CONSENT_CATEGORIES.PREFERENCES]: value,
+      [CONSENT_CATEGORIES.STATISTICS]: value,
+      [CONSENT_CATEGORIES.EASTER_EGG]: value,
+      [CONSENT_CATEGORIES.AI_PREFERENCE]: value,
+      timestamp: Date.now()
+    };
+  }
 
   // Room system constants
   const PUBLIC_ROOMS = [
@@ -531,6 +606,9 @@
     const [dangerZoneConfirmInput, setDangerZoneConfirmInput] = useState('');
     const [isSoundboardOpen, setIsSoundboardOpen] = useState(false);
     const [currentRoom, setCurrentRoom] = useState(getRoomFromHash());
+    const [showCookieBanner, setShowCookieBanner] = useState(getCookieConsent() === null);
+    const [isCookieSettingsOpen, setIsCookieSettingsOpen] = useState(false);
+    const [cookieConsent, setCookieConsent] = useState(getCookieConsent() || createConsentObject(false));
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -2002,6 +2080,69 @@
       handleCloseDangerZoneModal();
     }, [dangerZoneAction, dangerZoneConfirmInput, handleCloseDangerZoneModal, handleDisconnect, appendSystemMessage, t]);
 
+    /**
+     * Handles accepting all cookies
+     */
+    const handleAcceptAllCookies = useCallback(() => {
+      const consent = createConsentObject(true);
+      saveCookieConsent(consent);
+      setCookieConsent(consent);
+      setShowCookieBanner(false);
+      setIsCookieSettingsOpen(false);
+    }, []);
+
+    /**
+     * Handles rejecting non-essential cookies
+     */
+    const handleRejectNonEssential = useCallback(() => {
+      const consent = createConsentObject(false);
+      saveCookieConsent(consent);
+      setCookieConsent(consent);
+      setShowCookieBanner(false);
+      setIsCookieSettingsOpen(false);
+    }, []);
+
+    /**
+     * Opens the cookie settings modal
+     */
+    const handleOpenCookieSettings = useCallback(() => {
+      setIsCookieSettingsOpen(true);
+      setShowCookieBanner(false);
+    }, []);
+
+    /**
+     * Closes the cookie settings modal
+     */
+    const handleCloseCookieSettings = useCallback(() => {
+      setIsCookieSettingsOpen(false);
+      // If no consent was saved yet, show banner again
+      if (getCookieConsent() === null) {
+        setShowCookieBanner(true);
+      }
+    }, []);
+
+    /**
+     * Saves custom cookie preferences from the settings modal
+     */
+    const handleSaveCookiePreferences = useCallback(() => {
+      saveCookieConsent(cookieConsent);
+      setIsCookieSettingsOpen(false);
+    }, [cookieConsent]);
+
+    /**
+     * Toggles a specific cookie category
+     * @param {string} category - Category to toggle
+     */
+    const handleToggleCookieCategory = useCallback((category) => {
+      if (category === CONSENT_CATEGORIES.ESSENTIAL) {
+        return; // Essential cannot be toggled
+      }
+      setCookieConsent(prev => ({
+        ...prev,
+        [category]: !prev[category]
+      }));
+    }, []);
+
     const handleAiRewrite = useCallback(async () => {
       const draft = inputText.trim();
       if (!draft) {
@@ -2819,6 +2960,158 @@
                 React.createElement('button', { type: 'submit' }, t.apiKeyModal.save),
                 React.createElement('button', { type: 'button', onClick: handleDisableAi }, t.apiKeyModal.disable),
                 React.createElement('button', { type: 'button', onClick: handleContinueWithoutAi }, t.apiKeyModal.continueWithout)
+              )
+            )
+          )
+        ),
+        // Cookie Banner
+        showCookieBanner && React.createElement('div', {
+          className: 'cookie-banner',
+          role: 'dialog',
+          'aria-label': t.cookieConsent.banner.title,
+          'aria-modal': 'false'
+        },
+          React.createElement('div', { className: 'cookie-banner-content' },
+            React.createElement('div', { className: 'cookie-banner-text' },
+              React.createElement('h3', null, t.cookieConsent.banner.title),
+              React.createElement('p', null, t.cookieConsent.banner.description)
+            ),
+            React.createElement('div', { className: 'cookie-banner-actions' },
+              React.createElement('button', {
+                className: 'cookie-banner-button cookie-accept-all',
+                onClick: handleAcceptAllCookies
+              }, t.cookieConsent.banner.acceptAll),
+              React.createElement('button', {
+                className: 'cookie-banner-button cookie-reject',
+                onClick: handleRejectNonEssential
+              }, t.cookieConsent.banner.rejectNonEssential),
+              React.createElement('button', {
+                className: 'cookie-banner-button cookie-settings',
+                onClick: handleOpenCookieSettings,
+                'aria-label': t.cookieConsent.banner.settingsAriaLabel
+              }, t.cookieConsent.banner.settings)
+            )
+          )
+        ),
+        // Cookie Settings Modal
+        isCookieSettingsOpen && React.createElement('div', { className: 'modal-overlay', role: 'presentation', onClick: handleCloseCookieSettings },
+          React.createElement('div', {
+            className: 'modal-content',
+            role: 'dialog',
+            id: 'cookie-settings-dialog',
+            'aria-modal': 'true',
+            'aria-labelledby': 'cookie-settings-dialog-title',
+            onClick: (e) => e.stopPropagation()
+          },
+            React.createElement('div', { className: 'modal-header' },
+              React.createElement('h2', { id: 'cookie-settings-dialog-title' }, t.cookieConsent.modal.title),
+              React.createElement('button', {
+                className: 'modal-close',
+                onClick: handleCloseCookieSettings,
+                'aria-label': t.cookieConsent.modal.closeAriaLabel
+              }, t.cookieConsent.modal.close)
+            ),
+            React.createElement('div', { className: 'modal-body' },
+              React.createElement('p', { className: 'modal-description' }, t.cookieConsent.modal.description),
+              // Essential Category (always active)
+              React.createElement('div', { className: 'cookie-category' },
+                React.createElement('div', { className: 'cookie-category-header' },
+                  React.createElement('h3', null, t.cookieConsent.modal.categories.essential.title),
+                  React.createElement('span', { className: 'cookie-category-status' }, t.cookieConsent.modal.categories.essential.alwaysActive)
+                ),
+                React.createElement('p', { className: 'cookie-category-description' }, t.cookieConsent.modal.categories.essential.description)
+              ),
+              // Preferences Category
+              React.createElement('div', { className: 'cookie-category' },
+                React.createElement('div', { className: 'cookie-category-header' },
+                  React.createElement('h3', null, t.cookieConsent.modal.categories.preferences.title),
+                  React.createElement('label', { className: 'cookie-toggle' },
+                    React.createElement('input', {
+                      type: 'checkbox',
+                      checked: cookieConsent[CONSENT_CATEGORIES.PREFERENCES],
+                      onChange: () => handleToggleCookieCategory(CONSENT_CATEGORIES.PREFERENCES)
+                    }),
+                    React.createElement('span', { className: 'cookie-toggle-slider' })
+                  )
+                ),
+                React.createElement('p', { className: 'cookie-category-description' }, t.cookieConsent.modal.categories.preferences.description),
+                React.createElement('ul', { className: 'cookie-category-items' },
+                  t.cookieConsent.modal.categories.preferences.items.map((item, idx) =>
+                    React.createElement('li', { key: idx }, item)
+                  )
+                )
+              ),
+              // Statistics Category
+              React.createElement('div', { className: 'cookie-category' },
+                React.createElement('div', { className: 'cookie-category-header' },
+                  React.createElement('h3', null, t.cookieConsent.modal.categories.statistics.title),
+                  React.createElement('label', { className: 'cookie-toggle' },
+                    React.createElement('input', {
+                      type: 'checkbox',
+                      checked: cookieConsent[CONSENT_CATEGORIES.STATISTICS],
+                      onChange: () => handleToggleCookieCategory(CONSENT_CATEGORIES.STATISTICS)
+                    }),
+                    React.createElement('span', { className: 'cookie-toggle-slider' })
+                  )
+                ),
+                React.createElement('p', { className: 'cookie-category-description' }, t.cookieConsent.modal.categories.statistics.description),
+                React.createElement('ul', { className: 'cookie-category-items' },
+                  t.cookieConsent.modal.categories.statistics.items.map((item, idx) =>
+                    React.createElement('li', { key: idx }, item)
+                  )
+                )
+              ),
+              // Easter Egg Category
+              React.createElement('div', { className: 'cookie-category' },
+                React.createElement('div', { className: 'cookie-category-header' },
+                  React.createElement('h3', null, t.cookieConsent.modal.categories.easterEgg.title),
+                  React.createElement('label', { className: 'cookie-toggle' },
+                    React.createElement('input', {
+                      type: 'checkbox',
+                      checked: cookieConsent[CONSENT_CATEGORIES.EASTER_EGG],
+                      onChange: () => handleToggleCookieCategory(CONSENT_CATEGORIES.EASTER_EGG)
+                    }),
+                    React.createElement('span', { className: 'cookie-toggle-slider' })
+                  )
+                ),
+                React.createElement('p', { className: 'cookie-category-description' }, t.cookieConsent.modal.categories.easterEgg.description),
+                React.createElement('ul', { className: 'cookie-category-items' },
+                  t.cookieConsent.modal.categories.easterEgg.items.map((item, idx) =>
+                    React.createElement('li', { key: idx }, item)
+                  )
+                )
+              ),
+              // AI Preference Category
+              React.createElement('div', { className: 'cookie-category' },
+                React.createElement('div', { className: 'cookie-category-header' },
+                  React.createElement('h3', null, t.cookieConsent.modal.categories.aiPreference.title),
+                  React.createElement('label', { className: 'cookie-toggle' },
+                    React.createElement('input', {
+                      type: 'checkbox',
+                      checked: cookieConsent[CONSENT_CATEGORIES.AI_PREFERENCE],
+                      onChange: () => handleToggleCookieCategory(CONSENT_CATEGORIES.AI_PREFERENCE)
+                    }),
+                    React.createElement('span', { className: 'cookie-toggle-slider' })
+                  )
+                ),
+                React.createElement('p', { className: 'cookie-category-description' }, t.cookieConsent.modal.categories.aiPreference.description),
+                React.createElement('ul', { className: 'cookie-category-items' },
+                  t.cookieConsent.modal.categories.aiPreference.items.map((item, idx) =>
+                    React.createElement('li', { key: idx }, item)
+                  )
+                )
+              ),
+              React.createElement('div', { className: 'modal-actions' },
+                React.createElement('button', {
+                  className: 'cookie-save-preferences',
+                  onClick: handleSaveCookiePreferences
+                }, t.cookieConsent.modal.savePreferences),
+                React.createElement('button', {
+                  onClick: handleAcceptAllCookies
+                }, t.cookieConsent.modal.acceptAll),
+                React.createElement('button', {
+                  onClick: handleRejectNonEssential
+                }, t.cookieConsent.modal.rejectAll)
               )
             )
           )

@@ -366,6 +366,116 @@ const baseTranslation = Object.freeze({
       nuclearExecuted: 'Vollständiger Reset durchgeführt. Seite wird neu geladen...'
     }
   },
+  cookieConsent: {
+    banner: {
+      title: 'Cookie & Datenschutz',
+      description: 'Wir verwenden localStorage und Cookies, um deine Einstellungen zu speichern und die App-Funktionalität zu gewährleisten. Weitere Informationen findest du in unserer Datenschutzerklärung.',
+      acceptAll: 'Alle akzeptieren',
+      rejectNonEssential: 'Nur Essentiell',
+      settings: 'Einstellungen',
+      settingsAriaLabel: 'Cookie-Einstellungen öffnen'
+    },
+    modal: {
+      title: 'Datenschutz & Cookie-Einstellungen',
+      close: 'Schließen',
+      closeAriaLabel: 'Datenschutz-Dialog schließen',
+      description: 'Diese App verwendet localStorage und Cookies, um deine Nutzererfahrung zu verbessern. Du kannst selbst entscheiden, welche Kategorien du zulassen möchtest.',
+      savePreferences: 'Einstellungen speichern',
+      acceptAll: 'Alle akzeptieren',
+      rejectAll: 'Alle ablehnen',
+      categories: {
+        essential: {
+          title: 'Essenziell',
+          description: 'Erforderlich für grundlegende Funktionen wie die Verbindungs verwaltung. Kann nicht deaktiviert werden.',
+          alwaysActive: 'Immer aktiv'
+        },
+        preferences: {
+          title: 'Präferenzen',
+          description: 'Speichert Theme-Auswahl (Hell/Dunkel/RGB) und Spracheinstellungen, um deine persönlichen Vorlieben zu erhalten.',
+          items: [
+            'Theme-Einstellung (localStorage: thecommunity.theme-preference)',
+            'Spracheinstellung (localStorage: thecommunity.language-preference)'
+          ]
+        },
+        statistics: {
+          title: 'Statistiken',
+          description: 'Ermöglicht das Caching von GitHub-Statistiken und Mitwirkenden-Informationen für eine bessere Performance.',
+          items: [
+            'GitHub-Statistiken-Cache (localStorage)',
+            'Mitwirkenden-Cache (localStorage)'
+          ]
+        },
+        easterEgg: {
+          title: 'Easter Egg',
+          description: 'Speichert ein Cookie für eine spielerische Umleitung zur Higgs-Analyse-Seite (10% Wahrscheinlichkeit bei Seitenaufruf).',
+          items: [
+            'Higgs-Redirect-Cookie (Cookie: higgs_redirect, 365 Tage)'
+          ]
+        },
+        aiPreference: {
+          title: 'KI-Präferenz',
+          description: 'Speichert, ob du die OpenAI-Integration abgelehnt hast, damit du nicht jedes Mal gefragt wirst.',
+          items: [
+            'KI-Präferenz (localStorage: thecommunity.ai-preference)'
+          ]
+        }
+      }
+    },
+    privacy: {
+      title: 'Datenschutzerklärung',
+      intro: 'TheCommunity (PodTalk) ist eine vollständig dezentrale Peer-to-Peer-Anwendung. Es gibt keinen Backend-Server.',
+      dataCollection: {
+        title: 'Welche Daten werden gespeichert?',
+        description: 'Alle Daten werden ausschließlich lokal in deinem Browser gespeichert. Nichts wird an einen Server gesendet, außer:',
+        items: [
+          '**WebRTC-Verbindung**: Direktverbindung zu anderen Peers (P2P, kein Server beteiligt)',
+          '**GitHub API**: Öffentliche Statistiken über Mitwirkende (nur Lesezugriff)',
+          '**OpenAI API**: Nur wenn du einen API-Schlüssel eingibst und die KI-Funktion nutzt'
+        ]
+      },
+      localStorage: {
+        title: 'localStorage (Browser-Speicher)',
+        items: [
+          '**thecommunity.theme-preference**: Deine Theme-Auswahl (hell/dunkel/RGB)',
+          '**thecommunity.language-preference**: Deine Sprachauswahl',
+          '**thecommunity.ai-preference**: Ob du die KI-Funktion abgelehnt hast',
+          '**thecommunity.cookie-consent**: Deine Cookie-Einstellungen',
+          '**GitHub-Cache**: Zwischengespeicherte Statistiken (5 Minuten gültig)'
+        ]
+      },
+      cookies: {
+        title: 'Cookies',
+        items: [
+          '**higgs_redirect**: Easter-Egg-Cookie für Higgs-Analyse-Umleitung (365 Tage, SameSite=Strict)'
+        ]
+      },
+      webrtc: {
+        title: 'WebRTC & Netzwerk',
+        description: 'Bei WebRTC-Verbindungen werden deine lokalen Netzwerkadressen (IP) an den Peer offengelegt. Dies ist technisch notwendig für P2P-Verbindungen. Teile Verbindungssignale nur mit vertrauenswürdigen Personen.'
+      },
+      thirdParty: {
+        title: 'Externe Dienste',
+        items: [
+          '**OpenAI API**: Nur wenn du aktiv einen API-Schlüssel eingibst und die KI-Funktion nutzt',
+          '**GitHub API**: Nur zum Laden öffentlicher Mitwirkenden-Informationen',
+          '**CDN (React, QR-Code)**: Externe JavaScript-Bibliotheken'
+        ]
+      },
+      yourRights: {
+        title: 'Deine Rechte',
+        description: 'Du kannst jederzeit:',
+        items: [
+          'Alle lokalen Daten in der "Gefahrenzone" löschen',
+          'Deine Cookie-Einstellungen hier anpassen',
+          'Den Browser-Speicher manuell löschen (F12 → Application → Clear Storage)'
+        ]
+      },
+      contact: {
+        title: 'Kontakt',
+        description: 'Bei Fragen oder Anliegen zum Datenschutz, eröffne bitte ein Issue auf GitHub: https://github.com/TheMorpheus407/TheCommunity/issues'
+      }
+    }
+  },
   rooms: {
     randomButton: 'Zufälliger Raum',
     randomButtonTitle: 'Zufälligen öffentlichen Raum beitreten',
