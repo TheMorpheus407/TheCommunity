@@ -28,12 +28,18 @@
   const THEME_STORAGE_KEY = 'thecommunity.theme-preference';
   const AI_PREFERENCE_STORAGE_KEY = 'thecommunity.ai-preference';
   const COOKIE_CONSENT_STORAGE_KEY = 'thecommunity.cookie-consent';
+  const WHISPER_MODEL_STORAGE_KEY = 'thecommunity.whisper-model';
   const THEME_OPTIONS = {
     LIGHT: 'light',
     DARK: 'dark',
     RGB: 'rgb'
   };
   const THEME_SEQUENCE = [THEME_OPTIONS.DARK, THEME_OPTIONS.LIGHT, THEME_OPTIONS.RGB];
+  const WHISPER_MODELS = {
+    TINY_EN: 'Xenova/whisper-tiny.en',
+    BASE: 'Xenova/whisper-base'
+  };
+  const DEFAULT_WHISPER_MODEL = WHISPER_MODELS.TINY_EN;
 
   // Cookie consent categories
   const CONSENT_CATEGORIES = {
@@ -613,6 +619,16 @@
     const [showCookieBanner, setShowCookieBanner] = useState(getCookieConsent() === null);
     const [isCookieSettingsOpen, setIsCookieSettingsOpen] = useState(false);
     const [cookieConsent, setCookieConsent] = useState(getCookieConsent() || createConsentObject(false));
+    const [isRecording, setIsRecording] = useState(false);
+    const [isTranscribing, setIsTranscribing] = useState(false);
+    const [whisperModel, setWhisperModel] = useState(() => {
+      try {
+        return window.localStorage.getItem(WHISPER_MODEL_STORAGE_KEY) || DEFAULT_WHISPER_MODEL;
+      } catch {
+        return DEFAULT_WHISPER_MODEL;
+      }
+    });
+    const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -657,6 +673,9 @@
     const pongGameStateRef = useRef(null);
     const pongAnimationFrameRef = useRef(null);
     const triviaManagerRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
+    const whisperPipelineRef = useRef(null);
 
     /**
      * Triggers a Tux animation based on keywords detected in chat messages.
@@ -2308,6 +2327,112 @@
       }
     }, [appendSystemMessage, inputText, openAiKey, setIsAboutOpen, t]);
 
+    /**
+     * Handles voice recording toggle - starts or stops audio recording
+     */
+    const handleVoiceRecording = useCallback(async () => {
+      if (isRecording) {
+        // Stop recording
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+        setIsRecording(false);
+      } else {
+        // Start recording
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          audioChunksRef.current = [];
+
+          const mediaRecorder = new MediaRecorder(stream);
+          mediaRecorderRef.current = mediaRecorder;
+
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              audioChunksRef.current.push(event.data);
+            }
+          };
+
+          mediaRecorder.onstop = async () => {
+            // Stop all audio tracks
+            stream.getTracks().forEach(track => track.stop());
+
+            // Process the recorded audio
+            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+            await transcribeAudio(audioBlob);
+          };
+
+          mediaRecorder.start();
+          setIsRecording(true);
+        } catch (error) {
+          console.error('Failed to start recording:', error);
+          appendSystemMessage('Fehler beim Zugriff auf das Mikrofon. Bitte erlaube den Mikrofonzugriff.');
+        }
+      }
+    }, [isRecording, appendSystemMessage]);
+
+    /**
+     * Transcribes audio using Whisper model
+     * @param {Blob} audioBlob - The recorded audio blob
+     */
+    const transcribeAudio = useCallback(async (audioBlob) => {
+      setIsTranscribing(true);
+      try {
+        // Load Whisper pipeline if not already loaded
+        if (!whisperPipelineRef.current) {
+          const { pipeline } = window.transformers || {};
+          if (!pipeline) {
+            throw new Error('Transformers.js nicht geladen');
+          }
+
+          appendSystemMessage(t.voiceSettings.loadingModel);
+          whisperPipelineRef.current = await pipeline(
+            'automatic-speech-recognition',
+            whisperModel,
+            { device: 'webgpu' }
+          );
+          appendSystemMessage(t.voiceSettings.modelLoaded);
+        }
+
+        // Convert blob to audio data
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        const audioContext = new AudioContext({ sampleRate: 16000 });
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+        // Get audio data as Float32Array
+        const audioData = audioBuffer.getChannelData(0);
+
+        // Transcribe
+        const result = await whisperPipelineRef.current(audioData);
+        const transcribedText = result.text || '';
+
+        if (transcribedText.trim()) {
+          // Append transcribed text to input
+          const newText = inputText ? `${inputText} ${transcribedText}` : transcribedText;
+          setInputText(newText.slice(0, MAX_MESSAGE_LENGTH));
+        } else {
+          appendSystemMessage('Keine Sprache erkannt. Bitte versuche es erneut.');
+        }
+      } catch (error) {
+        console.error('Transcription failed:', error);
+        appendSystemMessage(t.voiceSettings.modelError + ': ' + (error.message || ''));
+      } finally {
+        setIsTranscribing(false);
+      }
+    }, [whisperModel, inputText, appendSystemMessage, t]);
+
+    /**
+     * Handles voice settings changes
+     */
+    const handleWhisperModelChange = useCallback((newModel) => {
+      setWhisperModel(newModel);
+      whisperPipelineRef.current = null; // Clear cached pipeline
+      try {
+        window.localStorage.setItem(WHISPER_MODEL_STORAGE_KEY, newModel);
+      } catch (error) {
+        console.warn('Could not save Whisper model preference', error);
+      }
+    }, []);
+
     useEffect(() => {
       if (typeof document !== 'undefined') {
         document.documentElement.dataset.theme = theme;
@@ -3048,6 +3173,54 @@
             )
           )
         ),
+        // Voice Settings Modal
+        isVoiceSettingsOpen && React.createElement('div', { className: 'modal-overlay', role: 'presentation', onClick: () => setIsVoiceSettingsOpen(false) },
+          React.createElement('div', {
+            className: 'modal-content',
+            role: 'dialog',
+            id: 'voice-settings-dialog',
+            'aria-modal': 'true',
+            'aria-labelledby': 'voice-settings-dialog-title',
+            onClick: (event) => event.stopPropagation()
+          },
+            React.createElement('div', { className: 'modal-header' },
+              React.createElement('h2', { id: 'voice-settings-dialog-title' }, t.voiceSettings.title),
+              React.createElement('button', {
+                className: 'modal-close',
+                onClick: () => setIsVoiceSettingsOpen(false),
+                'aria-label': t.voiceSettings.closeAriaLabel
+              }, t.voiceSettings.close)
+            ),
+            React.createElement('div', { className: 'modal-body' },
+              React.createElement('p', { className: 'modal-description' },
+                t.voiceSettings.description
+              ),
+              React.createElement('label', { className: 'modal-label', htmlFor: 'whisper-model-select' }, t.voiceSettings.modelLabel),
+              React.createElement('div', { className: 'model-options' },
+                React.createElement('label', { className: 'model-option' },
+                  React.createElement('input', {
+                    type: 'radio',
+                    name: 'whisper-model',
+                    value: WHISPER_MODELS.TINY_EN,
+                    checked: whisperModel === WHISPER_MODELS.TINY_EN,
+                    onChange: (e) => handleWhisperModelChange(e.target.value)
+                  }),
+                  React.createElement('span', null, t.voiceSettings.models.tinyEn)
+                ),
+                React.createElement('label', { className: 'model-option' },
+                  React.createElement('input', {
+                    type: 'radio',
+                    name: 'whisper-model',
+                    value: WHISPER_MODELS.BASE,
+                    checked: whisperModel === WHISPER_MODELS.BASE,
+                    onChange: (e) => handleWhisperModelChange(e.target.value)
+                  }),
+                  React.createElement('span', null, t.voiceSettings.models.base)
+                )
+              )
+            )
+          )
+        ),
         // Cookie Banner
         showCookieBanner && React.createElement('div', {
           className: 'cookie-banner',
@@ -3528,6 +3701,14 @@
                 'aria-label': themeToggleTitle,
                 disabled: isApiKeyModalOpen
               }, themeButtonLabel),
+              React.createElement('button', {
+                type: 'button',
+                className: 'settings-button',
+                onClick: () => setIsVoiceSettingsOpen(true),
+                title: t.chat.settingsButtonTitle,
+                'aria-label': t.chat.settingsButtonAriaLabel,
+                disabled: isApiKeyModalOpen
+              }, t.chat.settingsButton),
               messages.length > 0 && React.createElement('button', {
                 onClick: handleClearMessages,
                 className: 'clear-chat-button',
@@ -3608,7 +3789,7 @@
                 type: 'text',
                 placeholder: t.chat.inputPlaceholder,
                 autoComplete: 'off',
-                disabled: !channelReady,
+                disabled: !channelReady || isRecording || isTranscribing,
                 value: inputText,
                 onChange: (event) => setInputText(event.target.value),
                 onKeyDown: (event) => {
@@ -3621,6 +3802,14 @@
                 'aria-label': t.chat.inputAriaLabel,
                 'aria-describedby': 'channel-status'
               }),
+              React.createElement('button', {
+                type: 'button',
+                className: isRecording ? 'voice-button voice-button-recording' : 'voice-button',
+                onClick: handleVoiceRecording,
+                disabled: !channelReady || isTranscribing,
+                'aria-label': isRecording ? t.chat.voiceButtonAriaLabelRecording : t.chat.voiceButtonAriaLabel,
+                title: isRecording ? t.chat.voiceButtonTitleRecording : t.chat.voiceButtonTitle
+              }, isRecording ? t.chat.voiceButtonRecording : (isTranscribing ? '⏳' : t.chat.voiceButton)),
               React.createElement('button', {
                 type: 'button',
                 className: 'ai-button',
