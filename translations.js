@@ -193,6 +193,11 @@ const baseTranslation = Object.freeze({
     label: 'Sprache',
     ariaLabel: 'Sprache auswählen'
   },
+  franconiaIntro: {
+    title: 'Willkommen bei Fränggisch!',
+    close: 'Schließen',
+    closeAriaLabel: 'Intro-Video schließen'
+  },
   screenShare: {
     header: 'Bildschirmfreigabe',
     actions: {
@@ -1868,6 +1873,11 @@ const dialectConfigs = {
           alarm: '⚠️ Alarmton',
           cheer: '🎉 Jubelschrei'
         }
+      },
+      franconiaIntro: {
+        title: 'Willkumm beim Fränggischn!',
+        close: 'Zumachn',
+        closeAriaLabel: 'Intro-Video zumachn'
       },
       statistics: {
         title: 'KI-Statistik',
