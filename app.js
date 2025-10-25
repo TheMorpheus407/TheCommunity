@@ -36,6 +36,7 @@
   const AI_PROVIDER_STORAGE_KEY = 'thecommunity.ai-provider';
   const COOKIE_CONSENT_STORAGE_KEY = 'thecommunity.cookie-consent';
   const WHISPER_MODEL_STORAGE_KEY = 'thecommunity.whisper-model';
+  const FRANCONIA_INTRO_SEEN_KEY = 'thecommunity.franconia-intro-seen';
   const THEME_OPTIONS = {
     LIGHT: 'light',
     DARK: 'dark',
@@ -630,6 +631,36 @@
   }
 
   /**
+   * Checks if the Franconia intro video has been seen.
+   * @returns {boolean} true if intro has been seen, false otherwise
+   */
+  function hasFranconiaIntroBeenSeen() {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    try {
+      return window.localStorage.getItem(FRANCONIA_INTRO_SEEN_KEY) === 'true';
+    } catch (error) {
+      console.warn('Franconia intro preference could not be read from storage.', error);
+      return false;
+    }
+  }
+
+  /**
+   * Marks the Franconia intro video as seen.
+   */
+  function markFranconiaIntroAsSeen() {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      window.localStorage.setItem(FRANCONIA_INTRO_SEEN_KEY, 'true');
+    } catch (error) {
+      console.warn('Franconia intro preference could not be saved.', error);
+    }
+  }
+
+  /**
    * Gets the saved AI provider preference from localStorage.
    * @returns {string} The saved provider or default (OpenAI)
    */
@@ -723,6 +754,7 @@
     });
     const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
     const [isBrainsPlanVisible, setIsBrainsPlanVisible] = useState(true);
+    const [isFranconiaIntroOpen, setIsFranconiaIntroOpen] = useState(false);
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -869,6 +901,11 @@
       setChannelStatus(newT.status.channelClosed);
       setCopyButtonText(newT.signaling.copyButton);
       setRemoteControlStatus(newT.remoteControl.statusDisabled);
+
+      // Show Franconia intro video on first selection
+      if (newLanguage === 'fra' && !hasFranconiaIntroBeenSeen()) {
+        setIsFranconiaIntroOpen(true);
+      }
     }, [appendSystemMessage]);
 
     const handleRandomRoom = useCallback(() => {
@@ -902,6 +939,11 @@
       setIsApiKeyModalOpen(false);
       setApiKeyError('');
       setApiKeyInput('');
+    }, []);
+
+    const handleCloseFranconiaIntro = useCallback(() => {
+      setIsFranconiaIntroOpen(false);
+      markFranconiaIntroAsSeen();
     }, []);
 
     const handleContinueWithoutAi = useCallback(() => {
@@ -2752,6 +2794,22 @@
     }, [isAboutOpen]);
 
     useEffect(() => {
+      if (!isFranconiaIntroOpen) {
+        return;
+      }
+      const handleKeyDown = (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          handleCloseFranconiaIntro();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }, [handleCloseFranconiaIntro, isFranconiaIntroOpen]);
+
+    useEffect(() => {
       if (!isAboutOpen || contributorsLoadedRef.current) {
         return;
       }
@@ -3415,6 +3473,39 @@
                   }),
                   React.createElement('span', null, t.voiceSettings.models.base)
                 )
+              )
+            )
+          )
+        ),
+        // Franconia Intro Modal
+        isFranconiaIntroOpen && React.createElement('div', { className: 'modal-overlay', role: 'presentation' },
+          React.createElement('div', {
+            className: 'modal-content',
+            role: 'dialog',
+            id: 'franconia-intro-dialog',
+            'aria-modal': 'true',
+            'aria-labelledby': 'franconia-intro-dialog-title',
+            onClick: (event) => event.stopPropagation()
+          },
+            React.createElement('div', { className: 'modal-header' },
+              React.createElement('h2', { id: 'franconia-intro-dialog-title' }, t.franconiaIntro.title),
+              React.createElement('button', {
+                className: 'modal-close',
+                onClick: handleCloseFranconiaIntro,
+                'aria-label': t.franconiaIntro.closeAriaLabel
+              }, t.franconiaIntro.close)
+            ),
+            React.createElement('div', { className: 'modal-body' },
+              React.createElement('video', {
+                controls: true,
+                autoPlay: true,
+                style: { width: '100%', maxHeight: '70vh', borderRadius: '8px' }
+              },
+                React.createElement('source', {
+                  src: 'https://github.com/user-attachments/assets/1a677e3b-9abb-43c0-91b9-864c16b973d5',
+                  type: 'video/mp4'
+                }),
+                'Your browser does not support the video tag.'
               )
             )
           )
