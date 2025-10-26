@@ -1365,27 +1365,31 @@
     const setupTriviaChannel = useCallback((channel) => {
       triviaChannelRef.current = channel;
 
-      // Lazy-load TriviaManager when channel is ready
-      if (!triviaManagerRef.current) {
-        import('./src/managers/TriviaManager.js').then((module) => {
-          triviaManagerRef.current = module.createTriviaManager({
-            triviaChannelRef,
-            setTriviaGameActive: setIsTriviaActive,
-            setTriviaGameState,
-            appendSystemMessage: appendSystemMessageRef.current,
-            t
-          });
+      // TEMPORARY FIX: Trivia feature disabled due to ES6 module compatibility issues
+      // TODO: Re-enable after fixing module system or bundling
+      console.warn('Trivia feature temporarily disabled - module loading issue');
 
-          // Setup channel with manager
-          if (triviaManagerRef.current) {
-            triviaManagerRef.current.setupTriviaChannel(channel);
-          }
-        }).catch((err) => {
-          console.error('Failed to load TriviaManager:', err);
-        });
-      } else if (triviaManagerRef.current) {
-        triviaManagerRef.current.setupTriviaChannel(channel);
-      }
+      // Lazy-load TriviaManager when channel is ready
+      // if (!triviaManagerRef.current) {
+      //   import('./src/managers/TriviaManager.js').then((module) => {
+      //     triviaManagerRef.current = module.createTriviaManager({
+      //       triviaChannelRef,
+      //       setTriviaGameActive: setIsTriviaActive,
+      //       setTriviaGameState,
+      //       appendSystemMessage: appendSystemMessageRef.current,
+      //       t
+      //     });
+      //
+      //     // Setup channel with manager
+      //     if (triviaManagerRef.current) {
+      //       triviaManagerRef.current.setupTriviaChannel(channel);
+      //     }
+      //   }).catch((err) => {
+      //     console.error('Failed to load TriviaManager:', err);
+      //   });
+      // } else if (triviaManagerRef.current) {
+      //   triviaManagerRef.current.setupTriviaChannel(channel);
+      // }
     }, [t]);
 
     /**
@@ -1861,6 +1865,18 @@
         document.removeEventListener('click', handleClickOutside);
       };
     }, [isSoundboardOpen]);
+
+    /**
+     * Plays cat sound effect when in cat mode and audio is enabled.
+     */
+    const playCatSfx = useCallback(() => {
+      if (theme !== THEME_OPTIONS.CAT || !catAudioSettings.enabled || !catAudioSettings.sfxEnabled) {
+        return;
+      }
+      // Simple meow sound trigger - would play audio if files exist
+      // For now, just log (actual audio files need to be added per AUDIO_ASSETS_NEEDED.md)
+      console.log('Meow! (Cat SFX would play here)');
+    }, [theme, catAudioSettings]);
 
     /**
      * Sends the typed message across the data channel after validation.
@@ -2662,15 +2678,6 @@
         return updated;
       });
     }, []);
-
-    const playCatSfx = useCallback(() => {
-      if (theme !== THEME_OPTIONS.CAT || !catAudioSettings.enabled || !catAudioSettings.sfxEnabled) {
-        return;
-      }
-      // Simple meow sound trigger - would play audio if files exist
-      // For now, just log (actual audio files need to be added per AUDIO_ASSETS_NEEDED.md)
-      console.log('Meow! (Cat SFX would play here)');
-    }, [theme, catAudioSettings]);
 
     useEffect(() => {
       if (typeof document !== 'undefined') {
