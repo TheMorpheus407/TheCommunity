@@ -169,14 +169,32 @@ export const AI_PROVIDER_STORAGE_KEY = 'thecommunity.ai-provider';
 export const THEME_OPTIONS = {
   LIGHT: 'light',
   DARK: 'dark',
-  RGB: 'rgb'
+  RGB: 'rgb',
+  CAT: 'cat'
 };
 
 /**
  * Sequence of themes when cycling through theme toggle.
  * @constant {string[]}
  */
-export const THEME_SEQUENCE = [THEME_OPTIONS.DARK, THEME_OPTIONS.LIGHT, THEME_OPTIONS.RGB];
+export const THEME_SEQUENCE = [THEME_OPTIONS.DARK, THEME_OPTIONS.LIGHT, THEME_OPTIONS.RGB, THEME_OPTIONS.CAT];
+
+/**
+ * Local storage key for cat mode audio settings.
+ * @constant {string}
+ */
+export const CAT_AUDIO_STORAGE_KEY = 'thecommunity.cat-audio-settings';
+
+/**
+ * Default cat mode audio settings.
+ * @constant {Object}
+ */
+export const DEFAULT_CAT_AUDIO_SETTINGS = {
+  enabled: false,
+  musicEnabled: false,
+  sfxEnabled: false,
+  volume: 50
+};
 
 /**
  * Types of control messages for remote control functionality.

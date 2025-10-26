@@ -15,7 +15,7 @@ export function resolveInitialTheme() {
   }
   try {
     const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-    if (storedTheme === THEME_OPTIONS.LIGHT || storedTheme === THEME_OPTIONS.DARK || storedTheme === THEME_OPTIONS.RGB) {
+    if (storedTheme === THEME_OPTIONS.LIGHT || storedTheme === THEME_OPTIONS.DARK || storedTheme === THEME_OPTIONS.RGB || storedTheme === THEME_OPTIONS.CAT) {
       if (typeof document !== 'undefined') {
         document.documentElement.dataset.theme = storedTheme;
       }

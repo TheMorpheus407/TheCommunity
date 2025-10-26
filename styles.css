@@ -279,6 +279,191 @@
   }
 }
 
+/* Cat Theme - Cute pastel kawaii aesthetic */
+[data-theme='cat'] {
+  color-scheme: light dark;
+  --color-bg-body: #fff5f8;
+  --color-text-primary: #4a4a4a;
+  --color-text-muted: #6b6b6b;
+  --color-text-faint: rgba(74, 74, 74, 0.55);
+  --color-text-accent: #ff69b4;
+  --color-text-error: #ff6b9d;
+  --color-text-warning: #ffb347;
+  --color-text-info: #87ceeb;
+  --color-text-soft: rgba(74, 74, 74, 0.75);
+  --color-text-subtle: rgba(74, 74, 74, 0.5);
+  --color-panel-bg: #ffffff;
+  --color-panel-border: #ffc0e0;
+  --color-surface-muted: #fff0f5;
+  --color-surface-hover: #ffe4f0;
+  --color-surface-alt: #ffeef8;
+  --color-surface-strong: #ffffff;
+  --color-chip-bg: #ffddf0;
+  --color-modal-bg: #ffffff;
+  --color-modal-border: #ffb3d9;
+  --color-outline: #ff69b4;
+  --color-border-subtle: #ffc0e0;
+  --color-border-strong: #ffaad4;
+  --color-input-bg: #fff8fb;
+  --color-input-border: #ffcce6;
+  --color-empty-state: rgba(74, 74, 74, 0.55);
+  --color-hint: rgba(74, 74, 74, 0.65);
+  --shadow-panel: 0 8px 24px rgba(255, 105, 180, 0.15);
+  --shadow-elevated: 0 12px 32px rgba(255, 105, 180, 0.2);
+  --shadow-modal: 0 24px 60px rgba(255, 105, 180, 0.25);
+  --overlay-scrim: rgba(255, 192, 203, 0.4);
+}
+
+/* Dark variant for cat theme (when system prefers dark) */
+@media (prefers-color-scheme: dark) {
+  [data-theme='cat'] {
+    --color-bg-body: #2a1a2a;
+    --color-text-primary: #ffd6e8;
+    --color-text-muted: #ffb3d9;
+    --color-text-faint: rgba(255, 214, 232, 0.65);
+    --color-text-accent: #ff85c8;
+    --color-text-error: #ff69b4;
+    --color-text-warning: #ffc670;
+    --color-text-info: #a8d8f0;
+    --color-text-soft: rgba(255, 214, 232, 0.85);
+    --color-text-subtle: rgba(255, 214, 232, 0.6);
+    --color-panel-bg: #3a2a3a;
+    --color-panel-border: #ff69b4;
+    --color-surface-muted: #2f1f2f;
+    --color-surface-hover: #3f2f3f;
+    --color-surface-alt: #352535;
+    --color-surface-strong: #3a2a3a;
+    --color-chip-bg: #4a3a4a;
+    --color-modal-bg: #3a2a3a;
+    --color-modal-border: #ff85c8;
+    --color-outline: #ff85c8;
+    --color-border-subtle: #ff69b4;
+    --color-border-strong: #ff85c8;
+    --color-input-bg: #2f1f2f;
+    --color-input-border: #ff69b4;
+    --color-empty-state: rgba(255, 214, 232, 0.65);
+    --color-hint: rgba(255, 214, 232, 0.75);
+    --shadow-panel: 0 8px 24px rgba(255, 105, 180, 0.25);
+    --shadow-elevated: 0 12px 32px rgba(255, 105, 180, 0.3);
+    --shadow-modal: 0 24px 60px rgba(255, 105, 180, 0.4);
+    --overlay-scrim: rgba(42, 26, 42, 0.7);
+  }
+}
+
+[data-theme='cat'] body {
+  background: linear-gradient(135deg, #fff5f8 0%, #ffe4f5 50%, #fff5f8 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme='cat'] body {
+    background: linear-gradient(135deg, #2a1a2a 0%, #3a2050 50%, #2a1a2a 100%);
+  }
+}
+
+[data-theme='cat'] main {
+  border: 2px solid var(--color-panel-border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-panel);
+}
+
+/* Paw print accents for cat theme */
+[data-theme='cat'] main::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  right: 20px;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle at 50% 60%, var(--color-text-accent) 45%, transparent 45%),
+              radial-gradient(circle at 30% 30%, var(--color-text-accent) 25%, transparent 25%),
+              radial-gradient(circle at 70% 30%, var(--color-text-accent) 25%, transparent 25%),
+              radial-gradient(circle at 20% 50%, var(--color-text-accent) 20%, transparent 20%),
+              radial-gradient(circle at 80% 50%, var(--color-text-accent) 20%, transparent 20%);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+[data-theme='cat'] h1,
+[data-theme='cat'] h2,
+[data-theme='cat'] h3 {
+  background: linear-gradient(135deg, #ff69b4, #ff85c8, #ffa8d8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 8px rgba(255, 105, 180, 0.2);
+}
+
+[data-theme='cat'] button:not(:disabled) {
+  background: linear-gradient(135deg, #ffb3d9 0%, #ffc9e6 100%);
+  border: 2px solid #ff85c8;
+  color: #4a4a4a;
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+[data-theme='cat'] button:not(:disabled):hover {
+  background: linear-gradient(135deg, #ffc9e6 0%, #ffd6ec 100%);
+  border-color: #ff69b4;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 105, 180, 0.3);
+}
+
+[data-theme='cat'] button:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(255, 105, 180, 0.2);
+}
+
+[data-theme='cat'] textarea,
+[data-theme='cat'] input {
+  background: var(--color-input-bg);
+  border: 2px solid var(--color-input-border);
+  border-radius: 12px;
+  color: var(--color-text-primary);
+}
+
+[data-theme='cat'] textarea:focus,
+[data-theme='cat'] input:focus {
+  border-color: var(--color-outline);
+  box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.15);
+}
+
+[data-theme='cat'] .chat-line {
+  border-radius: 16px;
+  background: var(--color-surface-muted);
+  padding: 8px 12px;
+}
+
+[data-theme='cat'] .chat-line[data-role="remote"] {
+  background: linear-gradient(135deg, #ffe4f5 0%, #fff0f8 100%);
+}
+
+[data-theme='cat'] .screen-placeholder {
+  background: rgba(255, 245, 248, 0.9);
+  color: var(--color-text-muted);
+  border-radius: 16px;
+}
+
+[data-theme='cat'] .remote-pointer-indicator {
+  background: rgba(255, 105, 180, 0.85);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+}
+
+/* Cute wiggle animation for cat theme */
+@keyframes cat-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+[data-theme='cat'] .tux-mascot {
+  animation: cat-wiggle 2s ease-in-out infinite;
+}
+
+[data-theme='cat'] .tux-mascot:hover {
+  animation: cat-wiggle 0.5s ease-in-out infinite;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -2982,5 +3167,181 @@ textarea[readonly] {
 
   .brains-plan-text {
     font-size: 0.85rem;
+  }
+}
+
+/* Cat Mascot Styles */
+.cat-mascot {
+  display: inline-block;
+  transition: transform 0.3s ease;
+  filter: drop-shadow(0 2px 8px rgba(255, 105, 180, 0.3));
+}
+
+.cat-mascot:hover {
+  transform: scale(1.1);
+}
+
+[data-theme='cat'] .cat-mascot .cat-eye {
+  animation: cat-blink 3s ease-in-out infinite;
+}
+
+@keyframes cat-blink {
+  0%, 90%, 100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+
+[data-theme='cat'] .cat-mascot .cat-ear-left,
+[data-theme='cat'] .cat-mascot .cat-ear-right {
+  animation: cat-ear-wiggle 2s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+[data-theme='cat'] .cat-mascot .cat-ear-right {
+  animation-delay: 0.3s;
+}
+
+@keyframes cat-ear-wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+[data-theme='cat'] .cat-mascot:hover .cat-whisker {
+  animation: whisker-twitch 0.5s ease-in-out;
+}
+
+@keyframes whisker-twitch {
+  0%, 100% {
+    stroke-width: 1;
+  }
+  50% {
+    stroke-width: 1.5;
+  }
+}
+
+.paw-icon {
+  display: inline-block;
+  color: var(--color-text-accent);
+  opacity: 0.7;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.paw-icon:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Cat Mode Audio Controls */
+.cat-audio-controls {
+  padding: 1rem;
+  background: var(--color-surface-muted);
+  border-radius: 12px;
+  margin-top: 1rem;
+}
+
+.cat-audio-controls h3 {
+  margin: 0 0 1rem 0;
+  color: var(--color-text-primary);
+  font-size: 1.1rem;
+}
+
+.cat-audio-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.cat-audio-setting:last-child {
+  border-bottom: none;
+}
+
+.cat-audio-setting label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+}
+
+.cat-audio-setting input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.cat-audio-volume {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.cat-audio-volume label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+}
+
+.cat-audio-volume input[type="range"] {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-surface-alt);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.cat-audio-volume input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-text-accent);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.cat-audio-volume input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.cat-audio-volume input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-text-accent);
+  cursor: pointer;
+  border: none;
+  transition: transform 0.2s ease;
+}
+
+.cat-audio-volume input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.2);
+}
+
+[data-theme='cat'] .cat-audio-controls {
+  background: linear-gradient(135deg, #fff0f5 0%, #ffe4f5 100%);
+  border: 2px solid var(--color-border-subtle);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme='cat'] .cat-audio-controls {
+    background: linear-gradient(135deg, #2f1f2f 0%, #3a2050 100%);
   }
 }
