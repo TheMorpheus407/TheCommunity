@@ -40,6 +40,12 @@ export const TRIVIA_CHANNEL_LABEL = 'trivia';
 export const FLAPPYBIRD_CHANNEL_LABEL = 'flappybird';
 
 /**
+ * Label for the Chess game data channel.
+ * @constant {string}
+ */
+export const CHESS_CHANNEL_LABEL = 'chess';
+
+/**
  * Maximum allowed length for a chat message in characters.
  * @constant {number}
  */
