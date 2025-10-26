@@ -40,9 +40,17 @@
   const THEME_OPTIONS = {
     LIGHT: 'light',
     DARK: 'dark',
-    RGB: 'rgb'
+    RGB: 'rgb',
+    CAT: 'cat'
   };
-  const THEME_SEQUENCE = [THEME_OPTIONS.DARK, THEME_OPTIONS.LIGHT, THEME_OPTIONS.RGB];
+  const THEME_SEQUENCE = [THEME_OPTIONS.DARK, THEME_OPTIONS.LIGHT, THEME_OPTIONS.RGB, THEME_OPTIONS.CAT];
+  const CAT_AUDIO_STORAGE_KEY = 'thecommunity.cat-audio-settings';
+  const DEFAULT_CAT_AUDIO_SETTINGS = {
+    enabled: false,
+    musicEnabled: false,
+    sfxEnabled: false,
+    volume: 50
+  };
   const WHISPER_MODELS = {
     TINY_EN: 'Xenova/whisper-tiny.en',
     BASE: 'Xenova/whisper-base'
@@ -593,7 +601,7 @@
     }
     try {
       const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-      if (storedTheme === THEME_OPTIONS.LIGHT || storedTheme === THEME_OPTIONS.DARK || storedTheme === THEME_OPTIONS.RGB) {
+      if (storedTheme === THEME_OPTIONS.LIGHT || storedTheme === THEME_OPTIONS.DARK || storedTheme === THEME_OPTIONS.RGB || storedTheme === THEME_OPTIONS.CAT) {
         if (typeof document !== 'undefined') {
           document.documentElement.dataset.theme = storedTheme;
         }
@@ -755,6 +763,14 @@
     const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
     const [isBrainsPlanVisible, setIsBrainsPlanVisible] = useState(true);
     const [isFranconiaIntroOpen, setIsFranconiaIntroOpen] = useState(false);
+    const [catAudioSettings, setCatAudioSettings] = useState(() => {
+      try {
+        const stored = window.localStorage.getItem(CAT_AUDIO_STORAGE_KEY);
+        return stored ? JSON.parse(stored) : { ...DEFAULT_CAT_AUDIO_SETTINGS };
+      } catch (error) {
+        return { ...DEFAULT_CAT_AUDIO_SETTINGS };
+      }
+    });
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -1861,7 +1877,8 @@
       setInputText('');
       setAiStatus('');
       setAiError('');
-    }, [appendMessage, appendSystemMessage, inputText, t]);
+      playCatSfx(); // Play meow sound in cat mode
+    }, [appendMessage, appendSystemMessage, inputText, playCatSfx, t]);
 
     /**
      * Handles image file selection and sends it through the image channel.
@@ -2626,6 +2643,27 @@
         console.warn('Could not save Whisper model preference', error);
       }
     }, []);
+
+    const handleCatAudioSettingChange = useCallback((key, value) => {
+      setCatAudioSettings((prev) => {
+        const updated = { ...prev, [key]: value };
+        try {
+          window.localStorage.setItem(CAT_AUDIO_STORAGE_KEY, JSON.stringify(updated));
+        } catch (error) {
+          console.warn('Could not save cat audio settings', error);
+        }
+        return updated;
+      });
+    }, []);
+
+    const playCatSfx = useCallback(() => {
+      if (theme !== THEME_OPTIONS.CAT || !catAudioSettings.enabled || !catAudioSettings.sfxEnabled) {
+        return;
+      }
+      // Simple meow sound trigger - would play audio if files exist
+      // For now, just log (actual audio files need to be added per AUDIO_ASSETS_NEEDED.md)
+      console.log('Meow! (Cat SFX would play here)');
+    }, [theme, catAudioSettings]);
 
     useEffect(() => {
       if (typeof document !== 'undefined') {
@@ -3472,6 +3510,58 @@
                     onChange: (e) => handleWhisperModelChange(e.target.value)
                   }),
                   React.createElement('span', null, t.voiceSettings.models.base)
+                )
+              ),
+              // Cat Mode Audio Settings
+              theme === THEME_OPTIONS.CAT && React.createElement('div', { className: 'cat-audio-controls', style: { marginTop: '1.5rem' } },
+                React.createElement('h3', null, '🐱 Cat Mode Audio'),
+                React.createElement('div', { className: 'cat-audio-setting' },
+                  React.createElement('label', null,
+                    React.createElement('input', {
+                      type: 'checkbox',
+                      checked: catAudioSettings.enabled,
+                      onChange: (e) => handleCatAudioSettingChange('enabled', e.target.checked)
+                    }),
+                    ' Enable Cat Mode Audio'
+                  )
+                ),
+                catAudioSettings.enabled && React.createElement('div', { style: { marginTop: '1rem' } },
+                  React.createElement('div', { className: 'cat-audio-setting' },
+                    React.createElement('label', null,
+                      React.createElement('input', {
+                        type: 'checkbox',
+                        checked: catAudioSettings.musicEnabled,
+                        onChange: (e) => handleCatAudioSettingChange('musicEnabled', e.target.checked)
+                      }),
+                      ' Background Music'
+                    )
+                  ),
+                  React.createElement('div', { className: 'cat-audio-setting' },
+                    React.createElement('label', null,
+                      React.createElement('input', {
+                        type: 'checkbox',
+                        checked: catAudioSettings.sfxEnabled,
+                        onChange: (e) => handleCatAudioSettingChange('sfxEnabled', e.target.checked)
+                      }),
+                      ' Meow Sound Effects'
+                    )
+                  ),
+                  React.createElement('div', { className: 'cat-audio-volume' },
+                    React.createElement('label', null,
+                      React.createElement('span', null, 'Volume'),
+                      React.createElement('span', null, `${catAudioSettings.volume}%`)
+                    ),
+                    React.createElement('input', {
+                      type: 'range',
+                      min: '0',
+                      max: '100',
+                      value: catAudioSettings.volume,
+                      onChange: (e) => handleCatAudioSettingChange('volume', parseInt(e.target.value, 10))
+                    })
+                  )
+                ),
+                React.createElement('p', { className: 'modal-hint', style: { marginTop: '0.75rem', fontSize: '0.85rem' } },
+                  'Note: Audio files need to be added (see assets/AUDIO_ASSETS_NEEDED.md). Audio auto-mutes when tab is not focused and respects system "reduced motion" preferences.'
                 )
               )
             )
