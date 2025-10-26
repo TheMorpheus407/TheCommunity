@@ -711,6 +711,7 @@
     const [isCreatingAnswer, setIsCreatingAnswer] = useState(false);
     const [isSignalingCollapsed, setIsSignalingCollapsed] = useState(false);
     const [isAboutOpen, setIsAboutOpen] = useState(false);
+    const [isOffTopicOpen, setIsOffTopicOpen] = useState(false);
     const [contributors, setContributors] = useState([]);
     const [contributorsError, setContributorsError] = useState('');
     const [isLoadingContributors, setIsLoadingContributors] = useState(false);
@@ -788,6 +789,8 @@
     const messagesContainerRef = useRef(null);
     const aboutButtonRef = useRef(null);
     const closeAboutButtonRef = useRef(null);
+    const offTopicButtonRef = useRef(null);
+    const closeOffTopicButtonRef = useRef(null);
     const contributorsLoadedRef = useRef(false);
     const apiKeyButtonRef = useRef(null);
     const apiKeyInputRef = useRef(null);
@@ -2085,6 +2088,10 @@
       setIsAboutOpen((prev) => !prev);
     }, []);
 
+    const toggleOffTopic = useCallback(() => {
+      setIsOffTopicOpen((prev) => !prev);
+    }, []);
+
     /**
      * Copies the current local signal to the clipboard for easy sharing.
      */
@@ -2830,6 +2837,32 @@
         window.removeEventListener('keydown', handleKeyDown);
       };
     }, [isAboutOpen]);
+
+    useEffect(() => {
+      if (isOffTopicOpen) {
+        if (closeOffTopicButtonRef.current) {
+          closeOffTopicButtonRef.current.focus();
+        }
+      } else if (!isApiKeyModalOpen && offTopicButtonRef.current) {
+        offTopicButtonRef.current.focus();
+      }
+    }, [isOffTopicOpen, isApiKeyModalOpen]);
+
+    useEffect(() => {
+      if (!isOffTopicOpen) {
+        return;
+      }
+      const handleKeyDown = (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          setIsOffTopicOpen(false);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }, [isOffTopicOpen]);
 
     useEffect(() => {
       if (!isFranconiaIntroOpen) {
@@ -3778,7 +3811,16 @@
                 'aria-controls': 'about-dialog',
                 ref: aboutButtonRef,
                 disabled: isApiKeyModalOpen
-              }, t.about.button)
+              }, t.about.button),
+              React.createElement('button', {
+                className: 'off-topic-button',
+                onClick: toggleOffTopic,
+                'aria-label': t.offTopic.buttonAriaLabel,
+                'aria-expanded': isOffTopicOpen,
+                'aria-controls': 'off-topic-dialog',
+                ref: offTopicButtonRef,
+                disabled: isApiKeyModalOpen
+              }, t.offTopic.button)
             )
           ),
           React.createElement(BrainsPlan, {
@@ -3811,25 +3853,6 @@
               ),
               React.createElement('div', { className: 'modal-body' },
                 React.createElement('p', null, t.about.description),
-                React.createElement('div', { style: { margin: '20px 0', padding: '15px', background: '#e3f2fd', borderRadius: '8px', borderLeft: '4px solid #2196f3' } },
-                  React.createElement('h3', { style: { marginTop: 0, color: '#1976d2' } }, '🔬 Featured Analysis'),
-                  React.createElement('p', { style: { marginBottom: '10px' } }, 'Explore a complete High-Energy Physics analysis of the Higgs boson discovery channel:'),
-                  React.createElement('a', {
-                    href: 'higgs_analysis.html',
-                    target: '_blank',
-                    rel: 'noopener noreferrer',
-                    style: {
-                      display: 'inline-block',
-                      padding: '10px 20px',
-                      background: '#667eea',
-                      color: 'white',
-                      textDecoration: 'none',
-                      borderRadius: '6px',
-                      fontWeight: '600',
-                      transition: 'background 0.3s'
-                    }
-                  }, 'H→ZZ→4ℓ Analysis →')
-                ),
                 React.createElement('h3', null, t.about.contributorsTitle),
                 React.createElement('p', { className: 'contributors-intro' }, t.about.contributorsIntro),
                 isLoadingContributors && React.createElement('p', { className: 'contributors-status' }, t.about.loadingContributors),
@@ -3848,6 +3871,48 @@
                       React.createElement('span', { className: 'contribution-note' }, ` - ${issueLabel}`)
                     );
                   })
+                )
+              )
+            )
+          ),
+          isOffTopicOpen && React.createElement('div', { className: 'modal-overlay', role: 'presentation', onClick: toggleOffTopic },
+            React.createElement('div', {
+              className: 'modal-content',
+              role: 'dialog',
+              id: 'off-topic-dialog',
+              'aria-modal': 'true',
+              'aria-labelledby': 'off-topic-dialog-title',
+              onClick: (e) => e.stopPropagation()
+            },
+              React.createElement('div', { className: 'modal-header' },
+                React.createElement('h2', { id: 'off-topic-dialog-title' }, t.offTopic.title),
+                React.createElement('button', {
+                  className: 'modal-close',
+                  onClick: toggleOffTopic,
+                  'aria-label': t.offTopic.closeAriaLabel,
+                  ref: closeOffTopicButtonRef
+                }, t.offTopic.close)
+              ),
+              React.createElement('div', { className: 'modal-body' },
+                React.createElement('p', null, t.offTopic.description),
+                React.createElement('div', { style: { margin: '20px 0', padding: '15px', background: '#f5f5f5', borderRadius: '8px', borderLeft: '4px solid #667eea' } },
+                  React.createElement('h3', { style: { marginTop: 0, color: '#667eea' } }, '🔬 ' + t.offTopic.higgsAnalysisTitle),
+                  React.createElement('p', { style: { marginBottom: '10px', color: '#333' } }, t.offTopic.higgsAnalysisDescription),
+                  React.createElement('a', {
+                    href: 'higgs_analysis.html',
+                    target: '_blank',
+                    rel: 'noopener noreferrer',
+                    style: {
+                      display: 'inline-block',
+                      padding: '10px 20px',
+                      background: '#667eea',
+                      color: 'white',
+                      textDecoration: 'none',
+                      borderRadius: '6px',
+                      fontWeight: '600',
+                      transition: 'background 0.3s'
+                    }
+                  }, t.offTopic.higgsAnalysisButton)
                 )
               )
             )
