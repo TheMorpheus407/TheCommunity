@@ -11,6 +11,7 @@
   const PONG_CHANNEL_LABEL = 'pong';
   const TRIVIA_CHANNEL_LABEL = 'trivia';
   const FLAPPYBIRD_CHANNEL_LABEL = 'flappybird';
+  const CHESS_CHANNEL_LABEL = 'chess';
   const MAX_MESSAGE_LENGTH = 2000;
   const MAX_MESSAGES_PER_INTERVAL = 30;
   const MESSAGE_INTERVAL_MS = 5000;
@@ -783,6 +784,7 @@
     const imageChannelRef = useRef(null);
     const pongChannelRef = useRef(null);
     const triviaChannelRef = useRef(null);
+    const chessChannelRef = useRef(null);
     const flappyBirdChannelRef = useRef(null);
     const flappyBirdCanvasRef = useRef(null);
     const flappyBirdGameRef = useRef(null);
@@ -825,6 +827,7 @@
     const pongGameStateRef = useRef(null);
     const pongAnimationFrameRef = useRef(null);
     const triviaManagerRef = useRef(null);
+    const chessManagerRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
     const whisperPipelineRef = useRef(null);
@@ -1400,6 +1403,36 @@
     }, [t]);
 
     /**
+     * Configures event handlers for the Chess data channel.
+     * @param {RTCDataChannel} channel - The Chess data channel
+     */
+    const setupChessChannel = useCallback((channel) => {
+      chessChannelRef.current = channel;
+
+      // Lazy-load ChessManager when channel is ready
+      if (!chessManagerRef.current) {
+        import('./src/managers/ChessManager.js').then((module) => {
+          chessManagerRef.current = module.createChessManager({
+            chessChannelRef,
+            appendMessage,
+            appendSystemMessage: appendSystemMessageRef.current,
+            t
+          });
+
+          // Setup channel with manager
+          if (chessManagerRef.current) {
+            chessManagerRef.current.setupChessChannel(channel);
+          }
+        }).catch((err) => {
+          console.error('Failed to load ChessManager:', err);
+          appendSystemMessageRef.current('Failed to load chess game');
+        });
+      } else if (chessManagerRef.current) {
+        chessManagerRef.current.setupChessChannel(channel);
+      }
+    }, [appendMessage, t]);
+
+    /**
      * Configures event handlers for the Flappy Bird data channel.
      * @param {RTCDataChannel} channel - The Flappy Bird data channel
      */
@@ -1515,6 +1548,11 @@
           setupTriviaChannel(incomingChannel);
           return;
         }
+        if (incomingChannel.label === CHESS_CHANNEL_LABEL) {
+          chessChannelRef.current = incomingChannel;
+          setupChessChannel(incomingChannel);
+          return;
+        }
         if (incomingChannel.label === FLAPPYBIRD_CHANNEL_LABEL) {
           flappyBirdChannelRef.current = incomingChannel;
           setupFlappyBirdChannel(incomingChannel);
@@ -1525,7 +1563,7 @@
       };
 
       return pc;
-    }, [appendSystemMessage, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, setupTriviaChannel, setupFlappyBirdChannel, t]);
+    }, [appendSystemMessage, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, setupTriviaChannel, setupChessChannel, setupFlappyBirdChannel, t]);
 
     /**
      * Resolves once ICE gathering finishes for the current connection.
@@ -1607,6 +1645,10 @@
       const triviaChannel = pc.createDataChannel(TRIVIA_CHANNEL_LABEL);
       setupTriviaChannel(triviaChannel);
 
+      const chessChannel = pc.createDataChannel(CHESS_CHANNEL_LABEL);
+      chessChannelRef.current = chessChannel;
+      setupChessChannel(chessChannel);
+
       const flappyBirdChannel = pc.createDataChannel(FLAPPYBIRD_CHANNEL_LABEL);
       flappyBirdChannelRef.current = flappyBirdChannel;
       setupFlappyBirdChannel(flappyBirdChannel);
@@ -1630,7 +1672,7 @@
       } finally {
         setIsCreatingOffer(false);
       }
-    }, [appendSystemMessage, ensurePeerConnection, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, setupTriviaChannel, setupFlappyBirdChannel, waitForIce, t]);
+    }, [appendSystemMessage, ensurePeerConnection, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, setupTriviaChannel, setupChessChannel, setupFlappyBirdChannel, waitForIce, t]);
 
     /**
      * Applies the pasted remote offer or answer to the peer connection.
@@ -1934,6 +1976,33 @@
         appendSystemMessage(t.systemMessages.messageInputTooLong(MAX_MESSAGE_LENGTH, trimmed.length));
         return;
       }
+
+      // Check for chess commands
+      if (trimmed === '@chess') {
+        // Start a chess game
+        if (chessManagerRef.current) {
+          chessManagerRef.current.startGame(true);
+        } else {
+          appendSystemMessage('Chess not ready yet. Please wait for connection.');
+        }
+        setInputText('');
+        return;
+      }
+
+      // Check for move command
+      const moveMatch = trimmed.match(/^@move\s+([a-h][1-8])-([a-h][1-8])$/i);
+      if (moveMatch) {
+        const from = moveMatch[1].toLowerCase();
+        const to = moveMatch[2].toLowerCase();
+        if (chessManagerRef.current) {
+          chessManagerRef.current.handleMove(from, to);
+        } else {
+          appendSystemMessage('Chess not ready yet. Please wait for connection.');
+        }
+        setInputText('');
+        return;
+      }
+
       channel.send(trimmed);
       appendMessage(trimmed, 'local');
       setInputText('');
@@ -2371,6 +2440,10 @@
         triviaChannelRef.current.close();
         triviaChannelRef.current = null;
       }
+      if (chessChannelRef.current) {
+        chessChannelRef.current.close();
+        chessChannelRef.current = null;
+      }
       if (flappyBirdChannelRef.current) {
         flappyBirdChannelRef.current.close();
         flappyBirdChannelRef.current = null;
@@ -2378,6 +2451,9 @@
       handleStopPong();
       if (triviaManagerRef.current && triviaManagerRef.current.stopGame) {
         triviaManagerRef.current.stopGame();
+      }
+      if (chessManagerRef.current && chessManagerRef.current.stopGame) {
+        chessManagerRef.current.stopGame();
       }
       handleStopFlappyBird();
       if (pcRef.current) {

@@ -21,7 +21,8 @@ import {
   CONTROL_CHANNEL_LABEL,
   IMAGE_CHANNEL_LABEL,
   PONG_CHANNEL_LABEL,
-  TRIVIA_CHANNEL_LABEL
+  TRIVIA_CHANNEL_LABEL,
+  CHESS_CHANNEL_LABEL
 } from '../core/constants.js';
 
 /**
@@ -38,6 +39,7 @@ import {
  * @param {React.MutableRefObject} deps.imageChannelRef - Image channel reference
  * @param {React.MutableRefObject} deps.pongChannelRef - Pong channel reference
  * @param {React.MutableRefObject} deps.triviaChannelRef - Trivia channel reference
+ * @param {React.MutableRefObject} deps.chessChannelRef - Chess channel reference
  * @param {React.MutableRefObject} deps.incomingTimestampsRef - Rate limiting timestamps
  * @param {React.MutableRefObject} deps.canControlPeerRef - Remote control permission ref
  * @param {Function} deps.setStatus - Status setter
@@ -54,6 +56,7 @@ import {
  * @param {Function} deps.setupImageChannel - Image channel setup function
  * @param {Function} deps.setupPongChannel - Pong channel setup function
  * @param {Function} deps.setupTriviaChannel - Trivia channel setup function
+ * @param {Function} deps.setupChessChannel - Chess channel setup function
  * @param {Object} deps.t - Translation object
  * @returns {Object} WebRTC operations
  * @export
@@ -71,6 +74,7 @@ export function createWebRTCManager(deps) {
     imageChannelRef,
     pongChannelRef,
     triviaChannelRef,
+    chessChannelRef,
     incomingTimestampsRef,
     canControlPeerRef,
     setStatus,
@@ -87,6 +91,7 @@ export function createWebRTCManager(deps) {
     setupImageChannel,
     setupPongChannel,
     setupTriviaChannel,
+    setupChessChannel,
     t
   } = deps;
 
@@ -197,6 +202,10 @@ export function createWebRTCManager(deps) {
         setupTriviaChannel(incomingChannel);
         return;
       }
+      if (incomingChannel.label === CHESS_CHANNEL_LABEL) {
+        setupChessChannel(incomingChannel);
+        return;
+      }
 
       // Security: Close unexpected channels
       appendSystemMessage(t.systemMessages.channelBlocked(incomingChannel.label || ''));
@@ -298,6 +307,10 @@ export function createWebRTCManager(deps) {
     const triviaChannel = pc.createDataChannel(TRIVIA_CHANNEL_LABEL);
     triviaChannelRef.current = triviaChannel;
     setupTriviaChannel(triviaChannel);
+
+    const chessChannel = pc.createDataChannel(CHESS_CHANNEL_LABEL);
+    chessChannelRef.current = chessChannel;
+    setupChessChannel(chessChannel);
 
     // Reset state
     incomingTimestampsRef.current = [];
@@ -422,6 +435,10 @@ export function createWebRTCManager(deps) {
     if (triviaChannelRef.current) {
       triviaChannelRef.current.close();
       triviaChannelRef.current = null;
+    }
+    if (chessChannelRef.current) {
+      chessChannelRef.current.close();
+      chessChannelRef.current = null;
     }
 
     // Close peer connection
