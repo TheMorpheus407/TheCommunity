@@ -485,7 +485,7 @@ body {
   overflow-x: hidden;
 }
 main {
-  width: min(920px, 100%);
+  width: min(1400px, 100%);
   display: grid;
   gap: 1.5rem;
   padding: 2rem;
