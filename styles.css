@@ -995,6 +995,14 @@ h1 {
   min-width: unset;
   box-shadow: var(--shadow-elevated);
 }
+.off-topic-button {
+  position: absolute;
+  right: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  min-width: unset;
+  box-shadow: var(--shadow-elevated);
+}
 section {
   background: var(--color-surface-alt);
   padding: 1.5rem;
@@ -1073,7 +1081,8 @@ button:disabled {
   box-shadow: none;
   border-color: var(--color-border-subtle);
 }
-.about-button {
+.about-button,
+.off-topic-button {
   box-shadow: none;
 }
 button:not(:disabled):hover {
@@ -2026,7 +2035,8 @@ textarea[readonly] {
     width: 72px;
     height: 72px;
   }
-  .about-button {
+  .about-button,
+  .off-topic-button {
     position: static;
     width: 100%;
   }
@@ -2191,7 +2201,8 @@ textarea[readonly] {
     width: 76px;
     height: 76px;
   }
-  .about-button {
+  .about-button,
+  .off-topic-button {
     position: static;
     width: 100%;
   }
@@ -2299,7 +2310,8 @@ textarea[readonly] {
     width: 82px;
     height: 82px;
   }
-  .about-button {
+  .about-button,
+  .off-topic-button {
     position: static;
     width: 100%;
   }
@@ -2356,7 +2368,8 @@ textarea[readonly] {
     width: 84px;
     height: 84px;
   }
-  .about-button {
+  .about-button,
+  .off-topic-button {
     position: static;
     width: 100%;
   }
