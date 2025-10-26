@@ -509,7 +509,8 @@ h1 {
   position: relative;
   width: 100%;
   min-height: clamp(88px, 12vw, 128px);
-  padding: 0 clamp(3.5rem, 8vw, 4.75rem);
+  padding: 0 clamp(1rem, 3vw, 2rem);
+  box-sizing: border-box;
 }
 .app-title {
   display: inline-flex;
