@@ -5,11 +5,12 @@
 (function (window) {
   'use strict';
 
-  const CANVAS_WIDTH = 800;
-  const CANVAS_HEIGHT = 600;
-  const PADDLE_WIDTH = 15;
-  const PADDLE_HEIGHT = 100;
-  const BALL_RADIUS = 10;
+  // Base dimensions for aspect ratio calculation (4:3 ratio)
+  const BASE_WIDTH = 800;
+  const BASE_HEIGHT = 600;
+  const PADDLE_WIDTH_RATIO = 15 / 800;  // Relative to canvas width
+  const PADDLE_HEIGHT_RATIO = 100 / 600; // Relative to canvas height
+  const BALL_RADIUS_RATIO = 10 / 800;    // Relative to canvas width
   const PADDLE_SPEED = 8;
   const BALL_SPEED_INITIAL = 5;
   const BALL_SPEED_INCREMENT = 0.3;
@@ -28,7 +29,40 @@
       this.lastUpdateTime = Date.now();
       this.keys = {};
 
+      // Set up responsive canvas dimensions
+      this.updateCanvasDimensions();
       this.setupEventListeners();
+
+      // Add resize observer for dynamic resizing
+      this.resizeObserver = new ResizeObserver(() => {
+        this.updateCanvasDimensions();
+      });
+      this.resizeObserver.observe(this.canvas);
+    }
+
+    updateCanvasDimensions() {
+      // Get the displayed size of canvas from CSS
+      const rect = this.canvas.getBoundingClientRect();
+      const displayWidth = rect.width;
+      const displayHeight = rect.height;
+
+      // Set internal canvas resolution to match display size for crisp rendering
+      // Use devicePixelRatio for high-DPI displays
+      const dpr = window.devicePixelRatio || 1;
+      this.canvas.width = displayWidth * dpr;
+      this.canvas.height = displayHeight * dpr;
+
+      // Scale context to match device pixel ratio
+      this.ctx.scale(dpr, dpr);
+
+      // Store logical dimensions for game calculations
+      this.canvasWidth = displayWidth;
+      this.canvasHeight = displayHeight;
+
+      // Calculate scaled game element sizes
+      this.paddleWidth = this.canvasWidth * PADDLE_WIDTH_RATIO;
+      this.paddleHeight = this.canvasHeight * PADDLE_HEIGHT_RATIO;
+      this.ballRadius = this.canvasWidth * BALL_RADIUS_RATIO;
     }
 
     setupEventListeners() {
@@ -121,16 +155,16 @@
       this.isHost = asHost;
       this.gameState = {
         ball: {
-          x: CANVAS_WIDTH / 2,
-          y: CANVAS_HEIGHT / 2,
+          x: this.canvasWidth / 2,
+          y: this.canvasHeight / 2,
           vx: (asHost ? 1 : -1) * BALL_SPEED_INITIAL,
           vy: (Math.random() - 0.5) * BALL_SPEED_INITIAL
         },
         leftPaddle: {
-          y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2
+          y: this.canvasHeight / 2 - this.paddleHeight / 2
         },
         rightPaddle: {
-          y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2
+          y: this.canvasHeight / 2 - this.paddleHeight / 2
         },
         score: {
           left: 0,
@@ -214,7 +248,7 @@
         moved = true;
       }
 
-      paddle.y = Math.max(0, Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT, paddle.y));
+      paddle.y = Math.max(0, Math.min(this.canvasHeight - this.paddleHeight, paddle.y));
 
       if (moved) {
         this.sendMessage({
@@ -232,40 +266,40 @@
       ball.x += ball.vx * deltaTime;
       ball.y += ball.vy * deltaTime;
 
-      if (ball.y - BALL_RADIUS <= 0 || ball.y + BALL_RADIUS >= CANVAS_HEIGHT) {
+      if (ball.y - this.ballRadius <= 0 || ball.y + this.ballRadius >= this.canvasHeight) {
         ball.vy = -ball.vy;
-        ball.y = Math.max(BALL_RADIUS, Math.min(CANVAS_HEIGHT - BALL_RADIUS, ball.y));
+        ball.y = Math.max(this.ballRadius, Math.min(this.canvasHeight - this.ballRadius, ball.y));
       }
 
       if (
-        ball.x - BALL_RADIUS <= PADDLE_WIDTH &&
+        ball.x - this.ballRadius <= this.paddleWidth &&
         ball.y >= leftPaddle.y &&
-        ball.y <= leftPaddle.y + PADDLE_HEIGHT &&
+        ball.y <= leftPaddle.y + this.paddleHeight &&
         ball.vx < 0
       ) {
         ball.vx = -ball.vx * (1 + BALL_SPEED_INCREMENT / 10);
-        ball.x = PADDLE_WIDTH + BALL_RADIUS;
-        const hitPos = (ball.y - leftPaddle.y) / PADDLE_HEIGHT;
+        ball.x = this.paddleWidth + this.ballRadius;
+        const hitPos = (ball.y - leftPaddle.y) / this.paddleHeight;
         ball.vy += (hitPos - 0.5) * 2;
       }
 
       if (
-        ball.x + BALL_RADIUS >= CANVAS_WIDTH - PADDLE_WIDTH &&
+        ball.x + this.ballRadius >= this.canvasWidth - this.paddleWidth &&
         ball.y >= rightPaddle.y &&
-        ball.y <= rightPaddle.y + PADDLE_HEIGHT &&
+        ball.y <= rightPaddle.y + this.paddleHeight &&
         ball.vx > 0
       ) {
         ball.vx = -ball.vx * (1 + BALL_SPEED_INCREMENT / 10);
-        ball.x = CANVAS_WIDTH - PADDLE_WIDTH - BALL_RADIUS;
-        const hitPos = (ball.y - rightPaddle.y) / PADDLE_HEIGHT;
+        ball.x = this.canvasWidth - this.paddleWidth - this.ballRadius;
+        const hitPos = (ball.y - rightPaddle.y) / this.paddleHeight;
         ball.vy += (hitPos - 0.5) * 2;
       }
 
-      if (ball.x - BALL_RADIUS <= 0) {
+      if (ball.x - this.ballRadius <= 0) {
         this.handlePoint('right');
       }
 
-      if (ball.x + BALL_RADIUS >= CANVAS_WIDTH) {
+      if (ball.x + this.ballRadius >= this.canvasWidth) {
         this.handlePoint('left');
       }
     }
@@ -294,8 +328,8 @@
     resetBall() {
       if (!this.gameState) return;
 
-      this.gameState.ball.x = CANVAS_WIDTH / 2;
-      this.gameState.ball.y = CANVAS_HEIGHT / 2;
+      this.gameState.ball.x = this.canvasWidth / 2;
+      this.gameState.ball.y = this.canvasHeight / 2;
       this.gameState.ball.vx = (Math.random() > 0.5 ? 1 : -1) * BALL_SPEED_INITIAL;
       this.gameState.ball.vy = (Math.random() - 0.5) * BALL_SPEED_INITIAL;
     }
@@ -329,41 +363,48 @@
       const ctx = this.ctx;
 
       ctx.fillStyle = '#0a0a0f';
-      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
 
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
       ctx.setLineDash([10, 10]);
       ctx.beginPath();
-      ctx.moveTo(CANVAS_WIDTH / 2, 0);
-      ctx.lineTo(CANVAS_WIDTH / 2, CANVAS_HEIGHT);
+      ctx.moveTo(this.canvasWidth / 2, 0);
+      ctx.lineTo(this.canvasWidth / 2, this.canvasHeight);
       ctx.stroke();
       ctx.setLineDash([]);
 
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, this.gameState.leftPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
-      ctx.fillRect(CANVAS_WIDTH - PADDLE_WIDTH, this.gameState.rightPaddle.y, PADDLE_WIDTH, PADDLE_HEIGHT);
+      ctx.fillRect(0, this.gameState.leftPaddle.y, this.paddleWidth, this.paddleHeight);
+      ctx.fillRect(this.canvasWidth - this.paddleWidth, this.gameState.rightPaddle.y, this.paddleWidth, this.paddleHeight);
 
       ctx.beginPath();
-      ctx.arc(this.gameState.ball.x, this.gameState.ball.y, BALL_RADIUS, 0, Math.PI * 2);
+      ctx.arc(this.gameState.ball.x, this.gameState.ball.y, this.ballRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.font = '48px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(this.gameState.score.left.toString(), CANVAS_WIDTH / 4, 60);
-      ctx.fillText(this.gameState.score.right.toString(), (3 * CANVAS_WIDTH) / 4, 60);
+      // Scale font sizes based on canvas dimensions
+      const scoreFontSize = Math.max(24, this.canvasHeight * 0.08);
+      const livesFontSize = Math.max(12, this.canvasHeight * 0.033);
 
-      ctx.font = '20px monospace';
+      ctx.font = `${scoreFontSize}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(this.gameState.score.left.toString(), this.canvasWidth / 4, scoreFontSize + 12);
+      ctx.fillText(this.gameState.score.right.toString(), (3 * this.canvasWidth) / 4, scoreFontSize + 12);
+
+      ctx.font = `${livesFontSize}px monospace`;
       const leftLives = '❤️'.repeat(this.gameState.lives.left);
       const rightLives = '❤️'.repeat(this.gameState.lives.right);
-      ctx.fillText(leftLives, CANVAS_WIDTH / 4, 100);
-      ctx.fillText(rightLives, (3 * CANVAS_WIDTH) / 4, 100);
+      ctx.fillText(leftLives, this.canvasWidth / 4, scoreFontSize + 52);
+      ctx.fillText(rightLives, (3 * this.canvasWidth) / 4, scoreFontSize + 52);
     }
 
     destroy() {
       this.stopGame();
       window.removeEventListener('keydown', this.handleKeyDown);
       window.removeEventListener('keyup', this.handleKeyUp);
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect();
+      }
     }
   }
 

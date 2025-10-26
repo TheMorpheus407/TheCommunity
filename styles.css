@@ -1499,7 +1499,7 @@ textarea[readonly] {
 #messages {
   display: grid;
   gap: 0.75rem;
-  max-height: 260px;
+  max-height: clamp(220px, 30vh, 400px);
   overflow-y: auto;
   padding-right: 0.5rem;
 }
@@ -1507,7 +1507,7 @@ textarea[readonly] {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 200px;
+  min-height: clamp(150px, 20vh, 200px);
   text-align: center;
   color: var(--color-empty-state);
   font-style: italic;
@@ -1629,8 +1629,8 @@ textarea[readonly] {
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   padding: 0.75rem;
-  min-width: 280px;
-  max-width: 320px;
+  min-width: min(280px, calc(100vw - 2rem));
+  max-width: min(320px, calc(100vw - 1rem));
   z-index: 1000;
   animation: slideUp 200ms ease;
 }
@@ -1722,7 +1722,7 @@ textarea[readonly] {
   border-radius: 18px;
   border: 1px solid var(--color-modal-border);
   box-shadow: var(--shadow-modal);
-  max-width: 600px;
+  max-width: min(600px, 95vw);
   width: 100%;
   max-height: 80vh;
   overflow-y: auto;
@@ -2075,9 +2075,6 @@ textarea[readonly] {
     height: 36px;
     font-size: 0.9rem;
   }
-  #messages {
-    max-height: 220px;
-  }
   .chat-line {
     padding: 0.65rem 0.9rem;
   }
@@ -2219,9 +2216,6 @@ textarea[readonly] {
   }
   textarea {
     min-height: 95px;
-  }
-  #messages {
-    max-height: 240px;
   }
   .chat-input {
     flex-direction: column;
@@ -2406,7 +2400,7 @@ textarea[readonly] {
 .pong-canvas-container {
   position: relative;
   width: 100%;
-  max-width: 800px;
+  max-width: min(800px, 95vw);
   background: #0a0a0f;
   border-radius: 12px;
   overflow: hidden;
@@ -2979,7 +2973,7 @@ textarea[readonly] {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  max-width: 400px;
+  max-width: min(400px, calc(100vw - 2.5rem));
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: 2px solid #a855f7;
   border-radius: 12px;

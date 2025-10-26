@@ -4358,9 +4358,7 @@
               isPongActive && React.createElement('div', { className: 'pong-canvas-container' },
                 React.createElement('canvas', {
                   ref: pongCanvasRef,
-                  className: 'pong-canvas',
-                  width: 800,
-                  height: 600
+                  className: 'pong-canvas'
                 })
               ),
               isPongActive && React.createElement('div', { className: 'pong-score-display' },
