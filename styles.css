@@ -2488,6 +2488,113 @@ textarea[readonly] {
   }
 }
 
+/* Flappy Bird Game Section */
+#flappybird {
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-panel-border);
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow: var(--shadow-panel);
+}
+
+#flappybird header {
+  margin-bottom: 1.5rem;
+}
+
+.flappybird-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.flappybird-canvas-container {
+  position: relative;
+  width: 100%;
+  max-width: min(800px, 95vw);
+  background: #4EC0CA;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid var(--color-border-strong);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.flappybird-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+}
+
+.flappybird-controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.flappybird-controls button {
+  min-width: 200px;
+}
+
+.flappybird-instructions {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.flappybird-score-display {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  padding: 1rem;
+  background: var(--color-surface-alt);
+  border-radius: 10px;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.flappybird-score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.flappybird-score-item h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.flappybird-score-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--color-text-primary);
+}
+
+[data-theme='rgb'] .flappybird-canvas-container {
+  border: 2px solid;
+  border-image: linear-gradient(135deg, #FFD700, #FFA500, #FFD700) 1;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.4), 0 0 60px rgba(255, 165, 0, 0.3);
+}
+
+@media (max-width: 768px) {
+  .flappybird-controls button {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .flappybird-score-value {
+    font-size: 1.5rem;
+  }
+}
+
 /* Danger Zone Section */
 #danger-zone {
   border: 2px solid var(--color-text-error);

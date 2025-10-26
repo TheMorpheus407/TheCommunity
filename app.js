@@ -10,6 +10,7 @@
   const IMAGE_CHANNEL_LABEL = 'image';
   const PONG_CHANNEL_LABEL = 'pong';
   const TRIVIA_CHANNEL_LABEL = 'trivia';
+  const FLAPPYBIRD_CHANNEL_LABEL = 'flappybird';
   const MAX_MESSAGE_LENGTH = 2000;
   const MAX_MESSAGES_PER_INTERVAL = 30;
   const MESSAGE_INTERVAL_MS = 5000;
@@ -744,6 +745,9 @@
     const [isTriviaActive, setIsTriviaActive] = useState(false);
     const [triviaGameState, setTriviaGameState] = useState(null);
     const [triviaQuestionCount, setTriviaQuestionCount] = useState(5);
+    const [isFlappyBirdActive, setIsFlappyBirdActive] = useState(false);
+    const [flappyBirdScore, setFlappyBirdScore] = useState(0);
+    const [flappyBirdHighScore, setFlappyBirdHighScore] = useState(0);
     const [isDangerZoneModalOpen, setIsDangerZoneModalOpen] = useState(false);
     const [dangerZoneAction, setDangerZoneAction] = useState(null);
     const [dangerZoneConfirmInput, setDangerZoneConfirmInput] = useState('');
@@ -779,6 +783,9 @@
     const imageChannelRef = useRef(null);
     const pongChannelRef = useRef(null);
     const triviaChannelRef = useRef(null);
+    const flappyBirdChannelRef = useRef(null);
+    const flappyBirdCanvasRef = useRef(null);
+    const flappyBirdGameRef = useRef(null);
     const iceDoneRef = useRef(false);
     const screenSenderRef = useRef(null);
     const screenAudioSenderRef = useRef(null);
@@ -1393,6 +1400,33 @@
     }, [t]);
 
     /**
+     * Configures event handlers for the Flappy Bird data channel.
+     * @param {RTCDataChannel} channel - The Flappy Bird data channel
+     */
+    const setupFlappyBirdChannel = useCallback((channel) => {
+      channel.onopen = () => {
+        flappyBirdChannelRef.current = channel;
+        appendSystemMessageRef.current(t.flappyBird?.channelReady || 'Flappy Bird channel ready!');
+      };
+      channel.onclose = () => {
+        if (flappyBirdChannelRef.current === channel) {
+          flappyBirdChannelRef.current = null;
+        }
+        appendSystemMessageRef.current(t.flappyBird?.channelClosed || 'Flappy Bird channel closed.');
+        // Clean up game if active
+        if (flappyBirdGameRef.current) {
+          flappyBirdGameRef.current.destroy();
+          flappyBirdGameRef.current = null;
+          setIsFlappyBirdActive(false);
+          setFlappyBirdScore(0);
+        }
+      };
+      channel.onerror = () => {
+        appendSystemMessageRef.current(t.flappyBird?.channelError || 'Flappy Bird channel error.');
+      };
+    }, [t]);
+
+    /**
      * Lazily creates (or returns) the RTCPeerConnection instance.
      * @returns {RTCPeerConnection}
      */
@@ -1481,12 +1515,17 @@
           setupTriviaChannel(incomingChannel);
           return;
         }
+        if (incomingChannel.label === FLAPPYBIRD_CHANNEL_LABEL) {
+          flappyBirdChannelRef.current = incomingChannel;
+          setupFlappyBirdChannel(incomingChannel);
+          return;
+        }
         appendSystemMessage(t.systemMessages.channelBlocked(incomingChannel.label || ''));
         incomingChannel.close();
       };
 
       return pc;
-    }, [appendSystemMessage, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, setupTriviaChannel, t]);
+    }, [appendSystemMessage, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, setupTriviaChannel, setupFlappyBirdChannel, t]);
 
     /**
      * Resolves once ICE gathering finishes for the current connection.
@@ -1568,6 +1607,10 @@
       const triviaChannel = pc.createDataChannel(TRIVIA_CHANNEL_LABEL);
       setupTriviaChannel(triviaChannel);
 
+      const flappyBirdChannel = pc.createDataChannel(FLAPPYBIRD_CHANNEL_LABEL);
+      flappyBirdChannelRef.current = flappyBirdChannel;
+      setupFlappyBirdChannel(flappyBirdChannel);
+
       incomingTimestampsRef.current = [];
       iceDoneRef.current = false;
       setLocalSignal('');
@@ -1587,7 +1630,7 @@
       } finally {
         setIsCreatingOffer(false);
       }
-    }, [appendSystemMessage, ensurePeerConnection, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, setupTriviaChannel, waitForIce, t]);
+    }, [appendSystemMessage, ensurePeerConnection, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, setupTriviaChannel, setupFlappyBirdChannel, waitForIce, t]);
 
     /**
      * Applies the pasted remote offer or answer to the peer connection.
@@ -2235,6 +2278,76 @@
     }, []);
 
     /**
+     * Starts a Flappy Bird game.
+     */
+    const handleStartFlappyBird = useCallback(() => {
+      if (!flappyBirdChannelRef.current || flappyBirdChannelRef.current.readyState !== 'open') {
+        appendSystemMessage(t.flappyBird?.waitingForPeer || 'Waiting for peer to start Flappy Bird...');
+        return;
+      }
+      if (!flappyBirdCanvasRef.current) {
+        return;
+      }
+
+      // Stop any existing game
+      if (flappyBirdGameRef.current) {
+        flappyBirdGameRef.current.destroy();
+        flappyBirdGameRef.current = null;
+      }
+
+      // Create new Flappy Bird game instance
+      const game = new window.FlappyBirdGame(
+        flappyBirdCanvasRef.current,
+        flappyBirdChannelRef.current,
+        {
+          onGameStarted: () => {
+            setIsFlappyBirdActive(true);
+            setFlappyBirdScore(0);
+            appendSystemMessage(t.flappyBird?.gameStarted || 'Flappy Bird game started! Good luck!');
+          },
+          onScoreUpdate: (score) => {
+            setFlappyBirdScore(score);
+          },
+          onGameOver: (score, highScore) => {
+            setFlappyBirdScore(score);
+            setFlappyBirdHighScore(highScore);
+            if (score === highScore && score > 0) {
+              appendSystemMessage(t.flappyBird?.newHighScore || `Game Over! New high score: ${score}! 🎉`);
+            } else {
+              appendSystemMessage(t.flappyBird?.gameOver || `Game Over! Score: ${score}. Press Space to restart.`);
+            }
+          },
+          onChallengeReceived: (score) => {
+            appendSystemMessage(t.flappyBird?.challengeReceived || `Your peer challenges you to beat their score of ${score}! 🏆`);
+          },
+          onHighScoreReceived: (score) => {
+            appendSystemMessage(t.flappyBird?.highScoreReceived || `Your peer achieved a new high score: ${score}! 🌟`);
+          }
+        }
+      );
+
+      flappyBirdGameRef.current = game;
+      game.startGame();
+      setIsFlappyBirdActive(true);
+
+      // Load and set the high score
+      const highScore = game.getHighScore();
+      setFlappyBirdHighScore(highScore);
+    }, [appendSystemMessage, t]);
+
+    /**
+     * Stops the Flappy Bird game and cleans up resources.
+     */
+    const handleStopFlappyBird = useCallback(() => {
+      if (flappyBirdGameRef.current) {
+        flappyBirdGameRef.current.destroy();
+        flappyBirdGameRef.current = null;
+      }
+      setIsFlappyBirdActive(false);
+      setFlappyBirdScore(0);
+    }, []);
+
+    /**
      * Terminates the current peer connection and resets signaling state.
      */
     const handleDisconnect = useCallback(() => {
@@ -2258,10 +2371,15 @@
         triviaChannelRef.current.close();
         triviaChannelRef.current = null;
       }
+      if (flappyBirdChannelRef.current) {
+        flappyBirdChannelRef.current.close();
+        flappyBirdChannelRef.current = null;
+      }
       handleStopPong();
       if (triviaManagerRef.current && triviaManagerRef.current.stopGame) {
         triviaManagerRef.current.stopGame();
       }
+      handleStopFlappyBird();
       if (pcRef.current) {
         pcRef.current.close();
         pcRef.current = null;
@@ -3977,7 +4095,12 @@
                   id: 'trivia-challenge',
                   onClick: handleStartTrivia,
                   disabled: !channelReady
-                }, isTriviaActive ? t.trivia.challengeButtonBusy : t.trivia.challengeButton)
+                }, isTriviaActive ? t.trivia.challengeButtonBusy : t.trivia.challengeButton),
+                React.createElement('button', {
+                  id: 'flappybird-challenge',
+                  onClick: handleStartFlappyBird,
+                  disabled: !channelReady
+                }, isFlappyBirdActive ? (t.flappyBird?.challengeButtonBusy || 'Playing...') : (t.flappyBird?.challengeButton || '🐦 Play Flappy Bird'))
               ),
               React.createElement('div', { className: 'signal-block' },
                 React.createElement('div', { className: 'signal-heading' },
@@ -4394,6 +4517,43 @@
             handleTriviaAnswer,
             t
           }),
+          // Flappy Bird game section
+          React.createElement('section', { id: 'flappybird' },
+            React.createElement('header', null,
+              React.createElement('div', { className: 'header-content' },
+                React.createElement('h2', null, t.flappyBird?.title || '🐦 Flappy Bird')
+              )
+            ),
+            React.createElement('div', { className: 'flappybird-content' },
+              isFlappyBirdActive && React.createElement('div', { className: 'flappybird-canvas-container' },
+                React.createElement('canvas', {
+                  ref: flappyBirdCanvasRef,
+                  className: 'flappybird-canvas'
+                })
+              ),
+              isFlappyBirdActive && React.createElement('div', { className: 'flappybird-score-display' },
+                React.createElement('div', { className: 'flappybird-score-item' },
+                  React.createElement('h3', null, t.flappyBird?.currentScore || 'Score'),
+                  React.createElement('div', { className: 'flappybird-score-value' }, flappyBirdScore)
+                ),
+                React.createElement('div', { className: 'flappybird-score-item' },
+                  React.createElement('h3', null, t.flappyBird?.highScoreLabel || 'High Score'),
+                  React.createElement('div', { className: 'flappybird-score-value' }, flappyBirdHighScore)
+                )
+              ),
+              isFlappyBirdActive && React.createElement('p', { className: 'flappybird-instructions' },
+                t.flappyBird?.instructions || 'Press SPACE or click to flap!'
+              ),
+              React.createElement('div', { className: 'flappybird-controls' },
+                isFlappyBirdActive && React.createElement('button', {
+                  onClick: handleStopFlappyBird
+                }, t.flappyBird?.closeGame || 'Stop Game'),
+                !isFlappyBirdActive && !channelReady && React.createElement('p', { className: 'hint' },
+                  t.flappyBird?.waitingForPeer || 'Waiting for peer connection...'
+                )
+              )
+            )
+          ),
           React.createElement('section', { id: 'danger-zone', className: 'danger-zone' },
             React.createElement('header', null,
               React.createElement('div', { className: 'header-content' },

@@ -34,6 +34,12 @@ export const PONG_CHANNEL_LABEL = 'pong';
 export const TRIVIA_CHANNEL_LABEL = 'trivia';
 
 /**
+ * Label for the Flappy Bird game data channel.
+ * @constant {string}
+ */
+export const FLAPPYBIRD_CHANNEL_LABEL = 'flappybird';
+
+/**
  * Maximum allowed length for a chat message in characters.
  * @constant {number}
  */
