@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Higgs→ZZ→4ℓ Analysis | TheCommunity</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <style>
     * {
       margin: 0;
@@ -241,6 +243,60 @@
     </div>
 
     <div class="section">
+      <h2>Simulation Methodology and Transparency</h2>
+
+      <div class="warning-box">
+        <h3>Important: About the Simulation Approach</h3>
+        <p>
+          This analysis uses a <strong>simplified Monte Carlo simulation approach</strong> that differs significantly from standard
+          High-Energy Physics (HEP) simulation workflows. It is designed for <strong>demonstrative and educational purposes only</strong>.
+        </p>
+      </div>
+
+      <h3>Standard HEP Simulation vs. This Implementation</h3>
+      <p>In professional HEP analyses, Monte Carlo event generation typically involves:</p>
+      <ul>
+        <li><strong>Matrix Element Generators:</strong> Tools like MadGraph, POWHEG, or Pythia that calculate scattering amplitudes from theoretical predictions based on the Standard Model</li>
+        <li><strong>Parton Showering:</strong> Modeling QCD radiation from initial and final state quarks and gluons</li>
+        <li><strong>Hadronization:</strong> Converting partons into observable hadrons using models like the Lund string model</li>
+        <li><strong>Detector Simulation:</strong> Full GEANT4-based simulation of particle interactions with detector material</li>
+        <li><strong>Event Selection:</strong> Detailed selection criteria on lepton kinematics (pT, η, isolation), requiring specific trigger patterns</li>
+      </ul>
+
+      <h3>This Analysis Uses Direct Invariant Mass Simulation</h3>
+      <p>Instead of the full theoretical chain described above, this implementation:</p>
+      <ul>
+        <li><strong>Directly simulates the four-lepton invariant mass (m₄ₗ)</strong> using phenomenological distributions</li>
+        <li><strong>Signal (H→ZZ→4ℓ):</strong> Breit-Wigner distribution centered at mH = 125 GeV with natural width ΓH = 4.1 MeV</li>
+        <li><strong>ZZ Continuum Background:</strong> Kinematic distribution from two Z bosons with simplified angular correlations</li>
+        <li><strong>Detector Effects:</strong> Gaussian smearing to approximate momentum resolution (σ/pT ~ 1-2%)</li>
+        <li><strong>No explicit particle-level selection:</strong> Lepton kinematic cuts, isolation requirements, and trigger simulation are implicitly folded into acceptance factors</li>
+      </ul>
+
+      <div class="info-box">
+        <h3>Why This Approach?</h3>
+        <p>
+          This simplified approach avoids the computational cost and complexity of downloading and processing large CERN OpenData files
+          or running full simulation chains. It allows demonstrating the statistical analysis workflow (event yields, background estimation,
+          significance calculation) without requiring specialized HEP software frameworks like ROOT or Rivet.
+        </p>
+        <p>
+          <strong>Trade-off:</strong> While preserving the statistical methodology, this approach sacrifices the physical accuracy of
+          individual event kinematics. Real analyses model each decay product's momentum and combine them to reconstruct m₄ₗ, whereas
+          this implementation models m₄ₗ directly.
+        </p>
+      </div>
+
+      <h3>Cross-Sections and Normalizations</h3>
+      <p>All cross-sections, branching ratios, and acceptance factors are taken from published ATLAS and CMS papers:</p>
+      <ul>
+        <li>Higgs production cross-section at √s = 13 TeV: σ(ggF) ≈ 49 pb, branching ratio BR(H→ZZ→4ℓ) ≈ 0.0125%</li>
+        <li>ZZ continuum production: σ(pp→ZZ) ≈ 16.5 pb (qq̄ and gg-initiated), BR(ZZ→4ℓ) ≈ 0.45%</li>
+        <li>Detector acceptance and selection efficiency: ~40-45% for signal and backgrounds</li>
+      </ul>
+    </div>
+
+    <div class="section">
       <h2>1. Physics Background</h2>
 
       <h3>1.1 The Higgs Mechanism</h3>
@@ -383,28 +439,39 @@
       <h3>5.1 Profile Likelihood Method</h3>
       <p>
         The statistical significance is calculated using the profile likelihood ratio test statistic. We construct a binned likelihood
-        function for the m4ℓ distribution:
+        function for the m₄ₗ distribution:
       </p>
-      <div class="code-block">
-L(μ, θ) = ∏[bins i] Poisson(ni | μ·si(θ) + bi(θ))
-
-where:
-  μ = signal strength parameter (μ=1 for SM Higgs)
-  θ = nuisance parameters (background normalization, systematics)
-  ni = observed events in bin i
-  si = expected signal events
-  bi = expected background events
-      </div>
+      <p style="text-align: center; margin: 20px 0;">
+        \[
+        \mathcal{L}(\mu, \theta) = \prod_{i \in \text{bins}} \text{Poisson}(n_i \mid \mu \cdot s_i(\theta) + b_i(\theta))
+        \]
+      </p>
+      <p>where:</p>
+      <ul>
+        <li>\(\mu\) = signal strength parameter (\(\mu=1\) for Standard Model Higgs)</li>
+        <li>\(\theta\) = nuisance parameters (background normalization, systematics)</li>
+        <li>\(n_i\) = observed events in bin \(i\)</li>
+        <li>\(s_i\) = expected signal events in bin \(i\)</li>
+        <li>\(b_i\) = expected background events in bin \(i\)</li>
+      </ul>
 
       <p>
-        The test statistic is:
+        The test statistic for the background-only hypothesis is:
       </p>
-      <div class="code-block">
-q₀ = -2 ln[L(μ=0, θ̂₀) / L(μ̂, θ̂)]
-
-Under the background-only hypothesis, q₀ approximately follows a χ² distribution.
-The significance Z is calculated as: Z = √q₀
-      </div>
+      <p style="text-align: center; margin: 20px 0;">
+        \[
+        q_0 = -2 \ln\left[\frac{\mathcal{L}(\mu=0, \hat{\theta}_0)}{\mathcal{L}(\hat{\mu}, \hat{\theta})}\right]
+        \]
+      </p>
+      <p>
+        Under the background-only hypothesis, \(q_0\) approximately follows a \(\chi^2\) distribution.
+        The significance \(Z\) is calculated as:
+      </p>
+      <p style="text-align: center; margin: 20px 0;">
+        \[
+        Z = \sqrt{q_0}
+        \]
+      </p>
 
       <h3>5.2 Results</h3>
       <div id="significance-results"></div>
@@ -533,13 +600,29 @@ The significance Z is calculated as: Z = √q₀
     function generateZZBackground(nEvents) {
       const events = [];
       for (let i = 0; i < nEvents; i++) {
-        // ZZ continuum has broader mass distribution
-        // Use two Z masses and combine
-        const z1Mass = breitWigner(Z_MASS, Z_WIDTH, Z_MASS);
-        const z2Mass = breitWigner(Z_MASS, Z_WIDTH, Z_MASS);
+        // Decide if this is on-shell Z or continuum ZZ
+        // On-shell Z: Z -> l+l-gamma* -> l+l-l'+l'- (peak at ~90 GeV)
+        // About 30% of ZZ background comes from this on-shell Z scenario
+        const isOnShellZ = Math.random() < 0.3;
 
-        // Simplified kinematics
-        const m4l = Math.sqrt(z1Mass * z1Mass + z2Mass * z2Mass + 2 * z1Mass * z2Mass * Math.cos(Math.random() * Math.PI));
+        let m4l;
+        if (isOnShellZ) {
+          // On-shell Z decay: Z -> l+l-gamma* -> l+l-l'+l'-
+          // This produces a peak around the Z mass (~90 GeV)
+          // One Z is on-shell, the other (virtual photon) is very off-shell
+          const zMass = breitWigner(Z_MASS, Z_WIDTH, Z_MASS);
+          // Virtual photon contributes small mass
+          const photonMass = Math.abs(gaussianRandom(0, 5)); // Very low mass
+          m4l = zMass + photonMass;
+        } else {
+          // Both Z bosons or continuum ZZ with broader mass distribution
+          const z1Mass = breitWigner(Z_MASS, Z_WIDTH, Z_MASS);
+          const z2Mass = breitWigner(Z_MASS, Z_WIDTH, Z_MASS);
+
+          // Simplified kinematics
+          m4l = Math.sqrt(z1Mass * z1Mass + z2Mass * z2Mass + 2 * z1Mass * z2Mass * Math.cos(Math.random() * Math.PI));
+        }
+
         const detectorSmearing = gaussianRandom(0, 1.8);
         const m4l_smeared = m4l + detectorSmearing;
 
@@ -639,7 +722,7 @@ The significance Z is calculated as: Z = √q₀
       const backgroundHist = createHistogram(eventData.background, binEdges);
       const combinedHist = createHistogram(eventData.combined, binEdges);
 
-      // Plot mass distribution
+      // Plot mass distribution with stacked histograms
       const ctx1 = document.getElementById('massChart');
       new Chart(ctx1, {
         type: 'bar',
@@ -647,17 +730,17 @@ The significance Z is calculated as: Z = √q₀
           labels: binCenters.map(m => m.toFixed(0)),
           datasets: [
             {
-              label: 'Signal (H→ZZ→4ℓ)',
-              data: signalHist,
-              backgroundColor: 'rgba(255, 99, 132, 0.7)',
-              borderColor: 'rgba(255, 99, 132, 1)',
+              label: 'Background',
+              data: backgroundHist,
+              backgroundColor: 'rgba(54, 162, 235, 0.8)',
+              borderColor: 'rgba(54, 162, 235, 1)',
               borderWidth: 1
             },
             {
-              label: 'Background',
-              data: backgroundHist,
-              backgroundColor: 'rgba(54, 162, 235, 0.7)',
-              borderColor: 'rgba(54, 162, 235, 1)',
+              label: 'Signal (H→ZZ→4ℓ)',
+              data: signalHist,
+              backgroundColor: 'rgba(255, 99, 132, 0.8)',
+              borderColor: 'rgba(255, 99, 132, 1)',
               borderWidth: 1
             }
           ]
@@ -667,6 +750,7 @@ The significance Z is calculated as: Z = √q₀
           maintainAspectRatio: false,
           scales: {
             x: {
+              stacked: true,
               title: {
                 display: true,
                 text: 'm₄ₗ [GeV]',
@@ -677,6 +761,7 @@ The significance Z is calculated as: Z = √q₀
               }
             },
             y: {
+              stacked: true,
               title: {
                 display: true,
                 text: 'Events / 5 GeV',
@@ -716,17 +801,17 @@ The significance Z is calculated as: Z = √q₀
           labels: zoomBinCenters.map(m => m.toFixed(0)),
           datasets: [
             {
-              label: 'Signal',
-              data: signalHistZoom,
-              backgroundColor: 'rgba(255, 99, 132, 0.8)',
-              borderColor: 'rgba(255, 99, 132, 1)',
-              borderWidth: 1
-            },
-            {
               label: 'Background',
               data: backgroundHistZoom,
               backgroundColor: 'rgba(54, 162, 235, 0.8)',
               borderColor: 'rgba(54, 162, 235, 1)',
+              borderWidth: 1
+            },
+            {
+              label: 'Signal',
+              data: signalHistZoom,
+              backgroundColor: 'rgba(255, 99, 132, 0.8)',
+              borderColor: 'rgba(255, 99, 132, 1)',
               borderWidth: 1
             }
           ]
@@ -736,6 +821,7 @@ The significance Z is calculated as: Z = √q₀
           maintainAspectRatio: false,
           scales: {
             x: {
+              stacked: true,
               title: {
                 display: true,
                 text: 'm₄ₗ [GeV]',
@@ -743,6 +829,7 @@ The significance Z is calculated as: Z = √q₀
               }
             },
             y: {
+              stacked: true,
               title: {
                 display: true,
                 text: 'Events / 2 GeV',

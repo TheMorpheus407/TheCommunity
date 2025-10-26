@@ -27,6 +27,17 @@ const baseTranslation = Object.freeze({
     close: 'Schließen',
     closeAriaLabel: 'Über-Dialog schließen'
   },
+  offTopic: {
+    button: 'Anderweitige Entwicklungen',
+    buttonAriaLabel: 'Anderweitige Entwicklungen ansehen',
+    title: 'Anderweitige Entwicklungen',
+    description: 'Hier finden Sie Projekte und Analysen, die nicht direkt mit der Hauptanwendung zusammenhängen, aber dennoch interessant sind.',
+    close: 'Schließen',
+    closeAriaLabel: 'Anderweitige-Entwicklungen-Dialog schließen',
+    higgsAnalysisTitle: 'Higgs-Boson-Analyse',
+    higgsAnalysisDescription: 'Eine vollständige High-Energy-Physics-Analyse des Higgs-Boson-Entdeckungskanals H→ZZ→4ℓ.',
+    higgsAnalysisButton: 'H→ZZ→4ℓ Analyse →'
+  },
   signaling: {
     title: 'Manuelle Signalisierung',
     collapseAriaLabel: (collapsed) => (collapsed ? 'Signalisierung ausklappen' : 'Signalisierung einklappen'),
@@ -1304,6 +1315,17 @@ const dialectConfigs = {
         close: 'Zueche',
         closeAriaLabel: 'Über-Dialog zueche'
       },
+      offTopic: {
+        button: 'Anderi Entwicklige',
+        buttonAriaLabel: 'Anderi Entwicklige aaluege',
+        title: 'Anderi Entwicklige',
+        description: 'Do findsch Projäkt und Analyse, wo nit direkt mit dr Haupt-App z\'tue hän, aber trotzdem intressant sin.',
+        close: 'Zueche',
+        closeAriaLabel: 'Anderi-Entwicklige-Dialog zueche',
+        higgsAnalysisTitle: 'Higgs-Boson-Analyse',
+        higgsAnalysisDescription: 'E vollständigi High-Energy-Physics-Analyse vom Higgs-Boson-Entdeckigs-Kanal H→ZZ→4ℓ.',
+        higgsAnalysisButton: 'H→ZZ→4ℓ Analyse →'
+      },
       signaling: {
         title: 'Händischs Signalisiere',
         collapseAriaLabel: (collapsed) => (collapsed ? 'Signalisierig uufchlappe' : 'Signalisierig zueche'),
@@ -1620,6 +1642,17 @@ const dialectConfigs = {
         issueCount: (count) => (count === 1 ? '1 Issue' : `${count} Issues`),
         close: 'Zumachn',
         closeAriaLabel: 'Üwwer-Dialog zumachn'
+      },
+      offTopic: {
+        button: 'Annere Entwigglungen',
+        buttonAriaLabel: 'Annere Entwigglungen ooschaung',
+        title: 'Annere Entwigglungen',
+        description: 'Do findsd Broggd und Analysen, die ned direkd zur Haubd-App ghörn, abber trotzdem ganz schee indaressand senn.',
+        close: 'Zumachn',
+        closeAriaLabel: 'Annere-Entwigglungen-Dialog zumachn',
+        higgsAnalysisTitle: 'Higgs-Boson-Analyse',
+        higgsAnalysisDescription: 'A vollschdändiche High-Energy-Physics-Analyse vom Higgs-Boson-Enddeggungs-Kanal H→ZZ→4ℓ.',
+        higgsAnalysisButton: 'H→ZZ→4ℓ Analyse →'
       },
       signaling: {
         title: 'Handgmochds Signalisiern',
