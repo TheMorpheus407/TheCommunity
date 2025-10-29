@@ -557,6 +557,68 @@ h1 {
   align-items: center;
   gap: 0.5rem;
 }
+
+/* Main Navigation Menu */
+.main-navigation {
+  width: 100%;
+  background: var(--color-panel-bg);
+  border-bottom: 1px solid var(--color-panel-border);
+  padding: 0;
+  margin: 0;
+}
+
+.main-navigation nav {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.main-navigation ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+}
+
+.main-navigation li {
+  margin: 0;
+  padding: 0;
+}
+
+.main-navigation button {
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 200ms ease;
+  white-space: nowrap;
+  border-radius: 0;
+  box-shadow: none;
+  min-width: unset;
+}
+
+.main-navigation button:hover {
+  background: var(--color-surface-hover);
+  border-bottom-color: var(--color-outline);
+}
+
+.main-navigation button:focus-visible {
+  outline: 2px solid var(--color-outline);
+  outline-offset: -2px;
+  background: var(--color-surface-hover);
+}
+
+.main-navigation button:active {
+  background: var(--color-surface-alt);
+}
+
 .random-room-button {
   background: var(--color-surface-alt);
   border: 1px solid var(--color-border-subtle);
@@ -1988,6 +2050,10 @@ textarea[readonly] {
     min-height: 44px;
     min-width: 44px;
   }
+  .main-navigation button {
+    min-height: 48px;
+    padding: 0.75rem 1rem;
+  }
 }
 
 /* Small phones and narrow screens (< 400px) */
@@ -2040,6 +2106,14 @@ textarea[readonly] {
   .off-topic-button {
     position: static;
     width: 100%;
+  }
+  .main-navigation ul {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .main-navigation button {
+    padding: 0.65rem 1rem;
+    font-size: 0.85rem;
   }
   h1 {
     font-size: clamp(1.5rem, 5vw, 1.8rem);

@@ -714,6 +714,8 @@
     const [isSignalingCollapsed, setIsSignalingCollapsed] = useState(false);
     const [isAboutOpen, setIsAboutOpen] = useState(false);
     const [isOffTopicOpen, setIsOffTopicOpen] = useState(false);
+    const [isHelpOpen, setIsHelpOpen] = useState(false);
+    const [isImpressumOpen, setIsImpressumOpen] = useState(false);
     const [contributors, setContributors] = useState([]);
     const [contributorsError, setContributorsError] = useState('');
     const [isLoadingContributors, setIsLoadingContributors] = useState(false);
@@ -2218,6 +2220,14 @@
 
     const toggleOffTopic = useCallback(() => {
       setIsOffTopicOpen((prev) => !prev);
+    }, []);
+
+    const toggleHelp = useCallback(() => {
+      setIsHelpOpen((prev) => !prev);
+    }, []);
+
+    const toggleImpressum = useCallback(() => {
+      setIsImpressumOpen((prev) => !prev);
     }, []);
 
     /**
@@ -4024,6 +4034,40 @@
               }, t.offTopic.button)
             )
           ),
+          React.createElement('div', { className: 'main-navigation' },
+            React.createElement('nav', { 'aria-label': t.menu.ariaLabel },
+              React.createElement('ul', null,
+                React.createElement('li', null,
+                  React.createElement('button', {
+                    onClick: toggleAbout,
+                    'aria-label': t.about.buttonAriaLabel,
+                    'aria-expanded': isAboutOpen
+                  }, t.menu.about)
+                ),
+                React.createElement('li', null,
+                  React.createElement('button', {
+                    onClick: toggleHelp,
+                    'aria-label': t.help.buttonAriaLabel,
+                    'aria-expanded': isHelpOpen
+                  }, t.menu.help)
+                ),
+                React.createElement('li', null,
+                  React.createElement('button', {
+                    onClick: toggleImpressum,
+                    'aria-label': t.impressum.buttonAriaLabel,
+                    'aria-expanded': isImpressumOpen
+                  }, t.menu.impressum)
+                ),
+                React.createElement('li', null,
+                  React.createElement('button', {
+                    onClick: toggleOffTopic,
+                    'aria-label': t.offTopic.buttonAriaLabel,
+                    'aria-expanded': isOffTopicOpen
+                  }, t.menu.issues)
+                )
+              )
+            )
+          ),
           React.createElement(BrainsPlan, {
             t: t,
             isVisible: isBrainsPlanVisible,
@@ -4073,6 +4117,86 @@
                     );
                   })
                 )
+              )
+            )
+          ),
+          isHelpOpen && React.createElement('div', { className: 'modal-overlay', role: 'presentation', onClick: toggleHelp },
+            React.createElement('div', {
+              className: 'modal-content',
+              role: 'dialog',
+              id: 'help-dialog',
+              'aria-modal': 'true',
+              'aria-labelledby': 'help-dialog-title',
+              onClick: (e) => e.stopPropagation()
+            },
+              React.createElement('div', { className: 'modal-header' },
+                React.createElement('h2', { id: 'help-dialog-title' }, t.help.title),
+                React.createElement('button', {
+                  className: 'modal-close',
+                  onClick: toggleHelp,
+                  'aria-label': t.help.closeAriaLabel
+                }, t.help.close)
+              ),
+              React.createElement('div', { className: 'modal-body' },
+                React.createElement('p', null, t.help.description),
+                React.createElement('h3', null, t.help.howToConnect),
+                React.createElement('ol', null,
+                  t.help.howToConnectSteps.map((step, idx) =>
+                    React.createElement('li', { key: idx, style: { marginBottom: '0.5rem' } }, step)
+                  )
+                ),
+                React.createElement('h3', null, t.help.features),
+                React.createElement('ul', null,
+                  t.help.featuresList.map((feature, idx) =>
+                    React.createElement('li', { key: idx, style: { marginBottom: '0.5rem' } }, feature)
+                  )
+                ),
+                React.createElement('h3', null, t.help.security),
+                React.createElement('p', null, t.help.securityNote)
+              )
+            )
+          ),
+          isImpressumOpen && React.createElement('div', { className: 'modal-overlay', role: 'presentation', onClick: toggleImpressum },
+            React.createElement('div', {
+              className: 'modal-content',
+              role: 'dialog',
+              id: 'impressum-dialog',
+              'aria-modal': 'true',
+              'aria-labelledby': 'impressum-dialog-title',
+              onClick: (e) => e.stopPropagation()
+            },
+              React.createElement('div', { className: 'modal-header' },
+                React.createElement('h2', { id: 'impressum-dialog-title' }, t.impressum.title),
+                React.createElement('button', {
+                  className: 'modal-close',
+                  onClick: toggleImpressum,
+                  'aria-label': t.impressum.closeAriaLabel
+                }, t.impressum.close)
+              ),
+              React.createElement('div', { className: 'modal-body' },
+                React.createElement('h3', null, t.impressum.projectInfo),
+                React.createElement('p', null,
+                  React.createElement('strong', null, t.impressum.projectName)
+                ),
+                React.createElement('p', null, t.impressum.projectDescription),
+                React.createElement('h3', null, t.impressum.responsibility),
+                React.createElement('p', null, t.impressum.communityDriven),
+                React.createElement('h3', null, t.impressum.repository),
+                React.createElement('p', null,
+                  React.createElement('a', {
+                    href: t.impressum.repositoryLink,
+                    target: '_blank',
+                    rel: 'noopener noreferrer'
+                  }, t.impressum.repositoryLink)
+                ),
+                React.createElement('h3', null, t.impressum.license),
+                React.createElement('p', null, t.impressum.licenseInfo),
+                React.createElement('h3', null, t.impressum.contact),
+                React.createElement('p', null, t.impressum.contactInfo),
+                React.createElement('h3', null, t.impressum.disclaimer),
+                React.createElement('p', null, t.impressum.disclaimerText),
+                React.createElement('h3', null, t.impressum.privacy),
+                React.createElement('p', null, t.impressum.privacyText)
               )
             )
           ),
