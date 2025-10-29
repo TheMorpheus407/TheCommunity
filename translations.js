@@ -13,6 +13,61 @@ const baseTranslation = Object.freeze({
   app: {
     title: 'PodTalk'
   },
+  menu: {
+    ariaLabel: 'Hauptnavigation',
+    about: 'Über',
+    help: 'Hilfe',
+    impressum: 'Impressum',
+    issues: 'Anderweitige Entwicklungen'
+  },
+  help: {
+    button: 'Hilfe',
+    buttonAriaLabel: 'Hilfe öffnen',
+    title: 'Hilfe',
+    description: 'Willkommen bei PodTalk! Diese Anwendung ermöglicht Peer-to-Peer-Kommunikation über WebRTC ohne Backend-Server.',
+    howToConnect: 'Wie verbinde ich mich?',
+    howToConnectSteps: [
+      'Eine Person erstellt ein "Angebot" und teilt das Signal mit dem anderen Peer (z.B. über einen sicheren Kanal wie Signal oder WhatsApp).',
+      'Die zweite Person fügt das Signal ein, wendet es an, erstellt eine "Antwort" und teilt diese zurück.',
+      'Die erste Person fügt die Antwort ein und wendet sie an. Die Verbindung wird automatisch hergestellt.'
+    ],
+    features: 'Verfügbare Funktionen:',
+    featuresList: [
+      'Text-Chat: Senden Sie Nachrichten in Echtzeit',
+      'Bildfreigabe: Teilen Sie Bilder mit Ihrem Peer',
+      'Bildschirmfreigabe: Zeigen Sie Ihren Bildschirm',
+      'Fernsteuerung: Steuern Sie den Bildschirm Ihres Peers (mit Erlaubnis)',
+      'Spiele: Spielen Sie Pong, Trivia, Flappy Bird oder Schach zusammen',
+      'KI-Assistent: Nutzen Sie OpenAI oder Ollama für KI-gestützte Antworten',
+      'Sprachnachrichten: Nehmen Sie Sprachnachrichten auf und transkribieren Sie sie'
+    ],
+    security: 'Sicherheit:',
+    securityNote: 'Alle Kommunikation erfolgt direkt zwischen den Peers über verschlüsselte WebRTC-Verbindungen. Es gibt keinen zentralen Server, der Ihre Daten speichert.',
+    close: 'Schließen',
+    closeAriaLabel: 'Hilfe-Dialog schließen'
+  },
+  impressum: {
+    button: 'Impressum',
+    buttonAriaLabel: 'Impressum öffnen',
+    title: 'Impressum',
+    projectInfo: 'Projektinformationen',
+    projectName: 'PodTalk / TheCommunity',
+    projectDescription: 'Dies ist ein Open-Source-Community-Projekt, das vollständig über GitHub Issues gesteuert wird.',
+    responsibility: 'Verantwortlich für den Inhalt:',
+    communityDriven: 'Community-gesteuert via GitHub',
+    repository: 'GitHub Repository:',
+    repositoryLink: 'https://github.com/TheMorpheus407/TheCommunity',
+    license: 'Lizenz:',
+    licenseInfo: 'Dieses Projekt ist Open Source. Bitte beachten Sie die Lizenzbedingungen im Repository.',
+    contact: 'Kontakt:',
+    contactInfo: 'Für Fragen oder Anregungen öffnen Sie bitte ein Issue auf GitHub.',
+    disclaimer: 'Haftungsausschluss:',
+    disclaimerText: 'Diese Anwendung wird ohne jegliche Garantie zur Verfügung gestellt. Die Nutzung erfolgt auf eigene Verantwortung. Da es sich um eine P2P-Anwendung ohne Backend handelt, haben die Projektmaintainer keinen Zugriff auf Ihre Verbindungen oder Daten.',
+    privacy: 'Datenschutz:',
+    privacyText: 'Es werden keine Daten auf einem Server gespeichert. Alle Kommunikation erfolgt direkt zwischen den Peers. Lokale Einstellungen werden nur in Ihrem Browser (localStorage) gespeichert.',
+    close: 'Schließen',
+    closeAriaLabel: 'Impressum-Dialog schließen'
+  },
   about: {
     button: 'Über',
     buttonAriaLabel: 'Über dieses Projekt',
