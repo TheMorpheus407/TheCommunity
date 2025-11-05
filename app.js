@@ -741,6 +741,7 @@
     const [isLoadingStatistics, setIsLoadingStatistics] = useState(false);
     const [statisticsError, setStatisticsError] = useState('');
     const [randomJoke, setRandomJoke] = useState('');
+    const [randomN8nExample, setRandomN8nExample] = useState('');
     const [tuxAnimation, setTuxAnimation] = useState(null);
     const [isPongActive, setIsPongActive] = useState(false);
     const [pongScore, setPongScore] = useState({ left: 0, right: 0 });
@@ -3190,6 +3191,14 @@
     }, [t]);
 
     useEffect(() => {
+      const examples = t.statistics.n8nExample?.examples;
+      if (Array.isArray(examples) && examples.length > 0) {
+        const randomIndex = Math.floor(Math.random() * examples.length);
+        setRandomN8nExample(examples[randomIndex]);
+      }
+    }, [t]);
+
+    useEffect(() => {
       const controller = new AbortController();
       let didSucceed = false;
 
@@ -4668,6 +4677,10 @@
               randomJoke && React.createElement('div', { className: 'statistics-joke' },
                 React.createElement('h3', null, t.statistics.joke.title),
                 React.createElement('p', null, randomJoke)
+              ),
+              randomN8nExample && React.createElement('div', { className: 'statistics-n8n-example' },
+                React.createElement('h3', null, t.statistics.n8nExample.title),
+                React.createElement('p', null, randomN8nExample)
               )
             )
           ),

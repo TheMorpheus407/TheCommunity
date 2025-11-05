@@ -2044,6 +2044,30 @@ textarea[readonly] {
   font-style: italic;
 }
 
+.statistics-n8n-example {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(147, 51, 234, 0.3);
+  text-align: center;
+}
+
+.statistics-n8n-example h3 {
+  margin: 0 0 1rem 0;
+  color: var(--color-text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.statistics-n8n-example p {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 1rem;
+  line-height: 1.6;
+  font-family: 'Courier New', monospace;
+}
+
 /* ===== Mobile Responsive Design ===== */
 
 /* Improved touch target accessibility */
