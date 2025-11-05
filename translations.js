@@ -410,6 +410,26 @@ const baseTranslation = Object.freeze({
         '"Es ist nur ein kleiner Fix" - Berühmte letzte Worte vor 3 Tagen Debugging.',
         'Manche Menschen haben Albträume. Entwickler träumen von Production-Deployments am Freitagnachmittag.'
       ]
+    },
+    n8nExample: {
+      title: 'n8n Beispiel des Tages',
+      examples: [
+        'Automatische Slack-Benachrichtigung bei neuen GitHub-Issues: Webhook → GitHub → Slack',
+        'E-Mail-Anhänge automatisch in Google Drive speichern: Gmail → Filter → Google Drive',
+        'Twitter-Tweets mit bestimmten Hashtags in Notion-Datenbank speichern: Twitter → Filter → Notion',
+        'Automatische Backup-Erstellung von Datenbanken und Upload zu Dropbox: Cron → PostgreSQL → Dropbox',
+        'Lead-Erfassung von Webformular zu CRM: Webhook → Validierung → HubSpot → Slack-Benachrichtigung',
+        'Automatische Rechnungserstellung aus Google Sheets: Sheets → PDF generieren → E-Mail versenden',
+        'Monitoring-Alert-System: HTTP Request → Bedingung → Telegram + PagerDuty',
+        'Social Media Cross-Posting: RSS Feed → Filter → Twitter + LinkedIn + Facebook',
+        'Kundenservice-Ticketsystem: E-Mail → Kategorisierung → Jira → Antwort-Template',
+        'Automatische Datenanalyse-Reports: Cron → SQL-Abfrage → Chart erstellen → E-Mail mit PDF',
+        'Kalender-Synchronisation zwischen verschiedenen Plattformen: Google Calendar → Microsoft Outlook',
+        'Automatische Produktinventur-Überwachung: Shopify → Bestandsprüfung → Bestellauslöser bei niedrigem Bestand',
+        'Content-Moderation-Pipeline: Webhook → Bildanalyse-API → Filter → Benachrichtigung bei Verstoß',
+        'Automatische Meeting-Protokolle: Zoom → Transkription → Zusammenfassung → Notion',
+        'IoT-Datenverarbeitung: MQTT → Datenfilterung → InfluxDB → Grafana-Dashboard-Update'
+      ]
     }
   },
   pong: {
@@ -1670,6 +1690,26 @@ const dialectConfigs = {
             '"Es isch numme e chline Fix" - Berüehmti letschti Wort vor 3 Täg Debugge.',
             'Manchi Lüt hän Alpträum. Entwickler träume vo Production-Deployments am Fritignochmittag.'
           ]
+        },
+        n8nExample: {
+          title: 'n8n Bispiil vom Tag',
+          examples: [
+            'Automatischi Slack-Benachrichtigung bi neue GitHub-Issues: Webhook → GitHub → Slack',
+            'E-Mail-Aahäng automatisch i Google Drive speichere: Gmail → Filter → Google Drive',
+            'Twitter-Tweets mit bestimmte Hashtags i Notion-Datebank speichere: Twitter → Filter → Notion',
+            'Automatischi Backup-Erstellig vo Datebanke und Upload zu Dropbox: Cron → PostgreSQL → Dropbox',
+            'Lead-Erfassig vo Webformular zu CRM: Webhook → Validierig → HubSpot → Slack-Benachrichtigung',
+            'Automatischi Rechnigserstellig us Google Sheets: Sheets → PDF generiere → E-Mail versände',
+            'Monitoring-Alert-System: HTTP Request → Bedingig → Telegram + PagerDuty',
+            'Social Media Cross-Posting: RSS Feed → Filter → Twitter + LinkedIn + Facebook',
+            'Kundeservice-Ticketsystem: E-Mail → Kategorisierig → Jira → Antwort-Template',
+            'Automatischi Dateanalyse-Reports: Cron → SQL-Abfrog → Chart erstelle → E-Mail mit PDF',
+            'Kalender-Synchronisierig zwüsche verschiedene Plattforme: Google Calendar → Microsoft Outlook',
+            'Automatischi Produktinventur-Überwaachig: Shopify → Bestandsprüefig → Bestelluslöser bi niedrigem Bestand',
+            'Content-Moderation-Pipeline: Webhook → Bildanalyse-API → Filter → Benachrichtigung bi Verstoss',
+            'Automatischi Meeting-Protokoll: Zoom → Transkription → Zämmefassig → Notion',
+            'IoT-Dateverarbeitig: MQTT → Datefilterig → InfluxDB → Grafana-Dashboard-Update'
+          ]
         }
       }
     }
@@ -2002,6 +2042,26 @@ const dialectConfigs = {
             'Des ei\'zig schlimmer wie Legacy-Code is dei eigana vo vor 6 Monatn.',
             '"Is nur a kloana Fix" – berühmd letzte Wort vorm 3-Daach-Debuggn.',
             'Manch Leit träum von Albtraum. Entwickla träum vom Friday-Deploy.'
+          ]
+        },
+        n8nExample: {
+          title: 'n8n Beispul vom Dog',
+          examples: [
+            'Automatisch Slack-Benachrichtigung bei neie GitHub-Issues: Webhook → GitHub → Slack',
+            'E-Mail-Aahäng automatisch in Google Drive speichern: Gmail → Filter → Google Drive',
+            'Twitter-Tweets mit bestimmte Hashtags in Notion-Datenbank speichern: Twitter → Filter → Notion',
+            'Automatisch Backup-Erstellung vo Datenbanke und Upload zu Dropbox: Cron → PostgreSQL → Dropbox',
+            'Lead-Erfassung vo Webformular zu CRM: Webhook → Validierung → HubSpot → Slack-Benachrichtigung',
+            'Automatisch Rechnungserstellung aus Google Sheets: Sheets → PDF generieren → E-Mail verschicka',
+            'Monitoring-Alert-System: HTTP Request → Bedingung → Telegram + PagerDuty',
+            'Social Media Cross-Posting: RSS Feed → Filter → Twitter + LinkedIn + Facebook',
+            'Kundenservice-Ticketsystem: E-Mail → Kategorisierung → Jira → Antwort-Template',
+            'Automatisch Datenanalyse-Reports: Cron → SQL-Abfrag → Chart erstella → E-Mail mit PDF',
+            'Kalender-Synchronisation zwischn verschieden Plattforma: Google Calendar → Microsoft Outlook',
+            'Automatisch Produktinventur-Überwachung: Shopify → Bestandsprüfung → Bestellauslöser bei niedrigem Bestand',
+            'Content-Moderation-Pipeline: Webhook → Bildanalyse-API → Filter → Benachrichtigung bei Verstoß',
+            'Automatisch Meeting-Protokoll: Zoom → Transkription → Zsammafassung → Notion',
+            'IoT-Datenverarbeitung: MQTT → Datenfilterung → InfluxDB → Grafana-Dashboard-Update'
           ]
         }
       }
