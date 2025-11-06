@@ -308,6 +308,57 @@ const baseTranslation = Object.freeze({
     },
     footnote: 'Bildschirmfreigabe ist rein Peer-to-Peer. Teile Zugriff nur mit Personen, denen du vertraust.'
   },
+  voiceVideo: {
+    header: 'Sprach-/Videoanruf',
+    actions: {
+      start: 'Anruf starten',
+      startAria: 'Sprach-/Videoanruf starten',
+      active: 'Anruf läuft...',
+      stop: 'Anruf beenden',
+      stopAria: 'Sprach-/Videoanruf beenden',
+      toggleCamera: 'Kamera umschalten',
+      toggleCameraAria: 'Kamera ein-/ausschalten',
+      toggleMicrophone: 'Mikrofon umschalten',
+      toggleMicrophoneAria: 'Mikrofon ein-/ausschalten'
+    },
+    status: {
+      active: 'Anruf aktiv',
+      ready: 'Bereit zum Anrufen',
+      connect: 'Verbinde dich, um Anrufe zu aktivieren'
+    },
+    remote: {
+      receiving: 'Empfange Video/Audio des Peers',
+      idle: 'Peer sendet aktuell kein Video/Audio',
+      title: 'Video des Peers',
+      aria: 'Video-Stream des Peers',
+      peerStarted: 'Peer hat den Anruf gestartet.',
+      peerStopped: 'Peer hat den Anruf beendet.'
+    },
+    local: {
+      title: 'Dein Video',
+      aria: 'Eigene Videovorschau',
+      placeholderReady: 'Starte den Anruf, um Video/Audio zu senden.',
+      placeholderDisconnected: 'Verbinde dich mit einem Peer, um Anrufe zu aktivieren.'
+    },
+    messages: {
+      stopped: 'Sprach-/Videoanruf beendet.',
+      notSupported: 'Sprach-/Videoanrufe werden in diesem Browser nicht unterstützt.',
+      started: 'Sprach-/Videoanruf aktiv.',
+      nothingEnabled: 'Bitte aktiviere Kamera oder Mikrofon.',
+      cameraOn: 'Kamera eingeschaltet.',
+      cameraOff: 'Kamera ausgeschaltet.',
+      microphoneOn: 'Mikrofon eingeschaltet.',
+      microphoneOff: 'Mikrofon ausgeschaltet.'
+    },
+    errors: {
+      peerNotReady: 'Peer-Verbindung ist noch nicht bereit.',
+      permissionDenied: 'Berechtigung für Kamera/Mikrofon wurde verweigert.',
+      failed: (reason) => `Sprach-/Videoanruf fehlgeschlagen: ${reason}`,
+      cameraFailed: 'Fehler beim Aktivieren der Kamera.',
+      microphoneFailed: 'Fehler beim Aktivieren des Mikrofons.'
+    },
+    footnote: 'Sprach-/Videoanrufe sind rein Peer-to-Peer verschlüsselt.'
+  },
   remoteControl: {
     label: 'Fernsteuerung:',
     actions: {
@@ -665,11 +716,26 @@ const baseTranslation = Object.freeze({
     noRoom: 'Kein Raum',
     roomId: (id) => `Raum: ${id}`,
     publicRoomJoined: (roomId) => `Öffentlichem Raum "${roomId}" beigetreten. Erstelle ein Angebot oder warte auf eine Verbindung.`,
+    roomCreated: (roomId) => `Raum "${roomId}" erstellt.`,
+    passwordRequired: 'Dieser Raum erfordert ein Passwort.',
+    passwordIncorrect: 'Falsches Passwort.',
+    invalidInvite: 'Ungültiger Einladungslink oder falsches Passwort.',
+    communityEnabled: 'Raum ist jetzt in der Community-Liste sichtbar.',
+    communityDisabled: 'Raum aus der Community-Liste entfernt.',
     createRoom: {
       title: 'Raum-Einstellungen',
       allowRandom: 'Zufällige Nutzer dürfen beitreten',
       linkOnly: 'Nur mit Link beitreten',
-      description: 'Bestimme, ob dieser Raum im "Zufällige Räume"-Feature auftauchen soll.'
+      description: 'Bestimme, ob dieser Raum im "Zufällige Räume"-Feature auftauchen soll.',
+      button: 'Neuen Raum erstellen',
+      passwordLabel: 'Passwort (optional)',
+      passwordPlaceholder: 'Raum-Passwort eingeben...',
+      communityToggle: 'Als Community-Raum sichtbar machen',
+      generateInviteButton: 'Einladungslink erstellen',
+      inviteLink: 'Einladungslink:',
+      copyInvite: 'Link kopieren',
+      inviteCopied: 'Kopiert!',
+      inviteCopyFailed: 'Fehler beim Kopieren'
     }
   }
 });
