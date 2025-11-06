@@ -2129,8 +2129,349 @@ const dialectConfigs = {
   }
 };
 
+// International Language Translations
+const englishTranslation = Object.freeze({
+  name: 'English',
+  mascot: {
+    ariaLabel: 'Friendly dolphin mascot, hover to see animation'
+  },
+  app: {
+    title: 'PodTalk'
+  },
+  menu: {
+    ariaLabel: 'Main navigation',
+    about: 'About',
+    help: 'Help',
+    impressum: 'Imprint',
+    issues: 'Other Developments'
+  },
+  help: {
+    button: 'Help',
+    buttonAriaLabel: 'Open help',
+    title: 'Help',
+    description: 'Welcome to PodTalk! This application enables peer-to-peer communication via WebRTC without backend servers.',
+    howToConnect: 'How to connect?',
+    howToConnectSteps: [
+      'One person creates an "offer" and shares the signal with the other peer (e.g., via a secure channel like Signal or WhatsApp).',
+      'The second person pastes the signal, applies it, creates an "answer," and shares it back.',
+      'The first person pastes the answer and applies it. The connection establishes automatically.'
+    ],
+    features: 'Available features:',
+    featuresList: [
+      'Text Chat: Send messages in real-time',
+      'Image Sharing: Share images with your peer',
+      'Screen Sharing: Show your screen',
+      'Remote Control: Control your peer\'s screen (with permission)',
+      'Games: Play Pong, Trivia, Flappy Bird, or Chess together',
+      'AI Assistant: Use OpenAI or Ollama for AI-powered responses',
+      'Voice Messages: Record and transcribe voice messages'
+    ],
+    security: 'Security:',
+    securityNote: 'All communication happens directly between peers via encrypted WebRTC connections. There is no central server storing your data.',
+    close: 'Close',
+    closeAriaLabel: 'Close help dialog'
+  },
+  impressum: {
+    button: 'Imprint',
+    buttonAriaLabel: 'Open imprint',
+    title: 'Imprint',
+    projectInfo: 'Project Information',
+    projectName: 'PodTalk / TheCommunity',
+    projectDescription: 'This is an open-source community project entirely steered via GitHub Issues.',
+    responsibility: 'Responsible for content:',
+    communityDriven: 'Community-driven via GitHub',
+    repository: 'GitHub Repository:',
+    repositoryLink: 'https://github.com/TheMorpheus407/TheCommunity',
+    license: 'License:',
+    licenseInfo: 'This project is open source. Please see the license terms in the repository.',
+    contact: 'Contact:',
+    contactInfo: 'For questions or suggestions, please open an issue on GitHub.',
+    disclaimer: 'Disclaimer:',
+    disclaimerText: 'This application is provided without any warranty. Use at your own risk. As this is a P2P application without a backend, the project maintainers have no access to your connections or data.',
+    privacy: 'Privacy:',
+    privacyText: 'No data is stored on a server. All communication happens directly between peers. Local settings are only stored in your browser (localStorage).',
+    close: 'Close',
+    closeAriaLabel: 'Close imprint dialog'
+  },
+  about: {
+    button: 'About',
+    buttonAriaLabel: 'About this project',
+    title: 'About TheCommunity',
+    description: 'This is a peer-to-peer WebRTC chat application with no backend. The community controls everything via GitHub issues.',
+    contributorsTitle: 'Contributors',
+    contributorsIntro: 'Thanks to everyone who contributed by creating issues:',
+    loadingContributors: 'Loading contributors...',
+    contributorsError: 'Could not load contributors list. Please try again later.',
+    noIssues: 'No issues yet. Open one to appear in the credits.',
+    issueCount: (count) => (count === 1 ? '1 issue' : `${count} issues`),
+    close: 'Close',
+    closeAriaLabel: 'Close about dialog'
+  },
+  offTopic: {
+    button: 'Other Developments',
+    buttonAriaLabel: 'View other developments',
+    title: 'Other Developments',
+    description: 'Here you can find projects and analyses not directly related to the main application, but still interesting.',
+    close: 'Close',
+    closeAriaLabel: 'Close other developments dialog',
+    higgsAnalysisTitle: 'Higgs Boson Analysis',
+    higgsAnalysisDescription: 'A complete high-energy physics analysis of the Higgs boson discovery channel H→ZZ→4ℓ.',
+    higgsAnalysisButton: 'H→ZZ→4ℓ Analysis →'
+  },
+  signaling: {
+    title: 'Manual Signaling',
+    collapseAriaLabel: (collapsed) => (collapsed ? 'Expand signaling' : 'Collapse signaling'),
+    securityNotice: 'Security Notice:',
+    securityWarning: 'Sharing WebRTC signals reveals your network addresses. Only share offers with trusted peers.',
+    step1: 'Step 1: One person clicks "Create Offer" and shares the signal that appears below.',
+    step2: 'Step 2: The other person pastes it into "Remote Signal," clicks "Apply Remote," then "Create Answer," and shares their answer.',
+    step3: 'Step 3: The first person pastes the answer into "Remote Signal" and applies it. Chat starts when the status shows "connected."',
+    createOffer: 'Create Offer',
+    createAnswer: 'Create Answer',
+    applyRemote: 'Apply Remote',
+    disconnect: 'Disconnect',
+    disconnectAriaLabel: 'Disconnect from peer',
+    working: 'Working...',
+    localSignalLabel: 'Local Signal (share this)',
+    localSignalPlaceholder: 'The local SDP will appear here once ready.',
+    remoteSignalLabel: 'Remote Signal (paste received JSON here)',
+    remoteSignalPlaceholder: 'Paste your peer\'s JSON. Press Ctrl+Enter (Cmd+Enter on Mac) or click Apply Remote.',
+    copyButton: 'Copy',
+    copied: 'Copied!',
+    copyFailed: 'Failed',
+    copyAriaLabel: 'Copy local signal to clipboard',
+    qrCodeLabel: 'QR Code to Connect',
+    qrCodeDescription: 'Scan this QR code with the remote device to connect directly'
+  },
+  chat: {
+    title: 'Chat',
+    addApiKey: 'Add OpenAI Key',
+    updateApiKey: 'Update OpenAI Key',
+    themeToggle: (nextTheme) => {
+      switch (nextTheme) {
+        case 'light':
+          return '🌞 Light Mode';
+        case 'rgb':
+          return '🌈 RGB Mode';
+        case 'cat':
+          return '🐱 Cat Mode';
+        case 'dark':
+        default:
+          return '🌙 Dark Mode';
+      }
+    },
+    themeToggleTitle: (nextTheme) => {
+      switch (nextTheme) {
+        case 'light':
+          return 'Switch to light theme';
+        case 'rgb':
+          return 'Switch to RGB gaming mode';
+        case 'cat':
+          return 'Switch to cat theme';
+        case 'dark':
+        default:
+          return 'Switch to dark theme';
+      }
+    },
+    clear: 'Clear',
+    clearAriaLabel: 'Clear all chat messages',
+    emptyState: 'No messages yet. Connect with a peer to start chatting.',
+    roleLabels: {
+      local: 'You',
+      remote: 'Peer',
+      system: 'Notice'
+    },
+    inputPlaceholder: 'Type a message...',
+    inputAriaLabel: 'Message input',
+    aiButton: 'Rewrite with AI',
+    aiButtonBusy: 'Rewriting...',
+    aiButtonNoKey: 'Add OpenAI key to enable AI',
+    aiButtonTitle: 'Let OpenAI suggest a clearer version of your message.',
+    aiButtonTitleNoKey: 'Add your OpenAI key to enable AI assistance.',
+    send: 'Send',
+    sendAriaLabel: 'Send message',
+    sendTitle: 'Send message',
+    charCount: (current, max) => `${current} / ${max}`,
+    voiceButton: '🎤',
+    voiceButtonRecording: '⏹',
+    voiceButtonAriaLabel: 'Record voice message',
+    voiceButtonAriaLabelRecording: 'Stop recording',
+    voiceButtonTitle: 'Click to record voice message',
+    voiceButtonTitleRecording: 'Click to stop recording',
+    settingsButton: '⚙️',
+    settingsButtonAriaLabel: 'Open settings',
+    settingsButtonTitle: 'Voice model settings'
+  },
+  voiceSettings: {
+    title: 'Voice Model Settings',
+    close: 'Close',
+    closeAriaLabel: 'Close settings',
+    description: 'Choose the Whisper model for voice recognition. Smaller models are faster, larger ones are more accurate.',
+    modelLabel: 'Whisper Model',
+    models: {
+      tinyEn: 'Tiny English (fast, ~75MB)',
+      base: 'Base Multilingual (balanced, ~150MB)'
+    },
+    loadingModel: 'Loading model...',
+    modelLoaded: 'Model loaded',
+    modelError: 'Error loading model'
+  },
+  apiKeyModal: {
+    title: 'OpenAI Integration',
+    close: 'Close',
+    closeAriaLabel: 'Close API key dialog',
+    description: 'Enter your personal OpenAI API key to enable optional AI assistance. The key is only stored in this session and sent exclusively to api.openai.com.',
+    label: 'OpenAI API Key',
+    placeholder: 'sk-...',
+    hint: 'Never enter API keys on untrusted devices. Refresh the page or disable AI to remove the key.',
+    save: 'Save Key',
+    disable: 'Disable AI',
+    errorInvalid: 'Please enter a valid API key.',
+    errorNetwork: 'Network error. Please check your connection.',
+    providerLabel: 'AI Provider',
+    providers: {
+      openai: 'OpenAI',
+      ollama: 'Ollama (Local)'
+    },
+    ollamaEndpoint: 'Ollama Endpoint',
+    ollamaEndpointPlaceholder: 'http://localhost:11434',
+    ollamaEndpointHint: 'Enter your Ollama server URL (default: http://localhost:11434)'
+  },
+  cookieConsent: {
+    title: 'Cookie Preferences',
+    description: 'We use localStorage to remember your preferences. Choose which categories to enable:',
+    categories: {
+      essential: 'Essential',
+      essentialDescription: 'Required for basic functionality',
+      preferences: 'Preferences',
+      preferencesDescription: 'Theme, language, and UI settings',
+      statistics: 'Statistics',
+      statisticsDescription: 'Anonymous usage statistics',
+      easterEgg: 'Easter Eggs',
+      easterEggDescription: 'Fun surprises and special features',
+      aiPreference: 'AI Preferences',
+      aiPreferenceDescription: 'AI provider and model choices'
+    },
+    acceptAll: 'Accept All',
+    acceptSelected: 'Accept Selected',
+    rejectAll: 'Reject All'
+  },
+  language: {
+    label: 'Language',
+    ariaLabel: 'Select language'
+  },
+  status: {
+    waiting: 'Waiting for connection',
+    connecting: 'Connecting...',
+    connected: 'Connected',
+    disconnected: 'Disconnected',
+    failed: 'Connection failed',
+    channelClosed: 'Channel closed',
+    channelOpen: 'Channel open'
+  },
+  systemMessages: {
+    connected: 'Connected to peer.',
+    disconnected: 'Disconnected from peer.',
+    channelOpened: 'Chat channel opened.',
+    channelClosed: 'Chat channel closed.',
+    connectionFailed: 'Connection failed.',
+    themeSwitch: (theme) => `Switched to ${theme} theme.`,
+    languageChanged: (name) => `Language changed to ${name}.`,
+    cleared: 'Chat cleared.',
+    imageSent: 'Image sent.',
+    imageReceived: 'Image received from peer.',
+    imageTransferStart: (filename) => `Sending image: ${filename}`,
+    imageTransferProgress: (percent) => `Image transfer: ${percent}% complete`,
+    imageTransferComplete: 'Image transfer complete.',
+    imageTransferFailed: 'Image transfer failed.',
+    aiRewriteSuccess: 'AI rewrote your message.',
+    aiRewriteError: 'AI rewrite failed. Please try again.',
+    voiceRecordingStarted: 'Voice recording started...',
+    voiceRecordingStopped: 'Voice recording stopped.',
+    voiceTranscriptionInProgress: 'Transcribing voice...',
+    voiceTranscriptionComplete: 'Transcription complete.',
+    voiceTranscriptionError: 'Transcription failed.',
+    publicRoomJoined: (roomId) => `Joined public room: ${roomId}`
+  },
+  errors: {
+    rateLimitExceeded: 'Message rate limit exceeded. Please slow down.',
+    messageTooLong: (max) => `Message too long. Maximum ${max} characters allowed.`,
+    channelNotOpen: 'Cannot send message. Channel is not open.',
+    invalidMessage: 'Invalid message format.',
+    imageTooBig: (maxMB) => `Image too large. Maximum size is ${maxMB}MB.`,
+    imageTypeNotAllowed: 'Image type not allowed. Please use JPEG, PNG, GIF, or WebP.',
+    imageTransferFailed: 'Image transfer failed.',
+    genericError: 'An error occurred.'
+  },
+  remoteControl: {
+    title: 'Remote Control',
+    statusDisabled: 'Remote control: Disabled',
+    statusRequested: 'Remote control: Permission requested',
+    statusActive: 'Remote control: Active',
+    enableButton: 'Enable Remote Control',
+    disableButton: 'Disable Remote Control',
+    description: 'Allow your peer to control your mouse and keyboard within this app.',
+    securityWarning: 'Only enable this with trusted peers!'
+  },
+  screenShare: {
+    title: 'Screen Share',
+    startButton: 'Start Screen Share',
+    stopButton: 'Stop Screen Share',
+    status: 'Screen sharing active'
+  },
+  imageTransfer: {
+    title: 'Image Sharing',
+    selectButton: 'Select Image',
+    sending: 'Sending image...',
+    receiving: 'Receiving image...'
+  },
+  games: {
+    pong: {
+      title: 'Pong',
+      start: 'Start Pong',
+      waiting: 'Waiting for peer...',
+      playing: 'Playing Pong',
+      score: (left, right) => `${left} : ${right}`
+    },
+    trivia: {
+      title: 'Trivia',
+      start: 'Start Trivia',
+      waiting: 'Waiting for peer...',
+      playing: 'Playing Trivia',
+      score: (score) => `Score: ${score}`
+    },
+    flappyBird: {
+      title: 'Flappy Bird',
+      start: 'Start Flappy Bird',
+      playing: 'Playing Flappy Bird',
+      score: (score) => `Score: ${score}`
+    },
+    chess: {
+      title: 'Chess',
+      start: 'Start Chess',
+      waiting: 'Waiting for peer...',
+      playing: 'Playing Chess',
+      yourTurn: 'Your turn',
+      opponentTurn: 'Opponent\'s turn'
+    }
+  },
+  rooms: {
+    title: 'Public Rooms',
+    description: 'Join a public room to find peers:',
+    randomRoom: 'Random Room',
+    publicRoomJoined: (roomId) => `Joined public room: ${roomId}`,
+    currentRoom: (roomId) => `Current room: ${roomId}`
+  },
+  brainsPlan: {
+    title: 'Brain\'s Evil Plan',
+    toggle: 'Toggle Plan',
+    content: 'Tonight, Pinky, we take over the world!'
+  }
+});
+
 const translations = Object.freeze({
   de: baseTranslation,
+  en: englishTranslation,
   bar: createDialect(dialectConfigs.bar),
   swa: createDialect(dialectConfigs.swa),
   sxu: createDialect(dialectConfigs.sxu),
