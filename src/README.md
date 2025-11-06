@@ -18,6 +18,8 @@ src/
 │   ├── WebRTCManager.js      # Peer connection and signaling
 │   ├── ChatManager.js        # Chat messaging with rate limiting
 │   ├── ScreenShareManager.js # Screen capture and streaming
+│   ├── VoiceVideoManager.js  # Voice/video calling (NEW)
+│   ├── RoomManager.js        # Password-protected rooms (NEW)
 │   ├── RemoteControlManager.js # Remote screen control
 │   ├── ImageTransferManager.js # Chunked image transfer
 │   └── AIManager.js          # OpenAI API integration
@@ -372,6 +374,92 @@ aiManager.disableAi(setOpenAiKey);
 - Message length validation
 - Error handling for unauthorized responses
 - Token limits on API requests (256 for rewrite, 128 for summaries)
+
+#### `managers/VoiceVideoManager.js`
+Handles camera and microphone capture for voice/video calling via WebRTC.
+
+**API Documentation:**
+```javascript
+import { createVoiceVideoManager } from './managers/VoiceVideoManager.js';
+
+const voiceVideoManager = createVoiceVideoManager({
+  voiceVideoStreamRef, voiceVideoSenderRef, voiceAudioSenderRef,
+  localVoiceVideoRef, remoteVoiceVideoStreamRef, remoteVoiceVideoRef,
+  setIsVoiceVideoActive, setIsCameraEnabled, setIsMicrophoneEnabled,
+  setIsRemoteVoiceVideoActive, appendSystemMessage, ensurePeerConnection, t
+});
+
+// Start voice/video with camera and microphone
+await voiceVideoManager.startVoiceVideo(isCurrentlyActive, enableCamera, enableMicrophone);
+
+// Stop voice/video
+voiceVideoManager.stopVoiceVideo(isCurrentlyActive);
+
+// Toggle camera
+await voiceVideoManager.toggleCamera(isCameraEnabled);
+
+// Toggle microphone
+await voiceVideoManager.toggleMicrophone(isMicrophoneEnabled);
+```
+
+**Functions:**
+- `startVoiceVideo(isActive, enableCamera, enableMic)`: Starts camera/microphone capture
+- `stopVoiceVideo(isActive)`: Stops voice/video streaming
+- `toggleCamera(isEnabled)`: Toggles camera on/off
+- `toggleMicrophone(isEnabled)`: Toggles microphone on/off
+
+**Security:**
+- Browser permission checks
+- Track ending event handling
+- Proper resource cleanup
+- Media constraints for quality (720p, echo cancellation, noise suppression)
+
+#### `managers/RoomManager.js`
+Handles password-protected room creation and invite link generation with encryption.
+
+**API Documentation:**
+```javascript
+import { createRoomManager } from './managers/RoomManager.js';
+
+const roomManager = createRoomManager({
+  appendSystemMessage, t
+});
+
+// Create a password-protected room
+const roomMetadata = await roomManager.createRoom(password, isCommunityRoom);
+// Returns: { roomId, passwordHash, isCommunityRoom, createdAt }
+
+// Generate invite link with encrypted SDP
+const inviteLink = await roomManager.generateInviteLink(roomId, sdpOffer, password);
+// Returns: URL with encrypted offer
+
+// Parse invite link
+const result = await roomManager.parseInviteLink(roomId, inviteData, password);
+// Returns: { success: boolean, sdpOffer?: string, error?: string }
+
+// Toggle community visibility
+roomManager.toggleCommunityVisibility(roomId, isCommunity);
+
+// Get/save room metadata
+const metadata = roomManager.getRoomMetadata(roomId);
+roomManager.saveRoomMetadata(roomId, metadata);
+```
+
+**Functions:**
+- `createRoom(password, isCommunity)`: Creates password-protected room
+- `generateInviteLink(roomId, sdp, password)`: Generates encrypted invite link
+- `parseInviteLink(roomId, data, password)`: Parses and decrypts invite
+- `toggleCommunityVisibility(roomId, visible)`: Toggles public visibility
+- `getRoomMetadata(roomId)`: Retrieves room metadata from localStorage
+- `saveRoomMetadata(roomId, metadata)`: Saves room metadata
+
+**Security:**
+- SHA-256 password hashing (never stores plain passwords)
+- AES-256-GCM encryption for SDP offers
+- PBKDF2 key derivation (100,000 iterations)
+- Random salt and IV generation per encryption
+- Client-side only password verification
+- No backend required - fully P2P
 
 ## Benefits of Modular Architecture
 
