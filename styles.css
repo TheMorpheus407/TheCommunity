@@ -3566,3 +3566,69 @@ textarea[readonly] {
     background: linear-gradient(135deg, #2f1f2f 0%, #3a2050 100%);
   }
 }
+
+/* Dolphin Mascot Styles */
+.dolphin-mascot {
+  display: inline-block;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.dolphin-mascot:hover {
+  transform: scale(1.05);
+}
+
+.dolphin-svg {
+  width: 100%;
+  height: auto;
+}
+
+.dolphin-water-ripple {
+  animation: dolphin-ripple 3s ease-in-out infinite;
+}
+
+@keyframes dolphin-ripple {
+  0%, 100% {
+    rx: 40;
+    opacity: 0.3;
+  }
+  50% {
+    rx: 50;
+    opacity: 0.1;
+  }
+}
+
+.dolphin-mascot:hover .dolphin-body,
+.dolphin-mascot:hover .dolphin-head,
+.dolphin-mascot:hover .dolphin-snout {
+  fill: #6FC5F0;
+}
+
+.dolphin-mascot:hover .dolphin-tail,
+.dolphin-mascot:hover .dolphin-dorsal-fin {
+  animation: dolphin-fin-wave 0.6s ease-in-out infinite;
+}
+
+@keyframes dolphin-fin-wave {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-2px) rotate(5deg);
+  }
+}
+
+.dolphin-splash {
+  animation: dolphin-splash 2s ease-in-out infinite;
+}
+
+@keyframes dolphin-splash {
+  0%, 100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-5px);
+  }
+}
