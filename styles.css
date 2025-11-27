@@ -3647,3 +3647,219 @@ textarea[readonly] {
     transform: translateY(-5px);
   }
 }
+
+/* Version History Styles */
+.version-history-modal {
+  max-width: min(900px, 95vw);
+}
+
+.version-history-content {
+  margin-top: 1rem;
+}
+
+.current-version-info {
+  background: var(--color-surface-alt);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.current-version-info h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: var(--color-text-muted);
+}
+
+.version-number {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text-accent);
+  margin: 0;
+}
+
+.versions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.version-item {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.version-item.selected {
+  border-color: var(--color-text-accent);
+  background: var(--color-surface-hover);
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.2);
+}
+
+.version-item.compare {
+  border-color: var(--color-text-warning);
+  background: var(--color-surface-hover);
+  box-shadow: 0 0 0 2px rgba(242, 139, 130, 0.2);
+}
+
+.version-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.version-header h4 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--color-text-primary);
+}
+
+.current-badge {
+  font-size: 0.85rem;
+  color: var(--color-text-accent);
+  font-weight: normal;
+}
+
+.version-date {
+  color: var(--color-text-subtle);
+  font-size: 0.9rem;
+}
+
+.version-title {
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin: 0.5rem 0;
+}
+
+.version-description {
+  color: var(--color-text-soft);
+  margin: 0.5rem 0;
+}
+
+.version-changes {
+  margin-top: 1rem;
+}
+
+.version-changes h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+.version-changes ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.version-changes li {
+  color: var(--color-text-soft);
+  margin: 0.25rem 0;
+}
+
+.version-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.version-action-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.version-action-btn:hover {
+  background: var(--color-chip-bg);
+  border-color: var(--color-text-accent);
+  color: var(--color-text-accent);
+}
+
+.version-action-btn.compare-btn:hover {
+  border-color: var(--color-text-warning);
+  color: var(--color-text-warning);
+}
+
+.version-comparison {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--color-surface-alt);
+  border-radius: 12px;
+  border: 2px solid var(--color-text-accent);
+}
+
+.version-comparison h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--color-text-accent);
+}
+
+.comparison-content {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.comparison-side {
+  background: var(--color-surface-muted);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.comparison-side h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--color-text-primary);
+}
+
+.comparison-side p {
+  margin: 0.5rem 0;
+  color: var(--color-text-muted);
+}
+
+.comparison-side ul {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+}
+
+.comparison-side li {
+  color: var(--color-text-soft);
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.comparison-divider {
+  font-size: 1.5rem;
+  color: var(--color-text-accent);
+  align-self: center;
+}
+
+@media (max-width: 768px) {
+  .comparison-content {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .comparison-divider {
+    display: none;
+  }
+
+  .version-actions {
+    flex-direction: column;
+  }
+
+  .version-action-btn {
+    width: 100%;
+  }
+}

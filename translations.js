@@ -18,7 +18,8 @@ const baseTranslation = Object.freeze({
     about: 'Über',
     help: 'Hilfe',
     impressum: 'Impressum',
-    issues: 'Anderweitige Entwicklungen'
+    issues: 'Anderweitige Entwicklungen',
+    versionHistory: 'Versionshistorie'
   },
   help: {
     button: 'Hilfe',
@@ -96,6 +97,25 @@ const baseTranslation = Object.freeze({
     higgsAnalysisTitle: 'Higgs-Boson-Analyse',
     higgsAnalysisDescription: 'Eine vollständige High-Energy-Physics-Analyse des Higgs-Boson-Entdeckungskanals H→ZZ→4ℓ.',
     higgsAnalysisButton: 'H→ZZ→4ℓ Analyse →'
+  },
+  versionHistory: {
+    button: 'Versionshistorie',
+    buttonAriaLabel: 'Versionshistorie öffnen',
+    title: 'Versionshistorie',
+    description: 'Hier können Sie alle Versionen der Anwendung einsehen und Änderungen zwischen Versionen vergleichen.',
+    close: 'Schließen',
+    closeAriaLabel: 'Versionshistorie-Dialog schließen',
+    loading: 'Lade Versionshistorie...',
+    loadError: 'Versionshistorie konnte nicht geladen werden.',
+    currentVersion: 'Aktuelle Version',
+    current: 'aktuell',
+    allVersions: 'Alle Versionen',
+    changes: 'Änderungen:',
+    viewDetails: 'Details anzeigen',
+    deselect: 'Auswahl aufheben',
+    compareWith: 'Vergleichen mit',
+    cancelCompare: 'Vergleich abbrechen',
+    comparisonTitle: 'Versionsvergleich'
   },
   signaling: {
     title: 'Manuelle Signalisierung',
@@ -2223,7 +2243,8 @@ const englishTranslation = Object.freeze({
     about: 'About',
     help: 'Help',
     impressum: 'Imprint',
-    issues: 'Other Developments'
+    issues: 'Other Developments',
+    versionHistory: 'Version History'
   },
   help: {
     button: 'Help',
@@ -2301,6 +2322,25 @@ const englishTranslation = Object.freeze({
     higgsAnalysisTitle: 'Higgs Boson Analysis',
     higgsAnalysisDescription: 'A complete high-energy physics analysis of the Higgs boson discovery channel H→ZZ→4ℓ.',
     higgsAnalysisButton: 'H→ZZ→4ℓ Analysis →'
+  },
+  versionHistory: {
+    button: 'Version History',
+    buttonAriaLabel: 'Open version history',
+    title: 'Version History',
+    description: 'Here you can view all versions of the application and compare changes between versions.',
+    close: 'Close',
+    closeAriaLabel: 'Close version history dialog',
+    loading: 'Loading version history...',
+    loadError: 'Could not load version history.',
+    currentVersion: 'Current Version',
+    current: 'current',
+    allVersions: 'All Versions',
+    changes: 'Changes:',
+    viewDetails: 'View Details',
+    deselect: 'Deselect',
+    compareWith: 'Compare with',
+    cancelCompare: 'Cancel Comparison',
+    comparisonTitle: 'Version Comparison'
   },
   signaling: {
     title: 'Manual Signaling',

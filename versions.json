@@ -1,0 +1,22 @@
+{
+  "versions": [
+    {
+      "version": "1.0.0",
+      "date": "2025-11-27",
+      "title": "Initial Release",
+      "description": "First stable release of PodTalk - Dolphin-Powered P2P Chat",
+      "changes": [
+        "WebRTC peer-to-peer chat functionality",
+        "Screen sharing and remote control",
+        "AI integration (OpenAI and Ollama)",
+        "Multiple themes (Light, Dark, RGB, Cat)",
+        "Image transfer capability",
+        "Mini-games (Pong, Flappy Bird, Chess, Trivia)",
+        "Multi-language support",
+        "Voice transcription with Whisper"
+      ],
+      "commit": "b3c1179"
+    }
+  ],
+  "currentVersion": "1.0.0"
+}
