@@ -976,6 +976,7 @@
       }
     });
     const [userIp, setUserIp] = useState(null);
+    const [hasRemoteDescription, setHasRemoteDescription] = useState(false);
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -1912,6 +1913,7 @@
       try {
         const desc = parseRemoteDescription();
         await pc.setRemoteDescription(desc);
+        setHasRemoteDescription(true);
         setStatus(t.status.remoteApplied(desc.type));
         if (desc.type === 'answer') {
           setChannelStatus(t.status.answerApplied);
@@ -1941,6 +1943,7 @@
             throw new Error(t.systemMessages.needOfferForAnswer);
           }
           await pc.setRemoteDescription(desc);
+          setHasRemoteDescription(true);
         }
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
@@ -2733,6 +2736,7 @@
         pcRef.current.close();
         pcRef.current = null;
       }
+      setHasRemoteDescription(false);
       if (screenSenderRef.current) {
         try {
           screenSenderRef.current.replaceTrack(null);
@@ -4585,7 +4589,7 @@
                 React.createElement('button', {
                   id: 'restart-ice',
                   onClick: handleRestartIce,
-                  disabled: !pcRef.current || !pcRef.current.currentRemoteDescription,
+                  disabled: !hasRemoteDescription,
                   'aria-label': t.signaling.restartIceAriaLabel
                 }, t.signaling.restartIce),
                 React.createElement('button', {
