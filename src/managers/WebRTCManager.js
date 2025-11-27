@@ -384,6 +384,42 @@ export function createWebRTCManager(deps) {
   }
 
   /**
+   * Restarts ICE negotiation to recover from connection failures
+   * This is useful when the connection is in a failed or disconnected state
+   * @returns {Promise<void>}
+   */
+  async function restartIce() {
+    const pc = pcRef.current;
+    if (!pc) {
+      throw new Error(t.systemMessages.noConnection || 'No active connection');
+    }
+
+    // Check if we have a remote description (connection was established)
+    if (!pc.currentRemoteDescription) {
+      throw new Error(t.systemMessages.cannotRestartNoRemote || 'Cannot restart ICE without remote description');
+    }
+
+    try {
+      appendSystemMessage(t.systemMessages.iceRestartStarted || 'ICE restart initiated...');
+      setStatus(t.status.iceRestarting || 'ICE: restarting');
+      iceDoneRef.current = false;
+      setLocalSignal('');
+
+      // Create a new offer with iceRestart option
+      const offer = await pc.createOffer({ iceRestart: true });
+      await pc.setLocalDescription(offer);
+      await waitForIce();
+
+      appendSystemMessage(t.systemMessages.iceRestartComplete || 'ICE restart complete. Share the new signal with your peer.');
+    } catch (err) {
+      console.error('ICE restart failed:', err);
+      setStatus(t.status.iceRestartFailed || 'ICE: restart failed');
+      appendSystemMessage(t.systemMessages.iceRestartFailed || 'ICE restart failed');
+      throw err;
+    }
+  }
+
+  /**
    * Terminates the peer connection and cleans up all resources
    * @param {Object} screenState - Screen sharing state
    * @param {React.MutableRefObject} screenState.screenStreamRef - Screen stream reference
@@ -471,6 +507,7 @@ export function createWebRTCManager(deps) {
     createOffer,
     applyRemote,
     createAnswer,
+    restartIce,
     disconnect
   };
 }

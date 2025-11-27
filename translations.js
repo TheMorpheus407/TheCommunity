@@ -43,6 +43,10 @@ const baseTranslation = Object.freeze({
     ],
     security: 'Sicherheit:',
     securityNote: 'Alle Kommunikation erfolgt direkt zwischen den Peers über verschlüsselte WebRTC-Verbindungen. Es gibt keinen zentralen Server, der Ihre Daten speichert.',
+    feedback: 'Feedback geben:',
+    feedbackNote: 'Haben Sie Vorschläge oder Fehler gefunden? Öffnen Sie ein Issue auf GitHub!',
+    feedbackButton: '📝 Issue erstellen',
+    feedbackButtonAriaLabel: 'Öffne GitHub um ein Issue zu erstellen',
     close: 'Schließen',
     closeAriaLabel: 'Hilfe-Dialog schließen'
   },
@@ -98,14 +102,16 @@ const baseTranslation = Object.freeze({
     collapseAriaLabel: (collapsed) => (collapsed ? 'Signalisierung ausklappen' : 'Signalisierung einklappen'),
     securityNotice: 'Sicherheitshinweis:',
     securityWarning: 'Das Teilen von WebRTC-Signalen offenbart deine Netzwerkadressen. Teile Angebote nur mit vertrauenswürdigen Peers.',
-    step1: 'Schritt 1: Eine Person klickt auf „Angebot erstellen“ und teilt das unten erscheinende Signal.',
-    step2: 'Schritt 2: Die andere Person fügt es bei „Entferntes Signal“ ein, klickt auf „Remote anwenden“, dann auf „Antwort erstellen“ und teilt ihre Antwort.',
-    step3: 'Schritt 3: Die erste Person fügt die Antwort bei „Entferntes Signal“ ein und wendet sie an. Der Chat startet, sobald der Status „verbunden“ anzeigt.',
+    step1: 'Schritt 1: Eine Person klickt auf „Angebot erstellen" und teilt das unten erscheinende Signal.',
+    step2: 'Schritt 2: Die andere Person fügt es bei „Entferntes Signal" ein, klickt auf „Remote anwenden", dann auf „Antwort erstellen" und teilt ihre Antwort.',
+    step3: 'Schritt 3: Die erste Person fügt die Antwort bei „Entferntes Signal" ein und wendet sie an. Der Chat startet, sobald der Status „verbunden" anzeigt.',
     createOffer: 'Angebot erstellen',
     createAnswer: 'Antwort erstellen',
     applyRemote: 'Remote anwenden',
     disconnect: 'Trennen',
     disconnectAriaLabel: 'Verbindung zum Peer trennen',
+    restartIce: 'ICE Neustart',
+    restartIceAriaLabel: 'ICE-Verbindung neu starten',
     working: 'Arbeite...',
     localSignalLabel: 'Lokales Signal (dies teilen)',
     localSignalPlaceholder: 'Das lokale SDP erscheint hier, sobald es bereit ist.',
@@ -210,7 +216,9 @@ const baseTranslation = Object.freeze({
     disconnected: 'Getrennt',
     channelOpen: 'Kanal offen',
     channelClosed: 'Kanal geschlossen',
-    answerApplied: 'Antwort angewendet, warte auf Kanal...'
+    answerApplied: 'Antwort angewendet, warte auf Kanal...',
+    iceRestarting: 'ICE: Neustart läuft...',
+    iceRestartFailed: 'ICE: Neustart fehlgeschlagen'
   },
   systemMessages: {
     themeSwitch: (theme) => {
@@ -246,7 +254,13 @@ const baseTranslation = Object.freeze({
     aiSuggestionApplied: 'KI-Vorschlag übernommen. Prüfe vor dem Senden.',
     chatCleared: 'Chatverlauf gelöscht.',
     aiRewriteNotAttempted: (max) => `KI-Umschreibung nicht möglich: Entwürfe müssen unter ${max} Zeichen bleiben.`,
-    languageChanged: (name) => `Sprache auf ${name} umgestellt.`
+    languageChanged: (name) => `Sprache auf ${name} umgestellt.`,
+    connectionClosed: 'Verbindung geschlossen.',
+    noConnection: 'Keine aktive Verbindung zum Neustart.',
+    cannotRestartNoRemote: 'ICE-Neustart nicht möglich: Keine entfernte Beschreibung vorhanden.',
+    iceRestartStarted: 'ICE-Neustart gestartet...',
+    iceRestartComplete: 'ICE-Neustart abgeschlossen. Teile das neue Signal mit deinem Peer.',
+    iceRestartFailed: 'ICE-Neustart fehlgeschlagen.'
   },
   aiErrors: {
     emptyKey: 'Gib einen OpenAI-API-Schlüssel ein, um die KI-Umschreibung zu aktivieren.',
@@ -2234,6 +2248,10 @@ const englishTranslation = Object.freeze({
     ],
     security: 'Security:',
     securityNote: 'All communication happens directly between peers via encrypted WebRTC connections. There is no central server storing your data.',
+    feedback: 'Give Feedback:',
+    feedbackNote: 'Have suggestions or found a bug? Open an issue on GitHub!',
+    feedbackButton: '📝 Create Issue',
+    feedbackButtonAriaLabel: 'Open GitHub to create an issue',
     close: 'Close',
     closeAriaLabel: 'Close help dialog'
   },
@@ -2297,6 +2315,8 @@ const englishTranslation = Object.freeze({
     applyRemote: 'Apply Remote',
     disconnect: 'Disconnect',
     disconnectAriaLabel: 'Disconnect from peer',
+    restartIce: 'Restart ICE',
+    restartIceAriaLabel: 'Restart ICE connection',
     working: 'Working...',
     localSignalLabel: 'Local Signal (share this)',
     localSignalPlaceholder: 'The local SDP will appear here once ready.',
@@ -2433,7 +2453,9 @@ const englishTranslation = Object.freeze({
     disconnected: 'Disconnected',
     failed: 'Connection failed',
     channelClosed: 'Channel closed',
-    channelOpen: 'Channel open'
+    channelOpen: 'Channel open',
+    iceRestarting: 'ICE: Restarting...',
+    iceRestartFailed: 'ICE: Restart failed'
   },
   systemMessages: {
     connected: 'Connected to peer.',
@@ -2443,6 +2465,12 @@ const englishTranslation = Object.freeze({
     connectionFailed: 'Connection failed.',
     themeSwitch: (theme) => `Switched to ${theme} theme.`,
     languageChanged: (name) => `Language changed to ${name}.`,
+    connectionClosed: 'Connection closed.',
+    noConnection: 'No active connection to restart.',
+    cannotRestartNoRemote: 'Cannot restart ICE without remote description.',
+    iceRestartStarted: 'ICE restart initiated...',
+    iceRestartComplete: 'ICE restart complete. Share the new signal with your peer.',
+    iceRestartFailed: 'ICE restart failed.',
     cleared: 'Chat cleared.',
     imageSent: 'Image sent.',
     imageReceived: 'Image received from peer.',
