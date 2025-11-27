@@ -964,6 +964,12 @@
         return DEFAULT_WHISPER_MODEL;
       }
     });
+    const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
+    const [versionHistory, setVersionHistory] = useState(null);
+    const [isLoadingVersionHistory, setIsLoadingVersionHistory] = useState(false);
+    const [versionHistoryError, setVersionHistoryError] = useState('');
+    const [selectedVersion, setSelectedVersion] = useState(null);
+    const [compareVersion, setCompareVersion] = useState(null);
     const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
     const [isBrainsPlanVisible, setIsBrainsPlanVisible] = useState(true);
     const [isFranconiaIntroOpen, setIsFranconiaIntroOpen] = useState(false);
@@ -2496,6 +2502,10 @@
       setIsImpressumOpen((prev) => !prev);
     }, []);
 
+    const toggleVersionHistory = useCallback(() => {
+      setIsVersionHistoryOpen((prev) => !prev);
+    }, []);
+
     /**
      * Copies the current local signal to the clipboard for easy sharing.
      */
@@ -3357,6 +3367,72 @@
         window.removeEventListener('keydown', handleKeyDown);
       };
     }, [handleCloseFranconiaIntro, isFranconiaIntroOpen]);
+
+    useEffect(() => {
+      if (!isVersionHistoryOpen) {
+        return;
+      }
+      const handleKeyDown = (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          setIsVersionHistoryOpen(false);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }, [isVersionHistoryOpen]);
+
+    useEffect(() => {
+      if (!isVersionHistoryOpen || versionHistory) {
+        return;
+      }
+
+      const controller = new AbortController();
+      let didSucceed = false;
+
+      const loadVersionHistory = async () => {
+        setIsLoadingVersionHistory(true);
+        setVersionHistoryError('');
+        try {
+          const response = await fetch('versions.json', {
+            signal: controller.signal,
+            headers: {
+              Accept: 'application/json'
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to load versions.json: ${response.status}`);
+          }
+
+          const data = await response.json();
+          if (controller.signal.aborted) {
+            return;
+          }
+
+          setVersionHistory(data);
+          didSucceed = true;
+        } catch (error) {
+          if (controller.signal.aborted) {
+            return;
+          }
+          console.error('Failed to load version history', error);
+          setVersionHistoryError(t.versionHistory.loadError);
+        } finally {
+          if (!controller.signal.aborted) {
+            setIsLoadingVersionHistory(false);
+          }
+        }
+      };
+
+      loadVersionHistory();
+
+      return () => {
+        controller.abort();
+      };
+    }, [isVersionHistoryOpen, versionHistory, t]);
 
     useEffect(() => {
       if (!isAboutOpen || contributorsLoadedRef.current) {
@@ -4343,6 +4419,13 @@
                     'aria-label': t.offTopic.buttonAriaLabel,
                     'aria-expanded': isOffTopicOpen
                   }, t.menu.issues)
+                ),
+                React.createElement('li', null,
+                  React.createElement('button', {
+                    onClick: toggleVersionHistory,
+                    'aria-label': t.versionHistory.buttonAriaLabel,
+                    'aria-expanded': isVersionHistoryOpen
+                  }, t.menu.versionHistory)
                 )
               )
             )
@@ -4538,6 +4621,112 @@
                       transition: 'background 0.3s'
                     }
                   }, t.offTopic.higgsAnalysisButton)
+                )
+              )
+            )
+          ),
+          isVersionHistoryOpen && React.createElement('div', { className: 'modal-overlay', role: 'presentation', onClick: toggleVersionHistory },
+            React.createElement('div', {
+              className: 'modal-content version-history-modal',
+              role: 'dialog',
+              id: 'version-history-dialog',
+              'aria-modal': 'true',
+              'aria-labelledby': 'version-history-dialog-title',
+              onClick: (e) => e.stopPropagation()
+            },
+              React.createElement('div', { className: 'modal-header' },
+                React.createElement('h2', { id: 'version-history-dialog-title' }, t.versionHistory.title),
+                React.createElement('button', {
+                  className: 'modal-close',
+                  onClick: toggleVersionHistory,
+                  'aria-label': t.versionHistory.closeAriaLabel
+                }, t.versionHistory.close)
+              ),
+              React.createElement('div', { className: 'modal-body' },
+                React.createElement('p', null, t.versionHistory.description),
+                isLoadingVersionHistory && React.createElement('p', { className: 'loading-status' }, t.versionHistory.loading),
+                versionHistoryError && React.createElement('p', { className: 'error-status' }, versionHistoryError),
+                versionHistory && !isLoadingVersionHistory && !versionHistoryError && React.createElement('div', { className: 'version-history-content' },
+                  React.createElement('div', { className: 'current-version-info' },
+                    React.createElement('h3', null, t.versionHistory.currentVersion),
+                    React.createElement('p', { className: 'version-number' }, versionHistory.currentVersion)
+                  ),
+                  React.createElement('h3', null, t.versionHistory.allVersions),
+                  React.createElement('div', { className: 'versions-list' },
+                    versionHistory.versions && versionHistory.versions.map((version, idx) => {
+                      const isSelected = selectedVersion === idx;
+                      const isCompare = compareVersion === idx;
+                      return React.createElement('div', {
+                        key: version.version,
+                        className: 'version-item' + (isSelected ? ' selected' : '') + (isCompare ? ' compare' : '')
+                      },
+                        React.createElement('div', { className: 'version-header' },
+                          React.createElement('h4', null,
+                            version.version,
+                            version.version === versionHistory.currentVersion && React.createElement('span', { className: 'current-badge' }, ' (' + t.versionHistory.current + ')')
+                          ),
+                          React.createElement('span', { className: 'version-date' }, version.date)
+                        ),
+                        React.createElement('p', { className: 'version-title' }, version.title),
+                        React.createElement('p', { className: 'version-description' }, version.description),
+                        version.changes && version.changes.length > 0 && React.createElement('div', { className: 'version-changes' },
+                          React.createElement('h5', null, t.versionHistory.changes),
+                          React.createElement('ul', null,
+                            version.changes.map((change, changeIdx) =>
+                              React.createElement('li', { key: changeIdx }, change)
+                            )
+                          )
+                        ),
+                        React.createElement('div', { className: 'version-actions' },
+                          React.createElement('button', {
+                            className: 'version-action-btn',
+                            onClick: () => {
+                              if (isSelected) {
+                                setSelectedVersion(null);
+                              } else {
+                                setSelectedVersion(idx);
+                                setCompareVersion(null);
+                              }
+                            }
+                          }, isSelected ? t.versionHistory.deselect : t.versionHistory.viewDetails),
+                          selectedVersion !== null && selectedVersion !== idx && React.createElement('button', {
+                            className: 'version-action-btn compare-btn',
+                            onClick: () => {
+                              if (isCompare) {
+                                setCompareVersion(null);
+                              } else {
+                                setCompareVersion(idx);
+                              }
+                            }
+                          }, isCompare ? t.versionHistory.cancelCompare : t.versionHistory.compareWith)
+                        )
+                      );
+                    })
+                  ),
+                  selectedVersion !== null && compareVersion !== null && React.createElement('div', { className: 'version-comparison' },
+                    React.createElement('h3', null, t.versionHistory.comparisonTitle),
+                    React.createElement('div', { className: 'comparison-content' },
+                      React.createElement('div', { className: 'comparison-side' },
+                        React.createElement('h4', null, versionHistory.versions[selectedVersion].version),
+                        React.createElement('p', null, versionHistory.versions[selectedVersion].title),
+                        React.createElement('ul', null,
+                          versionHistory.versions[selectedVersion].changes && versionHistory.versions[selectedVersion].changes.map((change, idx) =>
+                            React.createElement('li', { key: idx }, change)
+                          )
+                        )
+                      ),
+                      React.createElement('div', { className: 'comparison-divider' }, '↔'),
+                      React.createElement('div', { className: 'comparison-side' },
+                        React.createElement('h4', null, versionHistory.versions[compareVersion].version),
+                        React.createElement('p', null, versionHistory.versions[compareVersion].title),
+                        React.createElement('ul', null,
+                          versionHistory.versions[compareVersion].changes && versionHistory.versions[compareVersion].changes.map((change, idx) =>
+                            React.createElement('li', { key: idx }, change)
+                          )
+                        )
+                      )
+                    )
+                  )
                 )
               )
             )
