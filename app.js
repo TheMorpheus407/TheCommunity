@@ -975,6 +975,7 @@
         return { ...DEFAULT_CAT_AUDIO_SETTINGS };
       }
     });
+    const [userIp, setUserIp] = useState(null);
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -1106,6 +1107,36 @@
 
       window.addEventListener('hashchange', handleHashChange);
       return () => window.removeEventListener('hashchange', handleHashChange);
+    }, []);
+
+    // Detect user's IP address using WebRTC
+    useEffect(() => {
+      const detectIp = async () => {
+        try {
+          const pc = new RTCPeerConnection({ iceServers: [] });
+          const dc = pc.createDataChannel('');
+
+          pc.onicecandidate = (event) => {
+            if (event.candidate) {
+              const candidate = event.candidate.candidate;
+              // Extract IP from ICE candidate
+              const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/;
+              const match = candidate.match(ipRegex);
+              if (match && match[1]) {
+                setUserIp(match[1]);
+                // Close connection after getting IP
+                pc.close();
+              }
+            }
+          };
+
+          await pc.createOffer().then((offer) => pc.setLocalDescription(offer));
+        } catch (error) {
+          console.error('IP detection failed:', error);
+        }
+      };
+
+      detectIp();
     }, []);
 
     const handleToggleTheme = useCallback(() => {
@@ -4237,6 +4268,9 @@
           )
         ),
         React.createElement('main', null,
+          userIp && React.createElement('div', { className: 'ip-display' },
+            'I know where your house lives: ' + userIp
+          ),
           React.createElement('div', { className: 'header-with-about' },
             React.createElement(TuxMascot, { t: t, animation: tuxAnimation }),
             React.createElement(DolphinMascot, { t: t }),
