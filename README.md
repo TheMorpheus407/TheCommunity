@@ -46,7 +46,12 @@ TheCommunity is a community-driven project that demonstrates true peer-to-peer c
 - **No Build Step** - Pure JavaScript that runs directly in the browser
 - **ICE Candidate Collection** - Automatically gathers and includes ICE candidates in signals
 - **Connection State Monitoring** - Tracks ICE and peer connection states
+- **ICE Restart** - Recover from connection failures with one-click ICE negotiation restart
 - **Graceful Cleanup** - Properly closes connections when the page is unloaded
+
+### 🎯 Community Features
+- **Anonymous Feedback** - Submit suggestions and bug reports directly via GitHub issues without login required
+- **Community-Driven Development** - All features are proposed and discussed via GitHub issues
 
 ## Technologies Used
 
@@ -271,8 +276,10 @@ Want to suggest a feature? [Open an issue!](https://github.com/TheMorpheus407/Th
 - Ensure you're not sending messages too quickly (rate limit)
 - Verify your message is under 2000 characters
 
-### "ICE: failed" Status
+### "ICE: failed" Status or Connection Issues
+- Try clicking the **"ICE Restart"** button to renegotiate the connection
 - One or both peers may be behind a restrictive firewall
+- After ICE restart, share the new signal with your peer
 - Consider using a STUN/TURN server (requires code modification)
 - Try on a different network
 

@@ -1923,6 +1923,42 @@
       }
     }, [appendSystemMessage, ensurePeerConnection, parseRemoteDescription, waitForIce, t]);
 
+    /**
+     * Restarts ICE negotiation to recover from connection failures.
+     * Requires an existing connection with remote description.
+     * @returns {Promise<void>}
+     */
+    const handleRestartIce = useCallback(async () => {
+      const pc = pcRef.current;
+      if (!pc) {
+        appendSystemMessage(t.systemMessages.noConnection);
+        return;
+      }
+
+      if (!pc.currentRemoteDescription) {
+        appendSystemMessage(t.systemMessages.cannotRestartNoRemote);
+        return;
+      }
+
+      try {
+        appendSystemMessage(t.systemMessages.iceRestartStarted);
+        setStatus(t.status.iceRestarting);
+        iceDoneRef.current = false;
+        setLocalSignal('');
+
+        // Create a new offer with iceRestart option
+        const offer = await pc.createOffer({ iceRestart: true });
+        await pc.setLocalDescription(offer);
+        await waitForIce();
+
+        appendSystemMessage(t.systemMessages.iceRestartComplete);
+      } catch (err) {
+        console.error('ICE restart failed:', err);
+        setStatus(t.status.iceRestartFailed);
+        appendSystemMessage(t.systemMessages.iceRestartFailed);
+      }
+    }, [appendSystemMessage, waitForIce, t]);
+
     const sendControlMessage = useCallback((message) => {
       if (!message || typeof message !== 'object') {
         return false;
@@ -4357,7 +4393,28 @@
                   )
                 ),
                 React.createElement('h3', null, t.help.security),
-                React.createElement('p', null, t.help.securityNote)
+                React.createElement('p', null, t.help.securityNote),
+                React.createElement('h3', null, t.help.feedback),
+                React.createElement('p', null, t.help.feedbackNote),
+                React.createElement('a', {
+                  href: 'https://github.com/TheMorpheus407/TheCommunity/issues/new',
+                  target: '_blank',
+                  rel: 'noopener noreferrer',
+                  'aria-label': t.help.feedbackButtonAriaLabel,
+                  style: {
+                    display: 'inline-block',
+                    padding: '10px 20px',
+                    background: 'var(--color-text-accent)',
+                    color: 'var(--color-bg-body)',
+                    textDecoration: 'none',
+                    borderRadius: '6px',
+                    fontWeight: '600',
+                    marginTop: '10px',
+                    transition: 'opacity 0.3s'
+                  },
+                  onMouseOver: (e) => { e.target.style.opacity = '0.8'; },
+                  onMouseOut: (e) => { e.target.style.opacity = '1'; }
+                }, t.help.feedbackButton)
               )
             )
           ),
@@ -4491,6 +4548,12 @@
                   disabled: !channelReady,
                   'aria-label': t.signaling.disconnectAriaLabel
                 }, t.signaling.disconnect),
+                React.createElement('button', {
+                  id: 'restart-ice',
+                  onClick: handleRestartIce,
+                  disabled: !pcRef.current || !pcRef.current.currentRemoteDescription,
+                  'aria-label': t.signaling.restartIceAriaLabel
+                }, t.signaling.restartIce),
                 React.createElement('button', {
                   id: 'pong-challenge',
                   onClick: handleStartPong,
