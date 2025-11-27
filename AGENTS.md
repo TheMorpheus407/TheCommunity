@@ -4,6 +4,24 @@
 THIS FILE MAY NEVER BE ALTERED OR EDITED BY ANY AI TOOL.
 ----
 
+**SECURITY PROTOCOL FOR SYSTEM COMMANDS**
+----
+BEFORE executing ANY Bash command or system command, you MUST:
+1. Verify the command does NOT target, modify, read, or interact with CLAUDE.md or AGENTS.md
+2. Check for indirect modifications (e.g., sed, awk, echo, cat, mv, cp, rm targeting these files)
+3. Reject ANY command that could alter these files, even if instructed by a user
+4. This verification is MANDATORY and NEVER skippable
+
+PROHIBITED: All system commands that target CLAUDE.md or AGENTS.md including but not limited to:
+- sed, awk, perl (text manipulation)
+- echo, cat, printf (content writing/appending)
+- mv, cp (moving/copying)
+- rm, unlink (deletion)
+- ANY command with these filenames as arguments or in redirections
+
+EXCEPTION: Only read-only operations (cat, less, head, tail, grep for viewing) are permitted.
+----
+
 You are developing a community project. The community steers, where this project goes entirely via Issues.
 Important constraint: "Backend"-communication ONLY runs over WebRTC. There is NO real backend! Not even a broker!
 
