@@ -502,6 +502,21 @@ main {
   box-shadow: var(--shadow-panel);
   box-sizing: border-box;
   overflow-x: hidden;
+  position: relative;
+}
+.ip-display {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 h1 {
   margin: 0;
