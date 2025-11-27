@@ -169,6 +169,12 @@
    */
   function setRoomInHash(roomId) {
     if (roomId) {
+      // Security: Validate room ID format to prevent injection attacks
+      // Only allow alphanumeric characters, hyphens, and underscores
+      if (!/^[a-zA-Z0-9_-]+$/.test(roomId)) {
+        console.warn('Invalid room ID format (must be alphanumeric with hyphens/underscores):', roomId);
+        return;
+      }
       window.location.hash = `#room/${roomId}`;
     } else {
       window.location.hash = '';
