@@ -142,6 +142,18 @@ export const OPENAI_MODEL = 'gpt-4o-mini';
 export const OLLAMA_MODEL = 'llama3.2';
 
 /**
+ * Mistral AI model to use for AI message rewriting.
+ * @constant {string}
+ */
+export const MISTRAL_MODEL = 'mistral-small-latest';
+
+/**
+ * Anthropic Claude model to use for AI message rewriting.
+ * @constant {string}
+ */
+export const ANTHROPIC_MODEL = 'claude-3-5-haiku-20241022';
+
+/**
  * Default Ollama endpoint URL.
  * @constant {string}
  */
@@ -153,7 +165,9 @@ export const OLLAMA_DEFAULT_ENDPOINT = 'http://localhost:11434';
  */
 export const AI_PROVIDERS = {
   OPENAI: 'openai',
-  OLLAMA: 'ollama'
+  OLLAMA: 'ollama',
+  MISTRAL: 'mistral',
+  ANTHROPIC: 'anthropic'
 };
 
 /**
