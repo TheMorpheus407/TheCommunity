@@ -12,6 +12,7 @@
   const TRIVIA_CHANNEL_LABEL = 'trivia';
   const FLAPPYBIRD_CHANNEL_LABEL = 'flappybird';
   const CHESS_CHANNEL_LABEL = 'chess';
+  const DOOM_CHANNEL_LABEL = 'doom';
   const MAX_MESSAGE_LENGTH = 2000;
   const MAX_MESSAGES_PER_INTERVAL = 30;
   const MESSAGE_INTERVAL_MS = 5000;
@@ -1216,6 +1217,7 @@
     const [isFlappyBirdActive, setIsFlappyBirdActive] = useState(false);
     const [flappyBirdScore, setFlappyBirdScore] = useState(0);
     const [flappyBirdHighScore, setFlappyBirdHighScore] = useState(0);
+    const [isDoomActive, setIsDoomActive] = useState(false);
     const [isDangerZoneModalOpen, setIsDangerZoneModalOpen] = useState(false);
     const [dangerZoneAction, setDangerZoneAction] = useState(null);
     const [dangerZoneConfirmInput, setDangerZoneConfirmInput] = useState('');
@@ -1263,6 +1265,9 @@
     const flappyBirdChannelRef = useRef(null);
     const flappyBirdCanvasRef = useRef(null);
     const flappyBirdGameRef = useRef(null);
+    const doomChannelRef = useRef(null);
+    const doomDisplayRef = useRef(null);
+    const doomGameRef = useRef(null);
     const iceDoneRef = useRef(false);
     const screenSenderRef = useRef(null);
     const screenAudioSenderRef = useRef(null);
@@ -1965,6 +1970,32 @@
     }, [t]);
 
     /**
+     * Configures event handlers for the Doom data channel.
+     * @param {RTCDataChannel} channel - The Doom data channel
+     */
+    const setupDoomChannel = useCallback((channel) => {
+      channel.onopen = () => {
+        doomChannelRef.current = channel;
+        appendSystemMessageRef.current(t.doom?.channelReady || 'Doom channel ready!');
+      };
+      channel.onclose = () => {
+        if (doomChannelRef.current === channel) {
+          doomChannelRef.current = null;
+        }
+        appendSystemMessageRef.current(t.doom?.channelClosed || 'Doom channel closed.');
+        // Clean up game if active
+        if (doomGameRef.current) {
+          doomGameRef.current.destroy();
+          doomGameRef.current = null;
+          setIsDoomActive(false);
+        }
+      };
+      channel.onerror = () => {
+        appendSystemMessageRef.current(t.doom?.channelError || 'Doom channel error.');
+      };
+    }, [t]);
+
+    /**
      * Lazily creates (or returns) the RTCPeerConnection instance.
      * @returns {RTCPeerConnection}
      */
@@ -2063,12 +2094,17 @@
           setupFlappyBirdChannel(incomingChannel);
           return;
         }
+        if (incomingChannel.label === DOOM_CHANNEL_LABEL) {
+          doomChannelRef.current = incomingChannel;
+          setupDoomChannel(incomingChannel);
+          return;
+        }
         appendSystemMessage(t.systemMessages.channelBlocked(incomingChannel.label || ''));
         incomingChannel.close();
       };
 
       return pc;
-    }, [appendSystemMessage, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, setupTriviaChannel, setupChessChannel, setupFlappyBirdChannel, t]);
+    }, [appendSystemMessage, setupChatChannel, setupControlChannel, setupImageChannel, setupPongChannel, setupTriviaChannel, setupChessChannel, setupFlappyBirdChannel, setupDoomChannel, t]);
 
     /**
      * Resolves once ICE gathering finishes for the current connection.
@@ -2157,6 +2193,10 @@
       const flappyBirdChannel = pc.createDataChannel(FLAPPYBIRD_CHANNEL_LABEL);
       flappyBirdChannelRef.current = flappyBirdChannel;
       setupFlappyBirdChannel(flappyBirdChannel);
+
+      const doomChannel = pc.createDataChannel(DOOM_CHANNEL_LABEL);
+      doomChannelRef.current = doomChannel;
+      setupDoomChannel(doomChannel);
 
       incomingTimestampsRef.current = [];
       iceDoneRef.current = false;
@@ -2969,6 +3009,53 @@
       }
       setIsFlappyBirdActive(false);
       setFlappyBirdScore(0);
+    }, []);
+
+    /**
+     * Starts a Doom game.
+     */
+    const handleStartDoom = useCallback(() => {
+      if (!doomChannelRef.current || doomChannelRef.current.readyState !== 'open') {
+        appendSystemMessage(t.doom?.waitingForPeer || 'Waiting for peer to start Doom...');
+        return;
+      }
+      if (!doomDisplayRef.current) {
+        appendSystemMessage(t.doom?.noDisplay || 'Doom display element not found');
+        return;
+      }
+
+      // Stop any existing game
+      handleStopDoom();
+
+      // Create new Doom game instance
+      const doomGame = new window.DoomGame(
+        doomDisplayRef.current,
+        doomChannelRef.current,
+        {
+          onStart: () => {
+            setIsDoomActive(true);
+            appendSystemMessage(t.doom?.gameStarted || 'Doom game started! Use arrow keys or WASD to move.');
+          },
+          onStop: () => {
+            setIsDoomActive(false);
+            appendSystemMessage(t.doom?.gameStopped || 'Doom game stopped.');
+          }
+        }
+      );
+
+      doomGameRef.current = doomGame;
+      appendSystemMessage(t.doom?.ready || 'Doom is ready. Press SPACE to start!');
+    }, [appendSystemMessage, t]);
+
+    /**
+     * Stops the Doom game and cleans up resources.
+     */
+    const handleStopDoom = useCallback(() => {
+      if (doomGameRef.current) {
+        doomGameRef.current.destroy();
+        doomGameRef.current = null;
+      }
+      setIsDoomActive(false);
     }, []);
 
     /**
@@ -5187,7 +5274,12 @@
                   id: 'flappybird-challenge',
                   onClick: handleStartFlappyBird,
                   disabled: !channelReady
-                }, isFlappyBirdActive ? (t.flappyBird?.challengeButtonBusy || 'Playing...') : (t.flappyBird?.challengeButton || '🐦 Play Flappy Bird'))
+                }, isFlappyBirdActive ? (t.flappyBird?.challengeButtonBusy || 'Playing...') : (t.flappyBird?.challengeButton || '🐦 Play Flappy Bird')),
+                React.createElement('button', {
+                  id: 'doom-challenge',
+                  onClick: handleStartDoom,
+                  disabled: !channelReady
+                }, isDoomActive ? (t.doom?.challengeButtonBusy || 'Playing...') : (t.doom?.challengeButton || '👾 Play ASCII Doom'))
               ),
               React.createElement('div', { className: 'signal-block' },
                 React.createElement('div', { className: 'signal-heading' },
@@ -5641,6 +5733,32 @@
                 }, t.flappyBird?.closeGame || 'Stop Game'),
                 !isFlappyBirdActive && !channelReady && React.createElement('p', { className: 'hint' },
                   t.flappyBird?.waitingForPeer || 'Waiting for peer connection...'
+                )
+              )
+            )
+          ),
+          React.createElement('section', { id: 'doom' },
+            React.createElement('header', null,
+              React.createElement('div', { className: 'header-content' },
+                React.createElement('h2', null, t.doom?.title || '👾 ASCII Doom')
+              )
+            ),
+            React.createElement('div', { className: 'doom-content' },
+              isDoomActive && React.createElement('div', { className: 'doom-display-container' },
+                React.createElement('div', {
+                  ref: doomDisplayRef,
+                  className: 'doom-display'
+                })
+              ),
+              isDoomActive && React.createElement('p', { className: 'doom-instructions' },
+                t.doom?.instructions || 'Arrow Keys / WASD to move and turn. SPACE to start. ESC to exit.'
+              ),
+              React.createElement('div', { className: 'doom-controls' },
+                isDoomActive && React.createElement('button', {
+                  onClick: handleStopDoom
+                }, t.doom?.closeGame || 'Stop Game'),
+                !isDoomActive && !channelReady && React.createElement('p', { className: 'hint' },
+                  t.doom?.waitingForPeer || 'Waiting for peer connection...'
                 )
               )
             )

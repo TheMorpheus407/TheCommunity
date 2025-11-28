@@ -556,6 +556,21 @@ const baseTranslation = Object.freeze({
     waitingForPeer: 'Warte auf Peer, um Pong zu spielen...',
     closeGame: 'Spiel beenden'
   },
+  doom: {
+    challengeButton: 'ASCII Doom spielen',
+    challengeButtonBusy: 'Doom läuft...',
+    title: '👾 ASCII Doom',
+    gameStarted: 'Doom gestartet! Nutze Pfeiltasten oder WASD zum Bewegen.',
+    gameStopped: 'Doom beendet.',
+    channelReady: 'Doom-Kanal bereit.',
+    channelClosed: 'Doom-Kanal geschlossen.',
+    channelError: 'Doom-Kanal Fehler aufgetreten.',
+    instructions: 'Pfeiltasten / WASD zum Bewegen und Drehen. LEERTASTE zum Start. ESC zum Beenden.',
+    waitingForPeer: 'Warte auf Peer, um Doom zu spielen...',
+    closeGame: 'Spiel beenden',
+    ready: 'Doom ist bereit. Drücke LEERTASTE zum Starten!',
+    noDisplay: 'Doom-Anzeige nicht gefunden'
+  },
   trivia: {
     challengeButton: 'Trivia-Quiz starten',
     challengeButtonBusy: 'Quiz läuft...',
@@ -2587,6 +2602,12 @@ const englishTranslation = Object.freeze({
       playing: 'Playing Chess',
       yourTurn: 'Your turn',
       opponentTurn: 'Opponent\'s turn'
+    },
+    doom: {
+      title: 'ASCII Doom',
+      start: 'Start Doom',
+      playing: 'Playing Doom',
+      instructions: 'Arrow Keys / WASD to move and turn. SPACE to start. ESC to exit.'
     }
   },
   rooms: {
