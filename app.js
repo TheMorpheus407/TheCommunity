@@ -1155,6 +1155,122 @@
   }
 
   /**
+   * Renders message content with support for Mermaid diagrams
+   * Detects ```mermaid code blocks and renders them as diagrams
+   * @param {string} text - Message text to render
+   * @param {number} messageId - Unique message ID for diagram rendering
+   * @returns {React.ReactElement|React.ReactElement[]} Rendered content
+   */
+  function renderMessageContent(text, messageId) {
+    // Pattern to detect mermaid code blocks (supports both \n and \r\n line endings)
+    const mermaidPattern = /```mermaid[\r\n]+([\s\S]*?)```/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    let diagramIndex = 0;
+
+    while ((match = mermaidPattern.exec(text)) !== null) {
+      // Add text before the mermaid block
+      if (match.index > lastIndex) {
+        const textBefore = text.substring(lastIndex, match.index);
+        parts.push(React.createElement('span', { key: `text-${lastIndex}` }, textBefore));
+      }
+
+      // Add mermaid diagram
+      const mermaidCode = match[1].trim();
+      const diagramId = `mermaid-${messageId}-${diagramIndex}`;
+      diagramIndex++;
+
+      parts.push(
+        React.createElement(MermaidDiagram, {
+          key: diagramId,
+          id: diagramId,
+          code: mermaidCode
+        })
+      );
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text after last mermaid block
+    if (lastIndex < text.length) {
+      const textAfter = text.substring(lastIndex);
+      parts.push(React.createElement('span', { key: `text-${lastIndex}` }, textAfter));
+    }
+
+    // If no mermaid blocks were found, return simple span
+    if (parts.length === 0) {
+      return React.createElement('span', null, text);
+    }
+
+    return parts;
+  }
+
+  /**
+   * React component for rendering a Mermaid diagram
+   * @param {Object} props - Component props
+   * @param {string} props.id - Unique ID for the diagram
+   * @param {string} props.code - Mermaid diagram code
+   * @returns {React.ReactElement}
+   */
+  function MermaidDiagram({ id, code }) {
+    const [svgContent, setSvgContent] = useState(null);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+      let isMounted = true;
+
+      const renderDiagram = async () => {
+        try {
+          // Wait for mermaid to be available
+          if (!window.mermaid) {
+            if (isMounted) setError('Mermaid library not loaded');
+            return;
+          }
+
+          // Render the diagram
+          const { svg } = await window.mermaid.render(id, code);
+          if (isMounted) {
+            setSvgContent(svg);
+            setError(null);
+          }
+        } catch (err) {
+          console.error('Mermaid rendering error:', err);
+          if (isMounted) setError('Failed to render diagram');
+        }
+      };
+
+      renderDiagram();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [id, code]);
+
+    if (error) {
+      return React.createElement('div', {
+        className: 'mermaid-error'
+      },
+        React.createElement('details', null,
+          React.createElement('summary', null, '⚠️ Diagram Error'),
+          React.createElement('pre', null, code)
+        )
+      );
+    }
+
+    if (!svgContent) {
+      return React.createElement('div', {
+        className: 'mermaid-diagram'
+      }, 'Loading diagram...');
+    }
+
+    return React.createElement('div', {
+      className: 'mermaid-diagram',
+      dangerouslySetInnerHTML: { __html: svgContent }
+    });
+  }
+
+  /**
    * Root React component that coordinates WebRTC setup and the user interface.
    * @returns {React.ReactElement}
    */
@@ -5552,7 +5668,7 @@
                       'data-role': message.role
                     },
                     React.createElement('strong', null, t.chat.roleLabels[message.role] || t.chat.roleLabels.system),
-                    React.createElement('span', null, message.text),
+                    renderMessageContent(message.text, message.id),
                     message.imageUrl && React.createElement('img', {
                       src: message.imageUrl,
                       alt: message.fileName || 'Shared image',
