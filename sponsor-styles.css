@@ -1,0 +1,240 @@
+/**
+ * Sponsorship System Styles
+ * Provides styling for sponsor advertisements
+ */
+
+/* Common sponsor label */
+.sponsor-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.6;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+/* Banner Ad Styles */
+.sponsor-banner {
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sponsor-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.sponsor-banner-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.sponsor-banner-content {
+  color: white;
+}
+
+.sponsor-banner-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: white;
+}
+
+.sponsor-banner-description {
+  font-size: 14px;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+  opacity: 0.95;
+}
+
+.sponsor-banner-cta {
+  display: inline-block;
+  padding: 8px 20px;
+  background: white;
+  color: #667eea;
+  font-weight: 600;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.sponsor-banner-link:hover .sponsor-banner-cta {
+  background: #f0f0f0;
+  transform: scale(1.05);
+}
+
+/* Sidebar Ad Styles */
+.sponsor-sidebar {
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  max-width: 300px;
+}
+
+.sponsor-sidebar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.sponsor-sidebar-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.sponsor-sidebar-content {
+  color: white;
+}
+
+.sponsor-sidebar-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: white;
+}
+
+.sponsor-sidebar-description {
+  font-size: 13px;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+  opacity: 0.95;
+}
+
+.sponsor-sidebar-cta {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  background: white;
+  color: #f5576c;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.sponsor-sidebar-link:hover .sponsor-sidebar-cta {
+  background: #f0f0f0;
+  transform: scale(1.02);
+}
+
+/* Dark theme adjustments */
+body.dark-theme .sponsor-banner,
+body.dark-theme .sponsor-sidebar {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-theme .sponsor-banner:hover,
+body.dark-theme .sponsor-sidebar:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Light theme adjustments */
+body.light-theme .sponsor-banner-cta,
+body.light-theme .sponsor-sidebar-cta {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* RGB theme adjustments */
+body.rgb-theme .sponsor-banner {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 0, 0, 0.8) 0%,
+    rgba(0, 255, 0, 0.8) 50%,
+    rgba(0, 0, 255, 0.8) 100%
+  );
+  animation: rgb-rotate 3s linear infinite;
+}
+
+body.rgb-theme .sponsor-sidebar {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 0, 255, 0.8) 0%,
+    rgba(255, 255, 0, 0.8) 50%,
+    rgba(0, 255, 255, 0.8) 100%
+  );
+  animation: rgb-rotate 3s linear infinite;
+}
+
+@keyframes rgb-rotate {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+/* Cat theme adjustments */
+body.cat-theme .sponsor-banner,
+body.cat-theme .sponsor-sidebar {
+  background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+  border: 2px dashed #ff6b9d;
+}
+
+body.cat-theme .sponsor-banner-cta,
+body.cat-theme .sponsor-sidebar-cta {
+  background: #ff6b9d;
+  color: white;
+}
+
+body.cat-theme .sponsor-banner-link:hover .sponsor-banner-cta,
+body.cat-theme .sponsor-sidebar-link:hover .sponsor-sidebar-cta {
+  background: #ff4d7d;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .sponsor-banner {
+    margin: 12px 0;
+    padding: 12px;
+  }
+
+  .sponsor-banner-title {
+    font-size: 16px;
+  }
+
+  .sponsor-banner-description {
+    font-size: 13px;
+  }
+
+  .sponsor-sidebar {
+    max-width: 100%;
+    margin: 12px 0;
+    padding: 12px;
+  }
+
+  .sponsor-sidebar-title {
+    font-size: 16px;
+  }
+}
+
+/* Accessibility */
+.sponsor-banner:focus-within,
+.sponsor-sidebar:focus-within {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .sponsor-banner,
+  .sponsor-sidebar,
+  .sponsor-banner-cta,
+  .sponsor-sidebar-cta {
+    transition: none;
+    animation: none;
+  }
+
+  .sponsor-banner:hover,
+  .sponsor-sidebar:hover,
+  .sponsor-banner-link:hover .sponsor-banner-cta,
+  .sponsor-sidebar-link:hover .sponsor-sidebar-cta {
+    transform: none;
+  }
+}
