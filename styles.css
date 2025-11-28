@@ -2059,6 +2059,110 @@ textarea[readonly] {
   font-style: italic;
 }
 
+.joke-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.joke-save-button,
+.joke-toggle-button {
+  padding: 0.5rem 1rem;
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.joke-save-button:hover:not(:disabled),
+.joke-toggle-button:hover {
+  background: var(--color-accent-hover);
+  transform: translateY(-1px);
+}
+
+.joke-save-button:disabled {
+  background: var(--color-surface-alt);
+  color: var(--color-text-soft);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.saved-jokes-list {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border-subtle);
+  text-align: left;
+}
+
+.saved-jokes-list h4 {
+  margin: 0 0 1rem 0;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.saved-joke-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: var(--color-surface);
+  border-radius: 8px;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.saved-joke-item p {
+  margin: 0;
+  flex: 1;
+  font-style: normal;
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+}
+
+.joke-delete-button {
+  background: transparent;
+  border: none;
+  color: var(--color-text-soft);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.joke-delete-button:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.saved-jokes-empty {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.saved-jokes-empty p {
+  text-align: center;
+  color: var(--color-text-soft);
+  font-style: normal;
+  font-size: 0.9rem;
+}
+
 .statistics-n8n-example {
   margin-top: 2rem;
   padding: 1.5rem;

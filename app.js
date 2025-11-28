@@ -1207,6 +1207,8 @@
     const [statisticsError, setStatisticsError] = useState('');
     const [randomJoke, setRandomJoke] = useState('');
     const [randomN8nExample, setRandomN8nExample] = useState('');
+    const [savedJokes, setSavedJokes] = useState([]);
+    const [showSavedJokes, setShowSavedJokes] = useState(false);
     const [tuxAnimation, setTuxAnimation] = useState(null);
     const [isPongActive, setIsPongActive] = useState(false);
     const [pongScore, setPongScore] = useState({ left: 0, right: 0 });
@@ -3970,6 +3972,64 @@
       }
     }, [t]);
 
+    // Load saved jokes from localStorage on mount
+    useEffect(() => {
+      try {
+        const saved = localStorage.getItem('savedJokes');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            setSavedJokes(parsed);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading saved jokes:', error);
+      }
+    }, []);
+
+    // Save joke to localStorage
+    const saveJoke = (joke) => {
+      if (!joke) return;
+
+      // Check if joke is already saved
+      if (savedJokes.some(savedJoke => savedJoke.text === joke)) {
+        return;
+      }
+
+      // Limit to 50 saved jokes to prevent localStorage overflow
+      const MAX_SAVED_JOKES = 50;
+      if (savedJokes.length >= MAX_SAVED_JOKES) {
+        console.warn('Maximum number of saved jokes reached');
+        return;
+      }
+
+      const newSavedJoke = {
+        text: joke,
+        savedAt: new Date().toISOString()
+      };
+
+      const updatedJokes = [newSavedJoke, ...savedJokes];
+      setSavedJokes(updatedJokes);
+
+      try {
+        localStorage.setItem('savedJokes', JSON.stringify(updatedJokes));
+      } catch (error) {
+        console.error('Error saving joke:', error);
+      }
+    };
+
+    // Delete saved joke
+    const deleteSavedJoke = (index) => {
+      const updatedJokes = savedJokes.filter((_, i) => i !== index);
+      setSavedJokes(updatedJokes);
+
+      try {
+        localStorage.setItem('savedJokes', JSON.stringify(updatedJokes));
+      } catch (error) {
+        console.error('Error deleting joke:', error);
+      }
+    };
+
     useEffect(() => {
       const controller = new AbortController();
       let didSucceed = false;
@@ -5646,7 +5706,34 @@
               ),
               randomJoke && React.createElement('div', { className: 'statistics-joke' },
                 React.createElement('h3', null, t.statistics.joke.title),
-                React.createElement('p', null, randomJoke)
+                React.createElement('p', null, randomJoke),
+                React.createElement('div', { className: 'joke-actions' },
+                  React.createElement('button', {
+                    className: 'joke-save-button',
+                    onClick: () => saveJoke(randomJoke),
+                    disabled: savedJokes.some(j => j.text === randomJoke) || savedJokes.length >= 50
+                  }, savedJokes.some(j => j.text === randomJoke) ? t.statistics.joke.alreadySaved : t.statistics.joke.saveButton),
+                  savedJokes.length > 0 && React.createElement('button', {
+                    className: 'joke-toggle-button',
+                    onClick: () => setShowSavedJokes(!showSavedJokes)
+                  }, showSavedJokes ? t.statistics.joke.hideSaved : t.statistics.joke.showSaved + ` (${savedJokes.length})`)
+                ),
+                showSavedJokes && savedJokes.length > 0 && React.createElement('div', { className: 'saved-jokes-list' },
+                  React.createElement('h4', null, t.statistics.joke.savedTitle),
+                  savedJokes.map((savedJoke, index) =>
+                    React.createElement('div', { key: index, className: 'saved-joke-item' },
+                      React.createElement('p', null, savedJoke.text),
+                      React.createElement('button', {
+                        className: 'joke-delete-button',
+                        onClick: () => deleteSavedJoke(index),
+                        'aria-label': t.statistics.joke.deleteButton
+                      }, '×')
+                    )
+                  )
+                ),
+                showSavedJokes && savedJokes.length === 0 && React.createElement('div', { className: 'saved-jokes-empty' },
+                  React.createElement('p', null, t.statistics.joke.noSavedJokes)
+                )
               ),
               randomN8nExample && React.createElement('div', { className: 'statistics-n8n-example' },
                 React.createElement('h3', null, t.statistics.n8nExample.title),
