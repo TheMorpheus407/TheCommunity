@@ -483,6 +483,13 @@ const baseTranslation = Object.freeze({
     cachedNote: 'Daten werden 5 Minuten zwischengespeichert.',
     joke: {
       title: 'Makaberer Witz des Tages',
+      saveButton: 'Speichern',
+      savedTitle: 'Gespeicherte Witze',
+      showSaved: 'Gespeicherte anzeigen',
+      hideSaved: 'Gespeicherte ausblenden',
+      deleteButton: 'Löschen',
+      alreadySaved: 'Bereits gespeichert',
+      noSavedJokes: 'Noch keine Witze gespeichert',
       jokes: [
         'Warum mögen Programmierer die Natur nicht? Zu viele Bugs.',
         'Ein Entwickler starb. Sein letztes Wort war: "Es funktioniert auf meiner Maschine..."',
