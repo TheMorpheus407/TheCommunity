@@ -650,6 +650,270 @@
   }
 
   /**
+   * Morpheus T-shirt of the Day data
+   */
+  const MORPHEUS_TSHIRTS = [
+    {
+      id: 'tshirt-001',
+      description: 'Classic black hoodie with tech-inspired design',
+      color: 'black',
+      design: 'Minimalist tech logo',
+      videoRef: 'Placeholder - awaiting community contribution'
+    },
+    {
+      id: 'tshirt-002',
+      description: 'Navy blue coding-themed T-shirt',
+      color: 'navy blue',
+      design: 'Programming syntax print',
+      videoRef: 'Placeholder - awaiting community contribution'
+    },
+    {
+      id: 'tshirt-003',
+      description: 'Dark grey jumper with subtle pattern',
+      color: 'dark grey',
+      design: 'Geometric pattern',
+      videoRef: 'Placeholder - awaiting community contribution'
+    },
+    {
+      id: 'tshirt-004',
+      description: 'Black T-shirt with Matrix-inspired green code',
+      color: 'black',
+      design: 'Green matrix code',
+      videoRef: 'Placeholder - awaiting community contribution'
+    },
+    {
+      id: 'tshirt-005',
+      description: 'Charcoal hoodie with developer motto',
+      color: 'charcoal',
+      design: 'Developer quote print',
+      videoRef: 'Placeholder - awaiting community contribution'
+    },
+    {
+      id: 'tshirt-006',
+      description: 'Wine red sweater, casual style',
+      color: 'wine red',
+      design: 'Solid color',
+      videoRef: 'Placeholder - awaiting community contribution'
+    },
+    {
+      id: 'tshirt-007',
+      description: 'Forest green T-shirt with Linux penguin',
+      color: 'forest green',
+      design: 'Linux Tux mascot',
+      videoRef: 'Placeholder - awaiting community contribution'
+    },
+    {
+      id: 'tshirt-008',
+      description: 'Black zip-up hoodie with cybersecurity theme',
+      color: 'black',
+      design: 'Cybersecurity graphics',
+      videoRef: 'Placeholder - awaiting community contribution'
+    },
+    {
+      id: 'tshirt-009',
+      description: 'Steel blue T-shirt with binary code pattern',
+      color: 'steel blue',
+      design: 'Binary code pattern',
+      videoRef: 'Placeholder - awaiting community contribution'
+    },
+    {
+      id: 'tshirt-010',
+      description: 'Dark purple jumper with abstract design',
+      color: 'dark purple',
+      design: 'Abstract tech pattern',
+      videoRef: 'Placeholder - awaiting community contribution'
+    },
+    {
+      id: 'tshirt-011',
+      description: 'Olive green military-style jacket',
+      color: 'olive green',
+      design: 'Military utility style',
+      videoRef: 'Placeholder - awaiting community contribution'
+    },
+    {
+      id: 'tshirt-012',
+      description: 'Burgundy sweater with retro computing graphics',
+      color: 'burgundy',
+      design: 'Retro computer graphics',
+      videoRef: 'Placeholder - awaiting community contribution'
+    }
+  ];
+
+  /**
+   * Get T-shirt of the day using deterministic selection based on date
+   * @returns {Object} T-shirt data object
+   */
+  function getTshirtOfTheDay() {
+    const today = new Date().toDateString();
+    const stored = localStorage.getItem('morpheus-tshirt-of-day');
+
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed.date === today && parsed.tshirt) {
+          return parsed.tshirt;
+        }
+      } catch (e) {
+        // Invalid stored data, continue to select new one
+      }
+    }
+
+    // Select new T-shirt for today using date as seed
+    const dateNumber = new Date().setHours(0, 0, 0, 0);
+    const index = dateNumber % MORPHEUS_TSHIRTS.length;
+    const tshirt = MORPHEUS_TSHIRTS[index];
+
+    // Store for the day
+    localStorage.setItem('morpheus-tshirt-of-day', JSON.stringify({
+      date: today,
+      tshirt: tshirt
+    }));
+
+    return tshirt;
+  }
+
+  /**
+   * Morpheus T-shirt of the Day component
+   * Displays a different T-shirt each day from the curated collection
+   * @param {Object} props
+   * @param {Object} props.t - Translation object
+   * @returns {React.ReactElement}
+   */
+  function MorpheusTshirt({ t }) {
+    const tshirt = getTshirtOfTheDay();
+
+    // Generate color hex from color name
+    const getColorHex = (colorName) => {
+      const colorMap = {
+        'black': '#1a1a1a',
+        'navy blue': '#001f3f',
+        'dark grey': '#4a4a4a',
+        'charcoal': '#36454f',
+        'wine red': '#722f37',
+        'forest green': '#228b22',
+        'steel blue': '#4682b4',
+        'dark purple': '#4b0082',
+        'olive green': '#808000',
+        'burgundy': '#800020'
+      };
+      return colorMap[colorName?.toLowerCase()] || '#333333';
+    };
+
+    const colorHex = getColorHex(tshirt.color);
+
+    // Create a simple T-shirt SVG placeholder
+    const renderPlaceholder = () => {
+      return React.createElement(
+        'svg',
+        {
+          className: 'morpheus-tshirt-placeholder',
+          viewBox: '0 0 200 240',
+          xmlns: 'http://www.w3.org/2000/svg',
+          'aria-hidden': 'true'
+        },
+        [
+          // T-shirt body
+          React.createElement('path', {
+            key: 'body',
+            d: 'M60 40 L40 60 L40 240 L160 240 L160 60 L140 40 L120 50 L100 45 L80 50 Z',
+            fill: colorHex,
+            stroke: '#666',
+            strokeWidth: '2'
+          }),
+          // Collar
+          React.createElement('path', {
+            key: 'collar',
+            d: 'M80 40 L90 50 L100 45 L110 50 L120 40 L110 60 L90 60 Z',
+            fill: colorHex,
+            stroke: '#666',
+            strokeWidth: '2'
+          }),
+          // Left sleeve
+          React.createElement('path', {
+            key: 'sleeve-left',
+            d: 'M60 40 L20 80 L30 100 L40 60 Z',
+            fill: colorHex,
+            stroke: '#666',
+            strokeWidth: '2'
+          }),
+          // Right sleeve
+          React.createElement('path', {
+            key: 'sleeve-right',
+            d: 'M140 40 L180 80 L170 100 L160 60 Z',
+            fill: colorHex,
+            stroke: '#666',
+            strokeWidth: '2'
+          }),
+          // Design element
+          tshirt.design && React.createElement('text', {
+            key: 'design',
+            x: '100',
+            y: '140',
+            textAnchor: 'middle',
+            fill: '#888',
+            fontSize: '12',
+            fontFamily: 'monospace'
+          }, '{ }')
+        ]
+      );
+    };
+
+    return React.createElement(
+      'div',
+      {
+        className: 'morpheus-tshirt-container',
+        role: 'article',
+        'aria-label': t?.morpheusTshirt?.ariaLabel || 'Morpheus T-shirt of the day'
+      },
+      [
+        React.createElement(
+          'h3',
+          { key: 'title', className: 'morpheus-tshirt-title' },
+          t?.morpheusTshirt?.title || 'Morpheus T-shirt of the Day'
+        ),
+        React.createElement(
+          'div',
+          { key: 'image-wrapper', className: 'morpheus-tshirt-image-wrapper' },
+          renderPlaceholder()
+        ),
+        React.createElement(
+          'div',
+          { key: 'details', className: 'morpheus-tshirt-details' },
+          [
+            React.createElement(
+              'p',
+              { key: 'description', className: 'morpheus-tshirt-description' },
+              tshirt.description
+            ),
+            tshirt.color && React.createElement(
+              'p',
+              { key: 'color', className: 'morpheus-tshirt-meta' },
+              [
+                React.createElement('strong', { key: 'color-label' }, t?.morpheusTshirt?.color || 'Color: '),
+                tshirt.color
+              ]
+            ),
+            tshirt.design && React.createElement(
+              'p',
+              { key: 'design', className: 'morpheus-tshirt-meta' },
+              [
+                React.createElement('strong', { key: 'design-label' }, t?.morpheusTshirt?.design || 'Design: '),
+                tshirt.design
+              ]
+            ),
+            React.createElement(
+              'p',
+              { key: 'contribute', className: 'morpheus-tshirt-contribute' },
+              t?.morpheusTshirt?.contribute ||
+              'Want to contribute real images? Submit a PR to replace placeholders with actual screenshots from Morpheus\'s videos!'
+            )
+          ]
+        )
+      ]
+    );
+  }
+
+  /**
    * Random room button component showing Tux with a rotating dice
    * @param {Object} props
    * @param {Object} props.t - Translation object
@@ -4478,7 +4742,8 @@
                       React.createElement('span', { className: 'contribution-note' }, ` - ${issueLabel}`)
                     );
                   })
-                )
+                ),
+                React.createElement(MorpheusTshirt, { t: t })
               )
             )
           ),

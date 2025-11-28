@@ -3863,3 +3863,108 @@ textarea[readonly] {
     width: 100%;
   }
 }
+
+/* Morpheus T-shirt of the Day Component */
+.morpheus-tshirt-container {
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-panel-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  box-shadow: var(--shadow-panel);
+  transition: all 0.3s ease;
+}
+
+.morpheus-tshirt-container:hover {
+  box-shadow: var(--shadow-elevated);
+  transform: translateY(-2px);
+}
+
+.morpheus-tshirt-title {
+  margin: 0 0 1rem 0;
+  color: var(--color-text-accent);
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.morpheus-tshirt-image-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1.5rem 0;
+  min-height: 240px;
+  background: var(--color-surface-muted);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.morpheus-tshirt-placeholder {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+.morpheus-tshirt-image {
+  max-width: 100%;
+  max-height: 400px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  object-fit: contain;
+}
+
+.morpheus-tshirt-details {
+  margin-top: 1rem;
+}
+
+.morpheus-tshirt-description {
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  margin: 0.5rem 0;
+  text-align: center;
+  font-weight: 500;
+}
+
+.morpheus-tshirt-meta {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin: 0.4rem 0;
+  text-align: center;
+}
+
+.morpheus-tshirt-meta strong {
+  color: var(--color-text-accent);
+}
+
+.morpheus-tshirt-contribute {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--color-surface-alt);
+  border-left: 3px solid var(--color-text-accent);
+  border-radius: 4px;
+  color: var(--color-text-soft);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .morpheus-tshirt-container {
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+
+  .morpheus-tshirt-title {
+    font-size: 1.1rem;
+  }
+
+  .morpheus-tshirt-image-wrapper {
+    min-height: 200px;
+  }
+
+  .morpheus-tshirt-placeholder {
+    max-width: 160px;
+  }
+}
