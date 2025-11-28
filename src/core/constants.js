@@ -46,6 +46,12 @@ export const FLAPPYBIRD_CHANNEL_LABEL = 'flappybird';
 export const CHESS_CHANNEL_LABEL = 'chess';
 
 /**
+ * Label for the Doom game data channel.
+ * @constant {string}
+ */
+export const DOOM_CHANNEL_LABEL = 'doom';
+
+/**
  * Maximum allowed length for a chat message in characters.
  * @constant {number}
  */
@@ -189,6 +195,24 @@ export const AI_PREFERENCE_STORAGE_KEY = 'thecommunity.ai-preference';
 export const AI_PROVIDER_STORAGE_KEY = 'thecommunity.ai-provider';
 
 /**
+ * Local storage key for cookie consent preferences.
+ * @constant {string}
+ */
+export const COOKIE_CONSENT_STORAGE_KEY = 'thecommunity.cookie-consent';
+
+/**
+ * Local storage key for Whisper model selection.
+ * @constant {string}
+ */
+export const WHISPER_MODEL_STORAGE_KEY = 'thecommunity.whisper-model';
+
+/**
+ * Local storage key for Franconia intro seen status.
+ * @constant {string}
+ */
+export const FRANCONIA_INTRO_SEEN_KEY = 'thecommunity.franconia-intro-seen';
+
+/**
  * Available theme options.
  * @enum {string}
  */
@@ -220,6 +244,33 @@ export const DEFAULT_CAT_AUDIO_SETTINGS = {
   musicEnabled: false,
   sfxEnabled: false,
   volume: 50
+};
+
+/**
+ * Available Whisper models for speech recognition.
+ * @enum {string}
+ */
+export const WHISPER_MODELS = {
+  TINY_EN: 'Xenova/whisper-tiny.en',
+  BASE: 'Xenova/whisper-base'
+};
+
+/**
+ * Default Whisper model to use.
+ * @constant {string}
+ */
+export const DEFAULT_WHISPER_MODEL = WHISPER_MODELS.TINY_EN;
+
+/**
+ * Cookie consent categories.
+ * @enum {string}
+ */
+export const CONSENT_CATEGORIES = {
+  ESSENTIAL: 'essential',
+  PREFERENCES: 'preferences',
+  STATISTICS: 'statistics',
+  EASTER_EGG: 'easterEgg',
+  AI_PREFERENCE: 'aiPreference'
 };
 
 /**

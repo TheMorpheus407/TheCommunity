@@ -2,8 +2,30 @@
  * Peer-to-peer WebRTC chat application bootstrap.
  * Allows two browsers to exchange messages without a signaling server.
  */
-(function () {
-  const { useState, useRef, useCallback, useEffect } = React;
+
+import {
+  DOOM_CHANNEL_LABEL,
+  COOKIE_CONSENT_STORAGE_KEY,
+  WHISPER_MODEL_STORAGE_KEY,
+  FRANCONIA_INTRO_SEEN_KEY,
+  WHISPER_MODELS,
+  DEFAULT_WHISPER_MODEL,
+  CONSENT_CATEGORIES
+} from './src/core/constants.js';
+
+import {
+  getCookieConsent,
+  saveCookieConsent,
+  hasConsentFor,
+  createConsentObject
+} from './src/managers/CookieConsentManager.js';
+
+import { MermaidDiagram } from './src/components/MermaidDiagram.js';
+import { BrainsPlan } from './src/components/BrainsPlan.js';
+import { RandomRoomButton } from './src/components/RandomRoomButton.js';
+import { DolphinMascot } from './src/components/DolphinMascot.js';
+
+const { useState, useRef, useCallback, useEffect } = React;
 
   const EXPECTED_CHANNEL_LABEL = 'chat';
   const CONTROL_CHANNEL_LABEL = 'control';
@@ -12,7 +34,6 @@
   const TRIVIA_CHANNEL_LABEL = 'trivia';
   const FLAPPYBIRD_CHANNEL_LABEL = 'flappybird';
   const CHESS_CHANNEL_LABEL = 'chess';
-  const DOOM_CHANNEL_LABEL = 'doom';
   const MAX_MESSAGE_LENGTH = 2000;
   const MAX_MESSAGES_PER_INTERVAL = 30;
   const MESSAGE_INTERVAL_MS = 5000;
@@ -41,9 +62,6 @@
   const THEME_STORAGE_KEY = 'thecommunity.theme-preference';
   const AI_PREFERENCE_STORAGE_KEY = 'thecommunity.ai-preference';
   const AI_PROVIDER_STORAGE_KEY = 'thecommunity.ai-provider';
-  const COOKIE_CONSENT_STORAGE_KEY = 'thecommunity.cookie-consent';
-  const WHISPER_MODEL_STORAGE_KEY = 'thecommunity.whisper-model';
-  const FRANCONIA_INTRO_SEEN_KEY = 'thecommunity.franconia-intro-seen';
   const THEME_OPTIONS = {
     LIGHT: 'light',
     DARK: 'dark',
@@ -58,85 +76,6 @@
     sfxEnabled: false,
     volume: 50
   };
-  const WHISPER_MODELS = {
-    TINY_EN: 'Xenova/whisper-tiny.en',
-    BASE: 'Xenova/whisper-base'
-  };
-  const DEFAULT_WHISPER_MODEL = WHISPER_MODELS.TINY_EN;
-
-  // Cookie consent categories
-  const CONSENT_CATEGORIES = {
-    ESSENTIAL: 'essential',
-    PREFERENCES: 'preferences',
-    STATISTICS: 'statistics',
-    EASTER_EGG: 'easterEgg',
-    AI_PREFERENCE: 'aiPreference'
-  };
-
-  /**
-   * Gets the current cookie consent state from localStorage
-   * @returns {Object} Consent state object with categories
-   */
-  function getCookieConsent() {
-    try {
-      const stored = window.localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch (error) {
-      console.warn('Could not read cookie consent from localStorage', error);
-    }
-    // Return null if no consent has been given yet
-    return null;
-  }
-
-  /**
-   * Saves cookie consent preferences to localStorage
-   * @param {Object} consent - Consent state object
-   */
-  function saveCookieConsent(consent) {
-    try {
-      window.localStorage.setItem(COOKIE_CONSENT_STORAGE_KEY, JSON.stringify(consent));
-    } catch (error) {
-      console.warn('Could not save cookie consent to localStorage', error);
-    }
-  }
-
-  /**
-   * Checks if a specific consent category is allowed
-   * @param {string} category - Category to check
-   * @returns {boolean} True if category is consented or essential
-   */
-  function hasConsentFor(category) {
-    // Essential is always allowed
-    if (category === CONSENT_CATEGORIES.ESSENTIAL) {
-      return true;
-    }
-
-    const consent = getCookieConsent();
-    // If no consent given yet, return false (show banner)
-    if (!consent) {
-      return false;
-    }
-
-    return consent[category] === true;
-  }
-
-  /**
-   * Creates a default consent object with all categories set to a value
-   * @param {boolean} value - Default value for all categories
-   * @returns {Object} Consent object
-   */
-  function createConsentObject(value) {
-    return {
-      [CONSENT_CATEGORIES.ESSENTIAL]: true, // Always true
-      [CONSENT_CATEGORIES.PREFERENCES]: value,
-      [CONSENT_CATEGORIES.STATISTICS]: value,
-      [CONSENT_CATEGORIES.EASTER_EGG]: value,
-      [CONSENT_CATEGORIES.AI_PREFERENCE]: value,
-      timestamp: Date.now()
-    };
-  }
 
   // Room system constants
   const PUBLIC_ROOMS = [
@@ -466,195 +405,6 @@
   }
 
   /**
-   * Dolphin mascot component - friendly dolphin for the dolphin-powered chat
-   * @param {Object} props
-   * @param {Object} props.t - Translation object
-   * @returns {React.ReactElement}
-   */
-  function DolphinMascot({ t }) {
-    return React.createElement(
-      'div',
-      {
-        className: 'dolphin-mascot',
-        role: 'img',
-        'aria-label': t?.mascot?.ariaLabel || 'Friendly dolphin mascot'
-      },
-      React.createElement(
-        'svg',
-        {
-          className: 'dolphin-svg',
-          width: '120',
-          height: '120',
-          viewBox: '0 0 120 120',
-          fill: 'none',
-          xmlns: 'http://www.w3.org/2000/svg',
-          'aria-hidden': 'true',
-          focusable: 'false'
-        },
-        // Water ripples
-        React.createElement('ellipse', {
-          key: 'water-ripple-1',
-          className: 'dolphin-water-ripple',
-          cx: '60',
-          cy: '110',
-          rx: '40',
-          ry: '5',
-          fill: '#87CEEB',
-          opacity: '0.3'
-        }),
-        React.createElement('ellipse', {
-          key: 'water-ripple-2',
-          className: 'dolphin-water-ripple',
-          cx: '60',
-          cy: '112',
-          rx: '50',
-          ry: '4',
-          fill: '#87CEEB',
-          opacity: '0.2'
-        }),
-        // Tail
-        React.createElement('path', {
-          key: 'tail',
-          className: 'dolphin-tail',
-          d: 'M20 75 Q10 65 5 70 Q8 80 15 85 Q12 90 10 95 Q15 92 22 82 Z',
-          fill: '#4A9FD8',
-          stroke: '#2E7FB8',
-          strokeWidth: '1.5'
-        }),
-        // Body
-        React.createElement('ellipse', {
-          key: 'body',
-          className: 'dolphin-body',
-          cx: '55',
-          cy: '70',
-          rx: '35',
-          ry: '22',
-          fill: '#5AB4E8',
-          stroke: '#2E7FB8',
-          strokeWidth: '2'
-        }),
-        // Belly
-        React.createElement('ellipse', {
-          key: 'belly',
-          className: 'dolphin-belly',
-          cx: '60',
-          cy: '75',
-          rx: '25',
-          ry: '15',
-          fill: '#E8F4F8'
-        }),
-        // Dorsal fin
-        React.createElement('path', {
-          key: 'dorsal-fin',
-          className: 'dolphin-dorsal-fin',
-          d: 'M55 50 Q50 35 52 30 Q58 35 60 50 Z',
-          fill: '#4A9FD8',
-          stroke: '#2E7FB8',
-          strokeWidth: '1.5'
-        }),
-        // Head
-        React.createElement('ellipse', {
-          key: 'head',
-          className: 'dolphin-head',
-          cx: '75',
-          cy: '60',
-          rx: '20',
-          ry: '18',
-          fill: '#5AB4E8',
-          stroke: '#2E7FB8',
-          strokeWidth: '2'
-        }),
-        // Snout/beak
-        React.createElement('ellipse', {
-          key: 'snout',
-          className: 'dolphin-snout',
-          cx: '92',
-          cy: '62',
-          rx: '12',
-          ry: '8',
-          fill: '#5AB4E8',
-          stroke: '#2E7FB8',
-          strokeWidth: '2'
-        }),
-        React.createElement('ellipse', {
-          key: 'snout-bottom',
-          className: 'dolphin-snout-bottom',
-          cx: '93',
-          cy: '65',
-          rx: '10',
-          ry: '5',
-          fill: '#E8F4F8'
-        }),
-        // Pectoral fin (left)
-        React.createElement('path', {
-          key: 'pectoral-fin',
-          className: 'dolphin-pectoral-fin',
-          d: 'M50 72 Q35 75 30 80 Q38 82 50 78 Z',
-          fill: '#4A9FD8',
-          stroke: '#2E7FB8',
-          strokeWidth: '1.5'
-        }),
-        // Eye
-        React.createElement('circle', {
-          key: 'eye-white',
-          className: 'dolphin-eye-white',
-          cx: '78',
-          cy: '55',
-          r: '5',
-          fill: 'white'
-        }),
-        React.createElement('circle', {
-          key: 'eye-pupil',
-          className: 'dolphin-eye-pupil',
-          cx: '79',
-          cy: '56',
-          r: '2.5',
-          fill: '#1a1a1a'
-        }),
-        React.createElement('circle', {
-          key: 'eye-shine',
-          className: 'dolphin-eye-shine',
-          cx: '80',
-          cy: '54.5',
-          r: '1.5',
-          fill: 'white'
-        }),
-        // Smile
-        React.createElement('path', {
-          key: 'smile',
-          className: 'dolphin-smile',
-          d: 'M85 64 Q88 67 92 66',
-          stroke: '#2E7FB8',
-          strokeWidth: '1.5',
-          fill: 'none',
-          strokeLinecap: 'round'
-        }),
-        // Water splashes (animated)
-        React.createElement('path', {
-          key: 'splash-1',
-          className: 'dolphin-splash',
-          d: 'M95 50 Q98 45 100 48',
-          stroke: '#87CEEB',
-          strokeWidth: '2',
-          fill: 'none',
-          strokeLinecap: 'round',
-          opacity: '0.6'
-        }),
-        React.createElement('path', {
-          key: 'splash-2',
-          className: 'dolphin-splash',
-          d: 'M102 55 Q105 52 107 55',
-          stroke: '#87CEEB',
-          strokeWidth: '2',
-          fill: 'none',
-          strokeLinecap: 'round',
-          opacity: '0.5'
-        })
-      )
-    );
-  }
-
-  /**
    * Morpheus T-shirt of the Day data
    */
   const MORPHEUS_TSHIRTS = [
@@ -919,145 +669,6 @@
   }
 
   /**
-   * Random room button component showing Tux with a rotating dice
-   * @param {Object} props
-   * @param {Object} props.t - Translation object
-   * @param {Function} props.onClick - Click handler
-   * @returns {React.ReactElement}
-   */
-  function RandomRoomButton({ t, onClick }) {
-    return React.createElement(
-      'button',
-      {
-        className: 'random-room-button',
-        onClick: onClick,
-        title: t.rooms.randomButtonTitle,
-        'aria-label': t.rooms.randomButtonAria
-      },
-      React.createElement(
-        'svg',
-        {
-          className: 'random-room-svg',
-          viewBox: '0 0 140 120',
-          xmlns: 'http://www.w3.org/2000/svg',
-          'aria-hidden': 'true',
-          focusable: 'false'
-        },
-        // Tux penguin (simplified, sitting pose)
-        React.createElement('ellipse', { className: 'tux-shadow', cx: '40', cy: '112', rx: '20', ry: '6' }),
-        React.createElement('ellipse', { className: 'tux-body', cx: '40', cy: '65', rx: '28', ry: '40' }),
-        React.createElement('ellipse', { className: 'tux-belly', cx: '40', cy: '80', rx: '18', ry: '24' }),
-        React.createElement('ellipse', { className: 'tux-head', cx: '40', cy: '42', rx: '22', ry: '20' }),
-        React.createElement('ellipse', { className: 'tux-face', cx: '40', cy: '50', rx: '16', ry: '12' }),
-        // Wings
-        React.createElement('ellipse', { className: 'tux-wing', cx: '18', cy: '72', rx: '9', ry: '20' }),
-        React.createElement('ellipse', { className: 'tux-wing', cx: '62', cy: '72', rx: '9', ry: '20' }),
-        // Feet
-        React.createElement('path', { className: 'tux-foot', d: 'M28 98 C25 104 28 108 34 108 L38 108 C42 108 44 104 41 98 Z' }),
-        React.createElement('path', { className: 'tux-foot', d: 'M52 98 C49 104 52 108 58 108 L62 108 C66 108 68 104 65 98 Z' }),
-        // Beak
-        React.createElement('polygon', { className: 'tux-beak-upper', points: '40,48 32,52 48,52' }),
-        React.createElement('ellipse', { className: 'tux-beak-lower', cx: '40', cy: '54', rx: '8', ry: '3' }),
-        // Eyes
-        React.createElement('circle', { className: 'tux-eye', cx: '34', cy: '42', r: '5' }),
-        React.createElement('circle', { className: 'tux-eye', cx: '46', cy: '42', r: '5' }),
-        React.createElement('circle', { className: 'tux-pupil', cx: '35', cy: '43', r: '2' }),
-        React.createElement('circle', { className: 'tux-pupil', cx: '47', cy: '43', r: '2' }),
-
-        // Dice (in front of Tux) - 3D cube representation
-        React.createElement('g', { className: 'dice-cube' },
-          // Top face
-          React.createElement('path', {
-            className: 'dice-face dice-top',
-            d: 'M85 50 L105 40 L125 50 L105 60 Z'
-          }),
-          // Left face
-          React.createElement('path', {
-            className: 'dice-face dice-left',
-            d: 'M85 50 L85 85 L105 95 L105 60 Z'
-          }),
-          // Right face
-          React.createElement('path', {
-            className: 'dice-face dice-right',
-            d: 'M105 60 L105 95 L125 85 L125 50 Z'
-          }),
-          // Dots on visible faces
-          React.createElement('circle', { className: 'dice-dot', cx: '105', cy: '50', r: '2' }), // Top center
-          React.createElement('circle', { className: 'dice-dot', cx: '95', cy: '68', r: '2' }), // Left
-          React.createElement('circle', { className: 'dice-dot', cx: '95', cy: '77', r: '2' }), // Left
-          React.createElement('circle', { className: 'dice-dot', cx: '115', cy: '68', r: '2' }), // Right
-          React.createElement('circle', { className: 'dice-dot', cx: '115', cy: '77', r: '2' })  // Right
-        )
-      )
-    );
-  }
-
-  /**
-   * World domination plans inspired by "Pinky and the Brain"
-   */
-  const WORLD_DOMINATION_PLANS = [
-    "Today we shall create a global network of peer-to-peer connections, rendering all centralized servers obsolete!",
-    "Tonight, Pinky, we take over the world... one WebRTC connection at a time!",
-    "Are you pondering what I'm pondering? I think so, Brain, but how do we get everyone to use manual signaling?",
-    "Step 1: Build a chat app. Step 2: Add screen sharing. Step 3: WORLD DOMINATION!",
-    "The same thing we do every night, Pinky - try to convince people that P2P is the future!",
-    "Brilliant! We'll use data channels to bypass all traditional infrastructure!",
-    "They said it couldn't be done - a chat app with NO backend! But they underestimated THE BRAIN!",
-    "Soon, every connection will be peer-to-peer, and I shall control... NOTHING! Because there's no server! NARF!",
-    "Phase 1 complete: Manual signaling. Phase 2: Pong game. Phase 3: INEVITABLE VICTORY!",
-    "While others rely on centralized servers, we shall triumph through distributed architecture!",
-    "Today, chat messages. Tomorrow, the world! But first, let me fix this ICE candidate issue...",
-    "A WebRTC empire requires no servers, no backends, no infrastructure - only PURE GENIUS!",
-  ];
-
-  /**
-   * Brain's World Domination Plan component
-   * Displays a rotating humorous plan inspired by "Pinky and the Brain"
-   * @param {Object} props
-   * @param {Object} props.t - Translation object
-   * @param {boolean} props.isVisible - Whether the plan is visible
-   * @param {Function} props.onToggle - Toggle visibility handler
-   * @returns {React.ReactElement}
-   */
-  function BrainsPlan({ t, isVisible, onToggle }) {
-    const [currentPlanIndex, setCurrentPlanIndex] = React.useState(
-      Math.floor(Math.random() * WORLD_DOMINATION_PLANS.length)
-    );
-
-    const handleNewPlan = useCallback(() => {
-      setCurrentPlanIndex((prev) => (prev + 1) % WORLD_DOMINATION_PLANS.length);
-    }, []);
-
-    return React.createElement(
-      'div',
-      { className: `brains-plan ${isVisible ? 'visible' : 'collapsed'}` },
-      React.createElement(
-        'div',
-        { className: 'brains-plan-header', onClick: onToggle },
-        React.createElement('span', { className: 'brains-plan-icon' }, '🧠'),
-        React.createElement('h3', { className: 'brains-plan-title' }, t.brainsPlan?.title || "Brain's Plan for World Domination"),
-        React.createElement('button', {
-          className: 'brains-plan-toggle',
-          'aria-label': isVisible ? (t.brainsPlan?.collapse || 'Collapse') : (t.brainsPlan?.expand || 'Expand'),
-          'aria-expanded': isVisible
-        }, isVisible ? '▼' : '▶')
-      ),
-      isVisible && React.createElement(
-        'div',
-        { className: 'brains-plan-content' },
-        React.createElement('p', { className: 'brains-plan-text' }, WORLD_DOMINATION_PLANS[currentPlanIndex]),
-        React.createElement('div', { className: 'brains-plan-actions' },
-          React.createElement('button', {
-            className: 'brains-plan-button',
-            onClick: handleNewPlan
-          }, t.brainsPlan?.newPlan || 'New Plan')
-        ),
-        React.createElement('p', { className: 'brains-plan-signature' }, '- The Brain')
-      )
-    );
-  }
-
-  /**
    * Determines the initial theme, preferring stored settings, then system preference.
    * @returns {{theme: 'light'|'dark'|'rgb', isStored: boolean}}
    */
@@ -1204,70 +815,6 @@
     }
 
     return parts;
-  }
-
-  /**
-   * React component for rendering a Mermaid diagram
-   * @param {Object} props - Component props
-   * @param {string} props.id - Unique ID for the diagram
-   * @param {string} props.code - Mermaid diagram code
-   * @returns {React.ReactElement}
-   */
-  function MermaidDiagram({ id, code }) {
-    const [svgContent, setSvgContent] = useState(null);
-    const [error, setError] = useState(null);
-
-    useEffect(() => {
-      let isMounted = true;
-
-      const renderDiagram = async () => {
-        try {
-          // Wait for mermaid to be available
-          if (!window.mermaid) {
-            if (isMounted) setError('Mermaid library not loaded');
-            return;
-          }
-
-          // Render the diagram
-          const { svg } = await window.mermaid.render(id, code);
-          if (isMounted) {
-            setSvgContent(svg);
-            setError(null);
-          }
-        } catch (err) {
-          console.error('Mermaid rendering error:', err);
-          if (isMounted) setError('Failed to render diagram');
-        }
-      };
-
-      renderDiagram();
-
-      return () => {
-        isMounted = false;
-      };
-    }, [id, code]);
-
-    if (error) {
-      return React.createElement('div', {
-        className: 'mermaid-error'
-      },
-        React.createElement('details', null,
-          React.createElement('summary', null, '⚠️ Diagram Error'),
-          React.createElement('pre', null, code)
-        )
-      );
-    }
-
-    if (!svgContent) {
-      return React.createElement('div', {
-        className: 'mermaid-diagram'
-      }, 'Loading diagram...');
-    }
-
-    return React.createElement('div', {
-      className: 'mermaid-diagram',
-      dangerouslySetInnerHTML: { __html: svgContent }
-    });
   }
 
   /**
@@ -6059,7 +5606,6 @@
     );
   }
 
-  const rootElement = document.getElementById('root');
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(React.createElement(App));
-})();
+const rootElement = document.getElementById('root');
+const root = ReactDOM.createRoot(rootElement);
+root.render(React.createElement(App));
