@@ -28,10 +28,14 @@
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   const OPENAI_MODEL = 'gpt-4o-mini';
   const OLLAMA_MODEL = 'llama3.2';
+  const MISTRAL_MODEL = 'mistral-small-latest';
+  const ANTHROPIC_MODEL = 'claude-3-5-haiku-20241022';
   const OLLAMA_DEFAULT_ENDPOINT = 'http://localhost:11434';
   const AI_PROVIDERS = {
     OPENAI: 'openai',
-    OLLAMA: 'ollama'
+    OLLAMA: 'ollama',
+    MISTRAL: 'mistral',
+    ANTHROPIC: 'anthropic'
   };
   const THEME_STORAGE_KEY = 'thecommunity.theme-preference';
   const AI_PREFERENCE_STORAGE_KEY = 'thecommunity.ai-preference';
@@ -1139,7 +1143,8 @@
     }
     try {
       const savedProvider = window.localStorage.getItem(AI_PROVIDER_STORAGE_KEY);
-      if (savedProvider === AI_PROVIDERS.OLLAMA || savedProvider === AI_PROVIDERS.OPENAI) {
+      const validProviders = Object.values(AI_PROVIDERS);
+      if (validProviders.includes(savedProvider)) {
         return savedProvider;
       }
     } catch (error) {
@@ -1496,8 +1501,8 @@
         event.preventDefault();
       }
 
-      // For OpenAI, require API key
-      if (aiProvider === AI_PROVIDERS.OPENAI) {
+      // Providers that need API keys: OpenAI, Mistral, Anthropic
+      if (aiProvider !== AI_PROVIDERS.OLLAMA) {
         const trimmed = apiKeyInput.trim();
         if (!trimmed) {
           setApiKeyError(t.aiErrors.emptyKey);
@@ -1506,7 +1511,7 @@
         setOpenAiKey(trimmed);
       } else {
         // For Ollama, no API key needed, but save the endpoint
-        setOpenAiKey(''); // Clear any existing OpenAI key
+        setOpenAiKey(''); // Clear any existing API key
       }
 
       // Save provider preference to localStorage
@@ -3195,6 +3200,32 @@
     }, []);
 
     /**
+     * Converts OpenAI-style messages to Anthropic format
+     */
+    const convertToAnthropicFormat = useCallback((messages) => {
+      const systemMessage = messages.find(m => m.role === 'system');
+      const userMessages = messages.filter(m => m.role !== 'system');
+      return {
+        system: systemMessage ? systemMessage.content : undefined,
+        messages: userMessages
+      };
+    }, []);
+
+    /**
+     * Converts Anthropic response to OpenAI format
+     */
+    const convertFromAnthropicFormat = useCallback((anthropicResponse) => {
+      return {
+        choices: [{
+          message: {
+            role: 'assistant',
+            content: anthropicResponse.content[0]?.text || ''
+          }
+        }]
+      };
+    }, []);
+
+    /**
      * Gets the appropriate API endpoint and model based on provider
      */
     const getApiConfig = useCallback((provider, endpoint) => {
@@ -3206,13 +3237,31 @@
         return {
           endpoint: fullEndpoint,
           model: OLLAMA_MODEL,
-          requiresAuth: false
+          requiresAuth: false,
+          apiType: 'openai-compatible'
+        };
+      }
+      if (provider === AI_PROVIDERS.MISTRAL) {
+        return {
+          endpoint: 'https://api.mistral.ai/v1/chat/completions',
+          model: MISTRAL_MODEL,
+          requiresAuth: true,
+          apiType: 'openai-compatible'
+        };
+      }
+      if (provider === AI_PROVIDERS.ANTHROPIC) {
+        return {
+          endpoint: 'https://api.anthropic.com/v1/messages',
+          model: ANTHROPIC_MODEL,
+          requiresAuth: true,
+          apiType: 'anthropic'
         };
       }
       return {
         endpoint: 'https://api.openai.com/v1/chat/completions',
         model: OPENAI_MODEL,
-        requiresAuth: true
+        requiresAuth: true,
+        apiType: 'openai-compatible'
       };
     }, []);
 
@@ -3222,7 +3271,7 @@
         return;
       }
       // Check if credentials are needed based on provider
-      const needsKey = aiProvider === AI_PROVIDERS.OPENAI;
+      const needsKey = aiProvider !== AI_PROVIDERS.OLLAMA;
       if (needsKey && !openAiKey) {
         setApiKeyInput(openAiKey);
         setApiKeyError(t.aiErrors.emptyKey);
@@ -3245,28 +3294,52 @@
           'Content-Type': 'application/json'
         };
         if (config.requiresAuth && openAiKey) {
-          headers['Authorization'] = `Bearer ${openAiKey}`;
+          if (config.apiType === 'anthropic') {
+            headers['x-api-key'] = openAiKey;
+            headers['anthropic-version'] = '2023-06-01';
+          } else {
+            headers['Authorization'] = `Bearer ${openAiKey}`;
+          }
+        }
+
+        // Prepare messages
+        const messages = [
+          {
+            role: 'system',
+            content:
+              'You rewrite chat drafts to stay concise, friendly, and clear. Preserve intent, remove sensitive data, and return only the revised message.'
+          },
+          {
+            role: 'user',
+            content: draft
+          }
+        ];
+
+        // Build request body based on API type
+        let requestBody;
+        if (config.apiType === 'anthropic') {
+          const anthropicFormat = convertToAnthropicFormat(messages);
+          requestBody = {
+            model: config.model,
+            max_tokens: 256,
+            messages: anthropicFormat.messages
+          };
+          if (anthropicFormat.system) {
+            requestBody.system = anthropicFormat.system;
+          }
+        } else {
+          requestBody = {
+            model: config.model,
+            messages: messages,
+            temperature: 0.7,
+            max_tokens: 256
+          };
         }
 
         const response = await fetch(config.endpoint, {
           method: 'POST',
           headers,
-          body: JSON.stringify({
-            model: config.model,
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You rewrite chat drafts to stay concise, friendly, and clear. Preserve intent, remove sensitive data, and return only the revised message.'
-              },
-              {
-                role: 'user',
-                content: draft
-              }
-            ],
-            temperature: 0.7,
-            max_tokens: 256
-          })
+          body: JSON.stringify(requestBody)
         });
         if (!response.ok) {
           if (response.status === 401 || response.status === 403) {
@@ -3274,7 +3347,13 @@
           }
           throw new Error(t.aiErrors.requestFailed(response.status));
         }
-        const data = await response.json();
+        let data = await response.json();
+
+        // Convert Anthropic response to OpenAI format if needed
+        if (config.apiType === 'anthropic') {
+          data = convertFromAnthropicFormat(data);
+        }
+
         const aiText =
           data &&
           data.choices &&
@@ -4279,6 +4358,26 @@
                   React.createElement('input', {
                     type: 'radio',
                     name: 'ai-provider',
+                    value: AI_PROVIDERS.MISTRAL,
+                    checked: aiProvider === AI_PROVIDERS.MISTRAL,
+                    onChange: (e) => handleProviderChange(e.target.value)
+                  }),
+                  React.createElement('span', null, 'Mistral AI')
+                ),
+                React.createElement('label', { className: 'model-option' },
+                  React.createElement('input', {
+                    type: 'radio',
+                    name: 'ai-provider',
+                    value: AI_PROVIDERS.ANTHROPIC,
+                    checked: aiProvider === AI_PROVIDERS.ANTHROPIC,
+                    onChange: (e) => handleProviderChange(e.target.value)
+                  }),
+                  React.createElement('span', null, 'Anthropic (Claude)')
+                ),
+                React.createElement('label', { className: 'model-option' },
+                  React.createElement('input', {
+                    type: 'radio',
+                    name: 'ai-provider',
                     value: AI_PROVIDERS.OLLAMA,
                     checked: aiProvider === AI_PROVIDERS.OLLAMA,
                     onChange: (e) => handleProviderChange(e.target.value)
@@ -4300,6 +4399,34 @@
                   'aria-describedby': apiKeyError ? 'api-key-error' : undefined
                 }),
                 React.createElement('p', { className: 'modal-hint' }, t.apiKeyModal.hint)
+              ),
+              aiProvider === AI_PROVIDERS.MISTRAL && React.createElement(React.Fragment, null,
+                React.createElement('label', { className: 'modal-label', htmlFor: 'mistral-api-key' }, 'Mistral API Key'),
+                React.createElement('input', {
+                  id: 'mistral-api-key',
+                  type: 'password',
+                  value: apiKeyInput,
+                  onChange: (event) => setApiKeyInput(event.target.value),
+                  ref: apiKeyInputRef,
+                  placeholder: 'Enter your Mistral API key',
+                  autoComplete: 'off',
+                  'aria-describedby': apiKeyError ? 'api-key-error' : undefined
+                }),
+                React.createElement('p', { className: 'modal-hint' }, 'Get your API key from https://console.mistral.ai/')
+              ),
+              aiProvider === AI_PROVIDERS.ANTHROPIC && React.createElement(React.Fragment, null,
+                React.createElement('label', { className: 'modal-label', htmlFor: 'anthropic-api-key' }, 'Anthropic API Key'),
+                React.createElement('input', {
+                  id: 'anthropic-api-key',
+                  type: 'password',
+                  value: apiKeyInput,
+                  onChange: (event) => setApiKeyInput(event.target.value),
+                  ref: apiKeyInputRef,
+                  placeholder: 'Enter your Anthropic API key',
+                  autoComplete: 'off',
+                  'aria-describedby': apiKeyError ? 'api-key-error' : undefined
+                }),
+                React.createElement('p', { className: 'modal-hint' }, 'Get your API key from https://console.anthropic.com/')
               ),
               aiProvider === AI_PROVIDERS.OLLAMA && React.createElement(React.Fragment, null,
                 React.createElement('label', { className: 'modal-label', htmlFor: 'ollama-endpoint' }, 'Ollama Endpoint (Optional)'),

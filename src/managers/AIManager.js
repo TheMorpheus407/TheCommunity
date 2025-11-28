@@ -19,6 +19,8 @@
 import {
   OPENAI_MODEL,
   OLLAMA_MODEL,
+  MISTRAL_MODEL,
+  ANTHROPIC_MODEL,
   OLLAMA_DEFAULT_ENDPOINT,
   AI_PROVIDERS,
   MAX_MESSAGE_LENGTH,
@@ -28,9 +30,9 @@ import {
 
 /**
  * Gets the appropriate API endpoint and model based on provider
- * @param {string} provider - AI provider (openai or ollama)
+ * @param {string} provider - AI provider (openai, ollama, mistral, or anthropic)
  * @param {string} ollamaEndpoint - Custom Ollama endpoint (optional)
- * @returns {Object} Configuration object with endpoint and model
+ * @returns {Object} Configuration object with endpoint, model, and auth settings
  */
 function getApiConfig(provider, ollamaEndpoint = '') {
   if (provider === AI_PROVIDERS.OLLAMA) {
@@ -44,7 +46,26 @@ function getApiConfig(provider, ollamaEndpoint = '') {
     return {
       endpoint: fullEndpoint,
       model: OLLAMA_MODEL,
-      requiresAuth: false
+      requiresAuth: false,
+      apiType: 'openai-compatible'
+    };
+  }
+
+  if (provider === AI_PROVIDERS.MISTRAL) {
+    return {
+      endpoint: 'https://api.mistral.ai/v1/chat/completions',
+      model: MISTRAL_MODEL,
+      requiresAuth: true,
+      apiType: 'openai-compatible'
+    };
+  }
+
+  if (provider === AI_PROVIDERS.ANTHROPIC) {
+    return {
+      endpoint: 'https://api.anthropic.com/v1/messages',
+      model: ANTHROPIC_MODEL,
+      requiresAuth: true,
+      apiType: 'anthropic'
     };
   }
 
@@ -52,7 +73,39 @@ function getApiConfig(provider, ollamaEndpoint = '') {
   return {
     endpoint: 'https://api.openai.com/v1/chat/completions',
     model: OPENAI_MODEL,
-    requiresAuth: true
+    requiresAuth: true,
+    apiType: 'openai-compatible'
+  };
+}
+
+/**
+ * Converts OpenAI-style messages to Anthropic format
+ * @param {Array} messages - OpenAI format messages
+ * @returns {Object} Anthropic format with system and messages
+ */
+function convertToAnthropicFormat(messages) {
+  const systemMessage = messages.find(m => m.role === 'system');
+  const userMessages = messages.filter(m => m.role !== 'system');
+
+  return {
+    system: systemMessage ? systemMessage.content : undefined,
+    messages: userMessages
+  };
+}
+
+/**
+ * Converts Anthropic response to OpenAI format
+ * @param {Object} anthropicResponse - Anthropic API response
+ * @returns {Object} OpenAI-compatible response format
+ */
+function convertFromAnthropicFormat(anthropicResponse) {
+  return {
+    choices: [{
+      message: {
+        role: 'assistant',
+        content: anthropicResponse.content[0]?.text || ''
+      }
+    }]
   };
 }
 
@@ -177,7 +230,7 @@ export function createAIManager(deps) {
     }
 
     // Check if credentials are set based on provider
-    const needsKey = aiProvider === AI_PROVIDERS.OPENAI;
+    const needsKey = aiProvider !== AI_PROVIDERS.OLLAMA;
     if (needsKey && !openAiKey) {
       setApiKeyInput(openAiKey);
       setApiKeyError(t.aiErrors.emptyKey);
@@ -205,29 +258,54 @@ export function createAIManager(deps) {
       };
 
       if (config.requiresAuth && openAiKey) {
-        headers['Authorization'] = `Bearer ${openAiKey}`;
+        if (config.apiType === 'anthropic') {
+          headers['x-api-key'] = openAiKey;
+          headers['anthropic-version'] = '2023-06-01';
+        } else {
+          headers['Authorization'] = `Bearer ${openAiKey}`;
+        }
+      }
+
+      // Prepare messages
+      const messages = [
+        {
+          role: 'system',
+          content:
+            'You rewrite chat drafts to stay concise, friendly, and clear. Preserve intent, remove sensitive data, and return only the revised message.'
+        },
+        {
+          role: 'user',
+          content: draft
+        }
+      ];
+
+      // Build request body based on API type
+      let requestBody;
+      if (config.apiType === 'anthropic') {
+        const anthropicFormat = convertToAnthropicFormat(messages);
+        requestBody = {
+          model: config.model,
+          max_tokens: 256,
+          messages: anthropicFormat.messages
+        };
+        if (anthropicFormat.system) {
+          requestBody.system = anthropicFormat.system;
+        }
+      } else {
+        // OpenAI-compatible format (OpenAI, Ollama, Mistral)
+        requestBody = {
+          model: config.model,
+          messages: messages,
+          temperature: 0.7,
+          max_tokens: 256
+        };
       }
 
       // Call AI API
       const response = await fetch(config.endpoint, {
         method: 'POST',
         headers,
-        body: JSON.stringify({
-          model: config.model,
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You rewrite chat drafts to stay concise, friendly, and clear. Preserve intent, remove sensitive data, and return only the revised message.'
-            },
-            {
-              role: 'user',
-              content: draft
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 256
-        })
+        body: JSON.stringify(requestBody)
       });
 
       // Handle HTTP errors
@@ -239,7 +317,13 @@ export function createAIManager(deps) {
       }
 
       // Parse response
-      const data = await response.json();
+      let data = await response.json();
+
+      // Convert Anthropic response to OpenAI format if needed
+      if (config.apiType === 'anthropic') {
+        data = convertFromAnthropicFormat(data);
+      }
+
       const aiText =
         data &&
         data.choices &&
@@ -289,8 +373,8 @@ export function createAIManager(deps) {
       return issues;
     }
 
-    // For OpenAI, we need a key. For Ollama, we don't
-    const needsKey = aiProvider === AI_PROVIDERS.OPENAI;
+    // Check if credentials are needed based on provider
+    const needsKey = aiProvider !== AI_PROVIDERS.OLLAMA;
     if (needsKey && !openAiKey) {
       return issues;
     }
@@ -307,34 +391,65 @@ export function createAIManager(deps) {
         };
 
         if (config.requiresAuth && openAiKey) {
-          headers['Authorization'] = `Bearer ${openAiKey}`;
+          if (config.apiType === 'anthropic') {
+            headers['x-api-key'] = openAiKey;
+            headers['anthropic-version'] = '2023-06-01';
+          } else {
+            headers['Authorization'] = `Bearer ${openAiKey}`;
+          }
+        }
+
+        // Prepare messages
+        const messages = [
+          {
+            role: 'system',
+            content: 'You summarize GitHub issues concisely and clearly.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ];
+
+        // Build request body based on API type
+        let requestBody;
+        if (config.apiType === 'anthropic') {
+          const anthropicFormat = convertToAnthropicFormat(messages);
+          requestBody = {
+            model: config.model,
+            max_tokens: 128,
+            messages: anthropicFormat.messages
+          };
+          if (anthropicFormat.system) {
+            requestBody.system = anthropicFormat.system;
+          }
+        } else {
+          // OpenAI-compatible format
+          requestBody = {
+            model: config.model,
+            messages: messages,
+            temperature: 0.5,
+            max_tokens: 128
+          };
         }
 
         const response = await fetch(config.endpoint, {
           method: 'POST',
           headers,
-          body: JSON.stringify({
-            model: config.model,
-            messages: [
-              {
-                role: 'system',
-                content: 'You summarize GitHub issues concisely and clearly.'
-              },
-              {
-                role: 'user',
-                content: prompt
-              }
-            ],
-            temperature: 0.5,
-            max_tokens: 128
-          })
+          body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {
           return { ...issue, aiSummary: null };
         }
 
-        const data = await response.json();
+        let data = await response.json();
+
+        // Convert Anthropic response to OpenAI format if needed
+        if (config.apiType === 'anthropic') {
+          data = convertFromAnthropicFormat(data);
+        }
+
         const summary =
           data &&
           data.choices &&
