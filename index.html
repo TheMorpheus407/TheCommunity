@@ -15,6 +15,15 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin="anonymous" defer></script>
   <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js" crossorigin="anonymous" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2" crossorigin="anonymous" defer></script>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'default',
+      securityLevel: 'strict'
+    });
+    window.mermaid = mermaid;
+  </script>
   <script src="translations.js" defer></script>
   <script src="pong-game.js" defer></script>
   <script src="flappy-bird-game.js" defer></script>

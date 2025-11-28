@@ -1631,6 +1631,45 @@ textarea[readonly] {
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
+.mermaid-diagram {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--color-panel-bg);
+  border-radius: 8px;
+  border: 1px solid var(--color-border-subtle);
+  overflow-x: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+.mermaid-error {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background: rgba(255, 100, 100, 0.1);
+  border: 1px solid rgba(255, 100, 100, 0.3);
+  border-radius: 8px;
+}
+.mermaid-error details {
+  cursor: pointer;
+}
+.mermaid-error summary {
+  font-weight: 600;
+  padding: 0.25rem;
+  user-select: none;
+}
+.mermaid-error pre {
+  margin: 0.5rem 0 0 0;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  overflow-x: auto;
+  font-family: monospace;
+  font-size: 0.875rem;
+}
 .chat-input {
   display: flex;
   gap: 0.75rem;
