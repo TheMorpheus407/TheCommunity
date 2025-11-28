@@ -183,7 +183,7 @@ TheCommunity/
 ├── app.js              # React application with WebRTC logic
 ├── styles.css          # All styling (dark theme, responsive)
 ├── package.json        # Project metadata
-├── LICENSE             # MIT License
+├── LICENSE             # Unlicense (Public Domain)
 ├── CLAUDE.md           # AI development guidelines
 ├── AGENTS.md           # Additional development guidelines
 └── .github/
@@ -285,7 +285,7 @@ Want to suggest a feature? [Open an issue!](https://github.com/TheMorpheus407/Th
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is released into the public domain under the Unlicense - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
