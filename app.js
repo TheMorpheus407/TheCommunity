@@ -1162,8 +1162,8 @@
    * @returns {React.ReactElement|React.ReactElement[]} Rendered content
    */
   function renderMessageContent(text, messageId) {
-    // Pattern to detect mermaid code blocks
-    const mermaidPattern = /```mermaid\n([\s\S]*?)```/g;
+    // Pattern to detect mermaid code blocks (supports both \n and \r\n line endings)
+    const mermaidPattern = /```mermaid[\r\n]+([\s\S]*?)```/g;
     const parts = [];
     let lastIndex = 0;
     let match;
@@ -1214,36 +1214,38 @@
    * @returns {React.ReactElement}
    */
   function MermaidDiagram({ id, code }) {
-    const diagramRef = useRef(null);
+    const [svgContent, setSvgContent] = useState(null);
     const [error, setError] = useState(null);
-    const [isRendered, setIsRendered] = useState(false);
 
     useEffect(() => {
-      const renderDiagram = async () => {
-        if (!diagramRef.current || isRendered) return;
+      let isMounted = true;
 
+      const renderDiagram = async () => {
         try {
           // Wait for mermaid to be available
           if (!window.mermaid) {
-            setError('Mermaid library not loaded');
+            if (isMounted) setError('Mermaid library not loaded');
             return;
           }
 
           // Render the diagram
           const { svg } = await window.mermaid.render(id, code);
-          if (diagramRef.current) {
-            diagramRef.current.innerHTML = svg;
-            setIsRendered(true);
+          if (isMounted) {
+            setSvgContent(svg);
             setError(null);
           }
         } catch (err) {
           console.error('Mermaid rendering error:', err);
-          setError('Failed to render diagram');
+          if (isMounted) setError('Failed to render diagram');
         }
       };
 
       renderDiagram();
-    }, [id, code, isRendered]);
+
+      return () => {
+        isMounted = false;
+      };
+    }, [id, code]);
 
     if (error) {
       return React.createElement('div', {
@@ -1256,9 +1258,15 @@
       );
     }
 
+    if (!svgContent) {
+      return React.createElement('div', {
+        className: 'mermaid-diagram'
+      }, 'Loading diagram...');
+    }
+
     return React.createElement('div', {
-      ref: diagramRef,
-      className: 'mermaid-diagram'
+      className: 'mermaid-diagram',
+      dangerouslySetInnerHTML: { __html: svgContent }
     });
   }
 
