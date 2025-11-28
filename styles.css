@@ -2716,6 +2716,89 @@ textarea[readonly] {
   }
 }
 
+/* Doom Game Section */
+#doom {
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-panel-border);
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow: var(--shadow-panel);
+}
+
+#doom header {
+  margin-bottom: 1.5rem;
+}
+
+.doom-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.doom-display-container {
+  position: relative;
+  width: 100%;
+  max-width: min(1000px, 95vw);
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid var(--color-border-strong);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.doom-display {
+  display: block;
+  width: 100%;
+  min-height: 400px;
+  font-family: 'Courier New', monospace;
+  font-size: 8px;
+  line-height: 8px;
+  color: #0f0;
+  background: #000;
+  padding: 10px;
+  white-space: pre;
+  overflow: hidden;
+}
+
+.doom-controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.doom-controls button {
+  min-width: 200px;
+}
+
+.doom-instructions {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+[data-theme='rgb'] .doom-display-container {
+  border: 2px solid;
+  border-image: linear-gradient(135deg, #00ff00, #00ff00, #00ff00) 1;
+  box-shadow: 0 0 30px rgba(0, 255, 0, 0.4), 0 0 60px rgba(0, 255, 0, 0.3);
+}
+
+@media (max-width: 768px) {
+  .doom-controls button {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .doom-display {
+    min-height: 300px;
+    font-size: 6px;
+    line-height: 6px;
+  }
+}
+
 /* Danger Zone Section */
 #danger-zone {
   border: 2px solid var(--color-text-error);
