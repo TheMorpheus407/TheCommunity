@@ -8,6 +8,7 @@
  * - Track management and lifecycle
  * - Integration with WebRTC transceivers
  * - Remote screen stream handling
+ * - Video quality optimization and codec selection
  *
  * Security features:
  * - Browser permission checks
@@ -16,6 +17,7 @@
  */
 
 import { CONTROL_MESSAGE_TYPES, CONTROL_TOTAL_TEXT_BUDGET } from '../core/constants.js';
+import { createVideoCodecManager } from './VideoCodecManager.js';
 
 /**
  * Creates a factory for Screen Share operations
@@ -58,6 +60,9 @@ export function createScreenShareManager(deps) {
     hideRemotePointer,
     t
   } = deps;
+
+  // Create video codec manager
+  const codecManager = createVideoCodecManager({ appendSystemMessage, t });
 
   /**
    * Stops screen sharing and cleans up resources
@@ -138,9 +143,10 @@ export function createScreenShareManager(deps) {
    * Starts screen capture and streams it to peer
    * @param {boolean} isCurrentlySharing - Current screen sharing state
    * @param {boolean} includeSystemAudio - Whether to capture system audio
+   * @param {Object|null} qualitySettings - Quality settings override (null for auto)
    * @returns {Promise<void>}
    */
-  async function startScreenShare(isCurrentlySharing, includeSystemAudio) {
+  async function startScreenShare(isCurrentlySharing, includeSystemAudio, qualitySettings = null) {
     if (isCurrentlySharing) {
       return;
     }
@@ -190,6 +196,15 @@ export function createScreenShareManager(deps) {
         localScreenVideoRef.current.srcObject = stream;
       }
 
+      // Apply video quality optimization
+      if (screenSenderRef.current) {
+        await codecManager.optimizeVideoQuality(screenSenderRef.current, pc, qualitySettings);
+      }
+
+      // Display codec information
+      const codecDesc = await codecManager.getCodecDescription();
+      appendSystemMessage(t.screenShare?.messages?.codecSelected?.(codecDesc) || `Using ${codecDesc}`);
+
       // Update state
       setIsScreenSharing(true);
       appendSystemMessage(t.screenShare.messages.started);
@@ -220,6 +235,26 @@ export function createScreenShareManager(deps) {
   }
 
   /**
+   * Updates video quality for active screen share
+   * @param {Object|null} qualitySettings - Quality settings override (null for auto)
+   * @returns {Promise<boolean>} Success status
+   */
+  async function updateVideoQuality(qualitySettings = null) {
+    const pc = ensurePeerConnection();
+    if (!pc || !screenSenderRef.current) {
+      return false;
+    }
+
+    try {
+      await codecManager.optimizeVideoQuality(screenSenderRef.current, pc, qualitySettings);
+      return true;
+    } catch (error) {
+      console.warn('Failed to update video quality', error);
+      return false;
+    }
+  }
+
+  /**
    * Toggles system audio capture preference
    * @param {Function} setShareSystemAudio - State setter for audio preference
    * @returns {void}
@@ -231,6 +266,8 @@ export function createScreenShareManager(deps) {
   return {
     startScreenShare,
     stopScreenShare,
-    toggleSystemAudio
+    toggleSystemAudio,
+    updateVideoQuality,
+    codecManager
   };
 }

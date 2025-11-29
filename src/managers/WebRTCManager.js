@@ -24,6 +24,7 @@ import {
   TRIVIA_CHANNEL_LABEL,
   CHESS_CHANNEL_LABEL
 } from '../core/constants.js';
+import { createVideoCodecManager } from './VideoCodecManager.js';
 
 /**
  * Creates a factory for WebRTC operations that integrates with React state
@@ -95,6 +96,9 @@ export function createWebRTCManager(deps) {
     t
   } = deps;
 
+  // Create codec manager for SDP processing
+  const codecManager = createVideoCodecManager({ appendSystemMessage, t });
+
   /**
    * Creates or returns existing RTCPeerConnection with event handlers
    * @returns {RTCPeerConnection}
@@ -125,7 +129,17 @@ export function createWebRTCManager(deps) {
     pc.onicecandidate = (event) => {
       if (!event.candidate && pc.localDescription) {
         iceDoneRef.current = true;
-        setLocalSignal(JSON.stringify(pc.localDescription));
+
+        // Apply SDP metadata minimization for privacy
+        const originalSdp = pc.localDescription.sdp;
+        const sanitizedSdp = codecManager.minimizeSdpMetadata(originalSdp);
+
+        const sanitizedDescription = {
+          type: pc.localDescription.type,
+          sdp: sanitizedSdp
+        };
+
+        setLocalSignal(JSON.stringify(sanitizedDescription));
         setStatus(t.status.signalReady);
       }
     };

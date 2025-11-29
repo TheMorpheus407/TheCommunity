@@ -82,6 +82,35 @@ export function createRemoteControlManager(deps) {
   } = deps;
 
   /**
+   * Tracking for keyboard event burst detection
+   * @type {Array<number>}
+   */
+  const keyboardEventTimestamps = [];
+  const MAX_KEYBOARD_EVENTS_PER_SECOND = 20; // Reasonable typing speed limit
+
+  /**
+   * Checks for keyboard event burst attacks
+   * @returns {boolean} True if burst detected (should block), false otherwise
+   */
+  function detectKeyboardBurst() {
+    const now = Date.now();
+
+    // Remove timestamps older than 1 second
+    while (keyboardEventTimestamps.length > 0 && now - keyboardEventTimestamps[0] > 1000) {
+      keyboardEventTimestamps.shift();
+    }
+
+    // Check if exceeding rate limit
+    if (keyboardEventTimestamps.length >= MAX_KEYBOARD_EVENTS_PER_SECOND) {
+      return true;
+    }
+
+    // Add current timestamp
+    keyboardEventTimestamps.push(now);
+    return false;
+  }
+
+  /**
    * Cancels pending pointer animation frame
    * @returns {void}
    */
@@ -210,6 +239,21 @@ export function createRemoteControlManager(deps) {
     }
 
     if (!message || typeof message.mode !== 'string') {
+      return;
+    }
+
+    // Security: Detect keyboard event burst attacks
+    if (detectKeyboardBurst()) {
+      appendSystemMessage(t.remoteControl?.system?.burstDetected || 'Rapid keyboard input detected - blocking');
+      remoteControlAllowedRef.current = false;
+      setIsRemoteControlAllowed(false);
+      setRemoteControlStatus(t.remoteControl?.statusDisabledBurst || 'Disabled (burst detected)');
+      hideRemotePointer();
+
+      sendControlMessage({
+        type: CONTROL_MESSAGE_TYPES.PERMISSION,
+        allowed: false
+      });
       return;
     }
 
