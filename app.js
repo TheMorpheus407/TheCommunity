@@ -4,14 +4,53 @@
  */
 
 import {
+  EXPECTED_CHANNEL_LABEL,
+  CONTROL_CHANNEL_LABEL,
+  IMAGE_CHANNEL_LABEL,
+  PONG_CHANNEL_LABEL,
+  TRIVIA_CHANNEL_LABEL,
+  FLAPPYBIRD_CHANNEL_LABEL,
+  CHESS_CHANNEL_LABEL,
   DOOM_CHANNEL_LABEL,
   FILE_CHANNEL_LABEL,
+  MAX_MESSAGE_LENGTH,
+  MAX_MESSAGES_PER_INTERVAL,
+  MESSAGE_INTERVAL_MS,
+  CONTROL_MAX_MESSAGES_PER_INTERVAL,
+  CONTROL_MESSAGE_INTERVAL_MS,
+  CONTROL_MAX_PAYLOAD_LENGTH,
+  CONTROL_TEXT_INSERT_LIMIT,
+  CONTROL_TOTAL_TEXT_BUDGET,
+  IMAGE_MAX_SIZE_BYTES,
+  IMAGE_CHUNK_SIZE,
+  IMAGE_MAX_PER_INTERVAL,
+  IMAGE_INTERVAL_MS,
+  IMAGE_MAX_CONCURRENT,
+  ALLOWED_IMAGE_TYPES,
+  ALLOWED_VIDEO_TYPES,
+  ALLOWED_DOCUMENT_TYPES,
+  ALLOWED_FILE_TYPES,
+  OPENAI_MODEL,
+  OLLAMA_MODEL,
+  MISTRAL_MODEL,
+  ANTHROPIC_MODEL,
+  OLLAMA_DEFAULT_ENDPOINT,
+  AI_PROVIDERS,
+  THEME_STORAGE_KEY,
+  AI_PREFERENCE_STORAGE_KEY,
+  AI_PROVIDER_STORAGE_KEY,
+  THEME_OPTIONS,
+  THEME_SEQUENCE,
+  CAT_AUDIO_STORAGE_KEY,
+  DEFAULT_CAT_AUDIO_SETTINGS,
+  CONTROL_MESSAGE_TYPES,
   COOKIE_CONSENT_STORAGE_KEY,
   WHISPER_MODEL_STORAGE_KEY,
   FRANCONIA_INTRO_SEEN_KEY,
   WHISPER_MODELS,
   DEFAULT_WHISPER_MODEL,
-  CONSENT_CATEGORIES
+  CONSENT_CATEGORIES,
+  getNextThemeValue
 } from './src/core/constants.js';
 
 import {
@@ -31,804 +70,739 @@ import { DolphinMascot } from './src/components/DolphinMascot.js';
 
 const { useState, useRef, useCallback, useEffect } = React;
 
-  const EXPECTED_CHANNEL_LABEL = 'chat';
-  const CONTROL_CHANNEL_LABEL = 'control';
-  const IMAGE_CHANNEL_LABEL = 'image';
-  const PONG_CHANNEL_LABEL = 'pong';
-  const TRIVIA_CHANNEL_LABEL = 'trivia';
-  const FLAPPYBIRD_CHANNEL_LABEL = 'flappybird';
-  const CHESS_CHANNEL_LABEL = 'chess';
-  const MAX_MESSAGE_LENGTH = 2000;
-  const MAX_MESSAGES_PER_INTERVAL = 30;
-  const MESSAGE_INTERVAL_MS = 5000;
-  const CONTROL_MAX_MESSAGES_PER_INTERVAL = 60;
-  const CONTROL_MESSAGE_INTERVAL_MS = 5000;
-  const CONTROL_MAX_PAYLOAD_LENGTH = 2048;
-  const CONTROL_TEXT_INSERT_LIMIT = 32;
-  const CONTROL_TOTAL_TEXT_BUDGET = 2048;
-  const IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024;
-  const IMAGE_CHUNK_SIZE = 16 * 1024;
-  const IMAGE_MAX_PER_INTERVAL = 10;
-  const IMAGE_INTERVAL_MS = 60000;
-  const IMAGE_MAX_CONCURRENT = 3;
-  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-  const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
-  const ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'text/plain', 'text/markdown'];
-  const ALLOWED_FILE_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES, ...ALLOWED_DOCUMENT_TYPES];
-  const OPENAI_MODEL = 'gpt-4o-mini';
-  const OLLAMA_MODEL = 'llama3.2';
-  const MISTRAL_MODEL = 'mistral-small-latest';
-  const ANTHROPIC_MODEL = 'claude-3-5-haiku-20241022';
-  const OLLAMA_DEFAULT_ENDPOINT = 'http://localhost:11434';
-  const AI_PROVIDERS = {
-    OPENAI: 'openai',
-    OLLAMA: 'ollama',
-    MISTRAL: 'mistral',
-    ANTHROPIC: 'anthropic'
-  };
-  const THEME_STORAGE_KEY = 'thecommunity.theme-preference';
-  const AI_PREFERENCE_STORAGE_KEY = 'thecommunity.ai-preference';
-  const AI_PROVIDER_STORAGE_KEY = 'thecommunity.ai-provider';
-  const THEME_OPTIONS = {
-    LIGHT: 'light',
-    DARK: 'dark',
-    RGB: 'rgb',
-    CAT: 'cat'
-  };
-  const THEME_SEQUENCE = [THEME_OPTIONS.DARK, THEME_OPTIONS.LIGHT, THEME_OPTIONS.RGB, THEME_OPTIONS.CAT];
-  const CAT_AUDIO_STORAGE_KEY = 'thecommunity.cat-audio-settings';
-  const DEFAULT_CAT_AUDIO_SETTINGS = {
-    enabled: false,
-    musicEnabled: false,
-    sfxEnabled: false,
-    volume: 50
-  };
+// Room system constants
+const PUBLIC_ROOMS = [
+  'lobby',
+  'random-1',
+  'random-2',
+  'random-3',
+  'community',
+  'deutsch',
+  'gaming',
+  'tech-talk',
+  'casual'
+];
 
-  // Room system constants
-  const PUBLIC_ROOMS = [
-    'lobby',
-    'random-1',
-    'random-2',
-    'random-3',
-    'community',
-    'deutsch',
-    'gaming',
-    'tech-talk',
-    'casual'
-  ];
-
-  function getNextThemeValue(currentTheme) {
-    const index = THEME_SEQUENCE.indexOf(currentTheme);
-    return THEME_SEQUENCE[(index + 1) % THEME_SEQUENCE.length];
+/**
+ * Gets the current room ID from the URL hash
+ * @returns {string|null} Room ID or null if no room
+ */
+function getRoomFromHash() {
+  const hash = window.location.hash;
+  if (hash && hash.startsWith('#room/')) {
+    return hash.substring(6); // Remove '#room/'
   }
+  return null;
+}
 
-  /**
-   * Gets the current room ID from the URL hash
-   * @returns {string|null} Room ID or null if no room
-   */
-  function getRoomFromHash() {
-    const hash = window.location.hash;
-    if (hash && hash.startsWith('#room/')) {
-      return hash.substring(6); // Remove '#room/'
-    }
-    return null;
-  }
-
-  /**
-   * Sets the room in the URL hash
-   * @param {string|null} roomId - Room ID to set, or null to clear
-   */
-  function setRoomInHash(roomId) {
-    if (roomId) {
-      // Security: Validate room ID format to prevent injection attacks
-      // Only allow alphanumeric characters, hyphens, and underscores
-      if (!/^[a-zA-Z0-9_-]+$/.test(roomId)) {
-        console.warn('Invalid room ID format (must be alphanumeric with hyphens/underscores):', roomId);
-        return;
-      }
-      window.location.hash = `#room/${roomId}`;
-    } else {
-      window.location.hash = '';
-    }
-  }
-
-  /**
-   * Gets a random public room ID
-   * @returns {string} Random public room ID
-   */
-  function getRandomPublicRoom() {
-    const randomIndex = Math.floor(Math.random() * PUBLIC_ROOMS.length);
-    return PUBLIC_ROOMS[randomIndex];
-  }
-
-  const CONTROL_MESSAGE_TYPES = {
-    POINTER: 'pointer',
-    POINTER_VISIBILITY: 'pointer-visibility',
-    KEYBOARD: 'keyboard',
-    PERMISSION: 'permission',
-    ACTION: 'action'
-  };
-  /**
-   * Renders the mascot that reacts angrily on hover.
-   * Pure SVG so it can be reused without additional assets.
-   * @param {Object} props
-   * @param {Object} props.t - Translation object
-   * @param {string|null} props.animation - Animation type ('flower' or 'diamond')
-   * @returns {React.ReactElement}
-   */
-  function TuxMascot({ t, animation }) {
-    const svgChildren = [
-      React.createElement('ellipse', {
-        key: 'shadow',
-        className: 'tux-shadow',
-        cx: '60',
-        cy: '112',
-        rx: '24',
-        ry: '8'
-      }),
-      React.createElement('ellipse', {
-        key: 'body',
-        className: 'tux-body',
-        cx: '60',
-        cy: '60',
-        rx: '32',
-        ry: '46'
-      }),
-      React.createElement('ellipse', {
-        key: 'belly',
-        className: 'tux-belly',
-        cx: '60',
-        cy: '78',
-        rx: '22',
-        ry: '28'
-      }),
-      React.createElement('ellipse', {
-        key: 'head',
-        className: 'tux-head',
-        cx: '60',
-        cy: '38',
-        rx: '26',
-        ry: '24'
-      }),
-      React.createElement('ellipse', {
-        key: 'face',
-        className: 'tux-face',
-        cx: '60',
-        cy: '47',
-        rx: '20',
-        ry: '15'
-      }),
-      React.createElement('ellipse', {
-        key: 'wing-left',
-        className: 'tux-wing wing-left',
-        cx: '33',
-        cy: '70',
-        rx: '11',
-        ry: '24'
-      }),
-      React.createElement('ellipse', {
-        key: 'wing-right',
-        className: 'tux-wing wing-right',
-        cx: '87',
-        cy: '70',
-        rx: '11',
-        ry: '24'
-      }),
-      React.createElement('path', {
-        key: 'foot-left',
-        className: 'tux-foot foot-left',
-        d: 'M44 96 C40 104 44 110 52 110 L58 110 C64 110 66 104 62 96 L56 88 Z'
-      }),
-      React.createElement('path', {
-        key: 'foot-right',
-        className: 'tux-foot foot-right',
-        d: 'M76 96 C72 104 76 110 84 110 L90 110 C96 110 98 104 94 96 L88 88 Z'
-      }),
-      React.createElement('polygon', {
-        key: 'beak-upper',
-        className: 'tux-beak-upper',
-        points: '60,50 48,56 72,56'
-      }),
-      React.createElement('ellipse', {
-        key: 'beak-lower',
-        className: 'tux-beak-lower',
-        cx: '60',
-        cy: '60',
-        rx: '12',
-        ry: '5'
-      }),
-      React.createElement('circle', {
-        key: 'eye-left',
-        className: 'tux-eye eye-left',
-        cx: '50',
-        cy: '44',
-        r: '7'
-      }),
-      React.createElement('circle', {
-        key: 'eye-right',
-        className: 'tux-eye eye-right',
-        cx: '70',
-        cy: '44',
-        r: '7'
-      }),
-      React.createElement('circle', {
-        key: 'pupil-left',
-        className: 'tux-pupil pupil-left',
-        cx: '52',
-        cy: '46',
-        r: '3'
-      }),
-      React.createElement('circle', {
-        key: 'pupil-right',
-        className: 'tux-pupil pupil-right',
-        cx: '68',
-        cy: '46',
-        r: '3'
-      }),
-      React.createElement('circle', {
-        key: 'glow-left',
-        className: 'tux-eye-glow glow-left',
-        cx: '50',
-        cy: '44',
-        r: '7'
-      }),
-      React.createElement('circle', {
-        key: 'glow-right',
-        className: 'tux-eye-glow glow-right',
-        cx: '70',
-        cy: '44',
-        r: '7'
-      }),
-      React.createElement('rect', {
-        key: 'brow-left',
-        className: 'tux-brow brow-left',
-        x: '42',
-        y: '32',
-        width: '16',
-        height: '3',
-        rx: '1.5'
-      }),
-      React.createElement('rect', {
-        key: 'brow-right',
-        className: 'tux-brow brow-right',
-        x: '62',
-        y: '32',
-        width: '16',
-        height: '3',
-        rx: '1.5'
-      }),
-      React.createElement('path', {
-        key: 'steam-left',
-        className: 'tux-steam steam-left',
-        d: 'M32 20 C28 14 31 10 35 8 C39 6 40 4 38 2'
-      }),
-      React.createElement('path', {
-        key: 'steam-right',
-        className: 'tux-steam steam-right',
-        d: 'M88 20 C92 14 89 10 85 8 C81 6 80 4 82 2'
-      })
-    ];
-
-    // Animation-specific elements
-    const animationElements = [];
-
-    if (animation === 'flower') {
-      // Flower bouquet (appears between male and female Tux)
-      animationElements.push(
-        React.createElement('g', {
-          key: 'flower-bouquet',
-          className: 'tux-flower-bouquet'
-        },
-          React.createElement('ellipse', { cx: '110', cy: '85', rx: '8', ry: '12', fill: '#ff69b4' }),
-          React.createElement('ellipse', { cx: '118', cy: '82', rx: '7', ry: '11', fill: '#ff1493' }),
-          React.createElement('ellipse', { cx: '102', cy: '82', rx: '7', ry: '11', fill: '#ff1493' }),
-          React.createElement('rect', { x: '108', y: '90', width: '4', height: '15', fill: '#228b22', rx: '2' })
-        )
-      );
-      // Heart (kiss effect)
-      animationElements.push(
-        React.createElement('path', {
-          key: 'kiss-heart',
-          className: 'tux-kiss-heart',
-          d: 'M150 50 C150 45 155 40 160 40 C163 40 165 42 166 45 C167 42 169 40 172 40 C177 40 182 45 182 50 C182 58 166 70 166 70 C166 70 150 58 150 50',
-          fill: '#ff69b4'
-        })
-      );
-    }
-
-    if (animation === 'diamond') {
-      // Diamond ring
-      animationElements.push(
-        React.createElement('g', {
-          key: 'diamond-ring',
-          className: 'tux-diamond-ring'
-        },
-          React.createElement('ellipse', { cx: '110', cy: '85', rx: '6', ry: '3', fill: '#ffd700' }),
-          React.createElement('path', { d: 'M110 75 L105 82 L115 82 Z', fill: '#b9f2ff' }),
-          React.createElement('circle', { cx: '110', cy: '78', r: '2', fill: '#ffffff', opacity: '0.8' })
-        )
-      );
-      // Wedding dress decoration
-      animationElements.push(
-        React.createElement('g', {
-          key: 'wedding-dress',
-          className: 'tux-wedding-dress'
-        },
-          React.createElement('path', { d: 'M180 95 C175 85 165 85 160 95 L160 110 C170 110 190 110 200 110 L200 95 C195 85 185 85 180 95', fill: '#ffffff', opacity: '0.9' }),
-          React.createElement('circle', { cx: '180', cy: '60', r: '8', fill: '#ffffff', opacity: '0.7' })
-        )
-      );
-    }
-
-    // Female Tux (rendered when animation is active)
-    const femaleTuxElements = animation ? [
-      React.createElement('g', {
-        key: 'female-tux',
-        className: 'tux-female',
-        transform: 'translate(120, 0)'
-      },
-        React.createElement('ellipse', { key: 'f-shadow', className: 'tux-shadow', cx: '60', cy: '112', rx: '24', ry: '8' }),
-        React.createElement('ellipse', { key: 'f-body', className: 'tux-body', cx: '60', cy: '60', rx: '32', ry: '46' }),
-        React.createElement('ellipse', { key: 'f-belly', className: 'tux-belly', cx: '60', cy: '78', rx: '22', ry: '28' }),
-        React.createElement('ellipse', { key: 'f-head', className: 'tux-head', cx: '60', cy: '38', rx: '26', ry: '24' }),
-        React.createElement('ellipse', { key: 'f-face', className: 'tux-face', cx: '60', cy: '47', rx: '20', ry: '15' }),
-        React.createElement('ellipse', { key: 'f-wing-left', className: 'tux-wing', cx: '33', cy: '70', rx: '11', ry: '24' }),
-        React.createElement('ellipse', { key: 'f-wing-right', className: 'tux-wing', cx: '87', cy: '70', rx: '11', ry: '24' }),
-        React.createElement('path', { key: 'f-foot-left', className: 'tux-foot', d: 'M44 96 C40 104 44 110 52 110 L58 110 C64 110 66 104 62 96 L56 88 Z' }),
-        React.createElement('path', { key: 'f-foot-right', className: 'tux-foot', d: 'M76 96 C72 104 76 110 84 110 L90 110 C96 110 98 104 94 96 L88 88 Z' }),
-        React.createElement('polygon', { key: 'f-beak-upper', className: 'tux-beak-upper', points: '60,50 48,56 72,56' }),
-        React.createElement('ellipse', { key: 'f-beak-lower', className: 'tux-beak-lower', cx: '60', cy: '60', rx: '12', ry: '5' }),
-        React.createElement('circle', { key: 'f-eye-left', className: 'tux-eye', cx: '50', cy: '44', r: '7' }),
-        React.createElement('circle', { key: 'f-eye-right', className: 'tux-eye', cx: '70', cy: '44', r: '7' }),
-        React.createElement('circle', { key: 'f-pupil-left', className: 'tux-pupil', cx: '52', cy: '46', r: '3' }),
-        React.createElement('circle', { key: 'f-pupil-right', className: 'tux-pupil', cx: '68', cy: '46', r: '3' }),
-        // Bow on head for female
-        React.createElement('path', { key: 'f-bow', d: 'M50 25 L45 30 L50 28 L55 30 Z M65 25 L70 30 L65 28 L60 30 Z', fill: '#ff69b4', className: 'tux-female-bow' })
-      )
-    ] : [];
-
-    const containerClass = animation ? `tux-mascot tux-animation-${animation}` : 'tux-mascot';
-    const viewBoxWidth = animation ? '240' : '120';
-
-    return React.createElement(
-      'div',
-      {
-        className: containerClass,
-        role: 'img',
-        'aria-label': t.mascot.ariaLabel
-      },
-      React.createElement(
-        'svg',
-        {
-          className: 'tux-svg',
-          viewBox: `0 0 ${viewBoxWidth} 120`,
-          xmlns: 'http://www.w3.org/2000/svg',
-          'aria-hidden': 'true',
-          focusable: 'false'
-        },
-        [...svgChildren, ...femaleTuxElements, ...animationElements]
-      )
-    );
-  }
-
-  /**
-   * Morpheus T-shirt of the Day data
-   */
-  const MORPHEUS_TSHIRTS = [
-    {
-      id: 'tshirt-001',
-      description: 'Classic black hoodie with tech-inspired design',
-      color: 'black',
-      design: 'Minimalist tech logo',
-      videoRef: 'Placeholder - awaiting community contribution'
-    },
-    {
-      id: 'tshirt-002',
-      description: 'Navy blue coding-themed T-shirt',
-      color: 'navy blue',
-      design: 'Programming syntax print',
-      videoRef: 'Placeholder - awaiting community contribution'
-    },
-    {
-      id: 'tshirt-003',
-      description: 'Dark grey jumper with subtle pattern',
-      color: 'dark grey',
-      design: 'Geometric pattern',
-      videoRef: 'Placeholder - awaiting community contribution'
-    },
-    {
-      id: 'tshirt-004',
-      description: 'Black T-shirt with Matrix-inspired green code',
-      color: 'black',
-      design: 'Green matrix code',
-      videoRef: 'Placeholder - awaiting community contribution'
-    },
-    {
-      id: 'tshirt-005',
-      description: 'Charcoal hoodie with developer motto',
-      color: 'charcoal',
-      design: 'Developer quote print',
-      videoRef: 'Placeholder - awaiting community contribution'
-    },
-    {
-      id: 'tshirt-006',
-      description: 'Wine red sweater, casual style',
-      color: 'wine red',
-      design: 'Solid color',
-      videoRef: 'Placeholder - awaiting community contribution'
-    },
-    {
-      id: 'tshirt-007',
-      description: 'Forest green T-shirt with Linux penguin',
-      color: 'forest green',
-      design: 'Linux Tux mascot',
-      videoRef: 'Placeholder - awaiting community contribution'
-    },
-    {
-      id: 'tshirt-008',
-      description: 'Black zip-up hoodie with cybersecurity theme',
-      color: 'black',
-      design: 'Cybersecurity graphics',
-      videoRef: 'Placeholder - awaiting community contribution'
-    },
-    {
-      id: 'tshirt-009',
-      description: 'Steel blue T-shirt with binary code pattern',
-      color: 'steel blue',
-      design: 'Binary code pattern',
-      videoRef: 'Placeholder - awaiting community contribution'
-    },
-    {
-      id: 'tshirt-010',
-      description: 'Dark purple jumper with abstract design',
-      color: 'dark purple',
-      design: 'Abstract tech pattern',
-      videoRef: 'Placeholder - awaiting community contribution'
-    },
-    {
-      id: 'tshirt-011',
-      description: 'Olive green military-style jacket',
-      color: 'olive green',
-      design: 'Military utility style',
-      videoRef: 'Placeholder - awaiting community contribution'
-    },
-    {
-      id: 'tshirt-012',
-      description: 'Burgundy sweater with retro computing graphics',
-      color: 'burgundy',
-      design: 'Retro computer graphics',
-      videoRef: 'Placeholder - awaiting community contribution'
-    }
-  ];
-
-  /**
-   * Get T-shirt of the day using deterministic selection based on date
-   * @returns {Object} T-shirt data object
-   */
-  function getTshirtOfTheDay() {
-    const today = new Date().toDateString();
-    const stored = localStorage.getItem('morpheus-tshirt-of-day');
-
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (parsed.date === today && parsed.tshirt) {
-          return parsed.tshirt;
-        }
-      } catch (e) {
-        // Invalid stored data, continue to select new one
-      }
-    }
-
-    // Select new T-shirt for today using date as seed
-    const dateNumber = new Date().setHours(0, 0, 0, 0);
-    const index = dateNumber % MORPHEUS_TSHIRTS.length;
-    const tshirt = MORPHEUS_TSHIRTS[index];
-
-    // Store for the day
-    localStorage.setItem('morpheus-tshirt-of-day', JSON.stringify({
-      date: today,
-      tshirt: tshirt
-    }));
-
-    return tshirt;
-  }
-
-  /**
-   * Morpheus T-shirt of the Day component
-   * Displays a different T-shirt each day from the curated collection
-   * @param {Object} props
-   * @param {Object} props.t - Translation object
-   * @returns {React.ReactElement}
-   */
-  function MorpheusTshirt({ t }) {
-    const tshirt = getTshirtOfTheDay();
-
-    // Generate color hex from color name
-    const getColorHex = (colorName) => {
-      const colorMap = {
-        'black': '#1a1a1a',
-        'navy blue': '#001f3f',
-        'dark grey': '#4a4a4a',
-        'charcoal': '#36454f',
-        'wine red': '#722f37',
-        'forest green': '#228b22',
-        'steel blue': '#4682b4',
-        'dark purple': '#4b0082',
-        'olive green': '#808000',
-        'burgundy': '#800020'
-      };
-      return colorMap[colorName?.toLowerCase()] || '#333333';
-    };
-
-    const colorHex = getColorHex(tshirt.color);
-
-    // Create a simple T-shirt SVG placeholder
-    const renderPlaceholder = () => {
-      return React.createElement(
-        'svg',
-        {
-          className: 'morpheus-tshirt-placeholder',
-          viewBox: '0 0 200 240',
-          xmlns: 'http://www.w3.org/2000/svg',
-          'aria-hidden': 'true'
-        },
-        [
-          // T-shirt body
-          React.createElement('path', {
-            key: 'body',
-            d: 'M60 40 L40 60 L40 240 L160 240 L160 60 L140 40 L120 50 L100 45 L80 50 Z',
-            fill: colorHex,
-            stroke: '#666',
-            strokeWidth: '2'
-          }),
-          // Collar
-          React.createElement('path', {
-            key: 'collar',
-            d: 'M80 40 L90 50 L100 45 L110 50 L120 40 L110 60 L90 60 Z',
-            fill: colorHex,
-            stroke: '#666',
-            strokeWidth: '2'
-          }),
-          // Left sleeve
-          React.createElement('path', {
-            key: 'sleeve-left',
-            d: 'M60 40 L20 80 L30 100 L40 60 Z',
-            fill: colorHex,
-            stroke: '#666',
-            strokeWidth: '2'
-          }),
-          // Right sleeve
-          React.createElement('path', {
-            key: 'sleeve-right',
-            d: 'M140 40 L180 80 L170 100 L160 60 Z',
-            fill: colorHex,
-            stroke: '#666',
-            strokeWidth: '2'
-          }),
-          // Design element
-          tshirt.design && React.createElement('text', {
-            key: 'design',
-            x: '100',
-            y: '140',
-            textAnchor: 'middle',
-            fill: '#888',
-            fontSize: '12',
-            fontFamily: 'monospace'
-          }, '{ }')
-        ]
-      );
-    };
-
-    return React.createElement(
-      'div',
-      {
-        className: 'morpheus-tshirt-container',
-        role: 'article',
-        'aria-label': t?.morpheusTshirt?.ariaLabel || 'Morpheus T-shirt of the day'
-      },
-      [
-        React.createElement(
-          'h3',
-          { key: 'title', className: 'morpheus-tshirt-title' },
-          t?.morpheusTshirt?.title || 'Morpheus T-shirt of the Day'
-        ),
-        React.createElement(
-          'div',
-          { key: 'image-wrapper', className: 'morpheus-tshirt-image-wrapper' },
-          renderPlaceholder()
-        ),
-        React.createElement(
-          'div',
-          { key: 'details', className: 'morpheus-tshirt-details' },
-          [
-            React.createElement(
-              'p',
-              { key: 'description', className: 'morpheus-tshirt-description' },
-              tshirt.description
-            ),
-            tshirt.color && React.createElement(
-              'p',
-              { key: 'color', className: 'morpheus-tshirt-meta' },
-              [
-                React.createElement('strong', { key: 'color-label' }, t?.morpheusTshirt?.color || 'Color: '),
-                tshirt.color
-              ]
-            ),
-            tshirt.design && React.createElement(
-              'p',
-              { key: 'design', className: 'morpheus-tshirt-meta' },
-              [
-                React.createElement('strong', { key: 'design-label' }, t?.morpheusTshirt?.design || 'Design: '),
-                tshirt.design
-              ]
-            ),
-            React.createElement(
-              'p',
-              { key: 'contribute', className: 'morpheus-tshirt-contribute' },
-              t?.morpheusTshirt?.contribute ||
-              'Want to contribute real images? Submit a PR to replace placeholders with actual screenshots from Morpheus\'s videos!'
-            )
-          ]
-        )
-      ]
-    );
-  }
-
-  /**
-   * Determines the initial theme, preferring stored settings, then system preference.
-   * @returns {{theme: 'light'|'dark'|'rgb', isStored: boolean}}
-   */
-  function resolveInitialTheme() {
-    if (typeof window === 'undefined') {
-      return { theme: THEME_OPTIONS.DARK, isStored: false };
-    }
-    try {
-      const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-      if (storedTheme === THEME_OPTIONS.LIGHT || storedTheme === THEME_OPTIONS.DARK || storedTheme === THEME_OPTIONS.RGB || storedTheme === THEME_OPTIONS.CAT) {
-        if (typeof document !== 'undefined') {
-          document.documentElement.dataset.theme = storedTheme;
-        }
-        return { theme: storedTheme, isStored: true };
-      }
-    } catch (error) {
-      console.warn('Theme preference could not be read from storage.', error);
-    }
-    const prefersDark = typeof window.matchMedia === 'function'
-      && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const detectedTheme = prefersDark ? THEME_OPTIONS.DARK : THEME_OPTIONS.LIGHT;
-    if (typeof document !== 'undefined') {
-      document.documentElement.dataset.theme = detectedTheme;
-    }
-    return { theme: detectedTheme, isStored: false };
-  }
-
-  /**
-   * Checks if the AI modal should be shown based on stored user preference.
-   * @returns {boolean} true if modal should be shown, false if user previously dismissed it
-   */
-  function shouldShowAiModal() {
-    if (typeof window === 'undefined') {
-      return true;
-    }
-    try {
-      const aiPreference = window.localStorage.getItem(AI_PREFERENCE_STORAGE_KEY);
-      // Don't show modal if user previously dismissed it
-      return aiPreference !== 'dismissed';
-    } catch (error) {
-      console.warn('AI preference could not be read from storage.', error);
-      // On error, show modal (fail-safe to allow user to interact)
-      return true;
-    }
-  }
-
-  /**
-   * Checks if the Franconia intro video has been seen.
-   * @returns {boolean} true if intro has been seen, false otherwise
-   */
-  function hasFranconiaIntroBeenSeen() {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-    try {
-      return window.localStorage.getItem(FRANCONIA_INTRO_SEEN_KEY) === 'true';
-    } catch (error) {
-      console.warn('Franconia intro preference could not be read from storage.', error);
-      return false;
-    }
-  }
-
-  /**
-   * Marks the Franconia intro video as seen.
-   */
-  function markFranconiaIntroAsSeen() {
-    if (typeof window === 'undefined') {
+/**
+ * Sets the room in the URL hash
+ * @param {string|null} roomId - Room ID to set, or null to clear
+ */
+function setRoomInHash(roomId) {
+  if (roomId) {
+    // Security: Validate room ID format to prevent injection attacks
+    // Only allow alphanumeric characters, hyphens, and underscores
+    if (!/^[a-zA-Z0-9_-]+$/.test(roomId)) {
+      console.warn('Invalid room ID format (must be alphanumeric with hyphens/underscores):', roomId);
       return;
     }
+    window.location.hash = `#room/${roomId}`;
+  } else {
+    window.location.hash = '';
+  }
+}
+
+/**
+ * Gets a random public room ID
+ * @returns {string} Random public room ID
+ */
+function getRandomPublicRoom() {
+  const randomIndex = Math.floor(Math.random() * PUBLIC_ROOMS.length);
+  return PUBLIC_ROOMS[randomIndex];
+}
+
+/**
+ * Renders the mascot that reacts angrily on hover.
+ * Pure SVG so it can be reused without additional assets.
+ * @param {Object} props
+ * @param {Object} props.t - Translation object
+ * @param {string|null} props.animation - Animation type ('flower' or 'diamond')
+ * @returns {React.ReactElement}
+ */
+function TuxMascot({ t, animation }) {
+  const svgChildren = [
+    React.createElement('ellipse', {
+      key: 'shadow',
+      className: 'tux-shadow',
+      cx: '60',
+      cy: '112',
+      rx: '24',
+      ry: '8'
+    }),
+    React.createElement('ellipse', {
+      key: 'body',
+      className: 'tux-body',
+      cx: '60',
+      cy: '60',
+      rx: '32',
+      ry: '46'
+    }),
+    React.createElement('ellipse', {
+      key: 'belly',
+      className: 'tux-belly',
+      cx: '60',
+      cy: '78',
+      rx: '22',
+      ry: '28'
+    }),
+    React.createElement('ellipse', {
+      key: 'head',
+      className: 'tux-head',
+      cx: '60',
+      cy: '38',
+      rx: '26',
+      ry: '24'
+    }),
+    React.createElement('ellipse', {
+      key: 'face',
+      className: 'tux-face',
+      cx: '60',
+      cy: '47',
+      rx: '20',
+      ry: '15'
+    }),
+    React.createElement('ellipse', {
+      key: 'wing-left',
+      className: 'tux-wing wing-left',
+      cx: '33',
+      cy: '70',
+      rx: '11',
+      ry: '24'
+    }),
+    React.createElement('ellipse', {
+      key: 'wing-right',
+      className: 'tux-wing wing-right',
+      cx: '87',
+      cy: '70',
+      rx: '11',
+      ry: '24'
+    }),
+    React.createElement('path', {
+      key: 'foot-left',
+      className: 'tux-foot foot-left',
+      d: 'M44 96 C40 104 44 110 52 110 L58 110 C64 110 66 104 62 96 L56 88 Z'
+    }),
+    React.createElement('path', {
+      key: 'foot-right',
+      className: 'tux-foot foot-right',
+      d: 'M76 96 C72 104 76 110 84 110 L90 110 C96 110 98 104 94 96 L88 88 Z'
+    }),
+    React.createElement('polygon', {
+      key: 'beak-upper',
+      className: 'tux-beak-upper',
+      points: '60,50 48,56 72,56'
+    }),
+    React.createElement('ellipse', {
+      key: 'beak-lower',
+      className: 'tux-beak-lower',
+      cx: '60',
+      cy: '60',
+      rx: '12',
+      ry: '5'
+    }),
+    React.createElement('circle', {
+      key: 'eye-left',
+      className: 'tux-eye eye-left',
+      cx: '50',
+      cy: '44',
+      r: '7'
+    }),
+    React.createElement('circle', {
+      key: 'eye-right',
+      className: 'tux-eye eye-right',
+      cx: '70',
+      cy: '44',
+      r: '7'
+    }),
+    React.createElement('circle', {
+      key: 'pupil-left',
+      className: 'tux-pupil pupil-left',
+      cx: '52',
+      cy: '46',
+      r: '3'
+    }),
+    React.createElement('circle', {
+      key: 'pupil-right',
+      className: 'tux-pupil pupil-right',
+      cx: '68',
+      cy: '46',
+      r: '3'
+    }),
+    React.createElement('circle', {
+      key: 'glow-left',
+      className: 'tux-eye-glow glow-left',
+      cx: '50',
+      cy: '44',
+      r: '7'
+    }),
+    React.createElement('circle', {
+      key: 'glow-right',
+      className: 'tux-eye-glow glow-right',
+      cx: '70',
+      cy: '44',
+      r: '7'
+    }),
+    React.createElement('rect', {
+      key: 'brow-left',
+      className: 'tux-brow brow-left',
+      x: '42',
+      y: '32',
+      width: '16',
+      height: '3',
+      rx: '1.5'
+    }),
+    React.createElement('rect', {
+      key: 'brow-right',
+      className: 'tux-brow brow-right',
+      x: '62',
+      y: '32',
+      width: '16',
+      height: '3',
+      rx: '1.5'
+    }),
+    React.createElement('path', {
+      key: 'steam-left',
+      className: 'tux-steam steam-left',
+      d: 'M32 20 C28 14 31 10 35 8 C39 6 40 4 38 2'
+    }),
+    React.createElement('path', {
+      key: 'steam-right',
+      className: 'tux-steam steam-right',
+      d: 'M88 20 C92 14 89 10 85 8 C81 6 80 4 82 2'
+    })
+  ];
+
+  // Animation-specific elements
+  const animationElements = [];
+
+  if (animation === 'flower') {
+    // Flower bouquet (appears between male and female Tux)
+    animationElements.push(
+      React.createElement('g', {
+        key: 'flower-bouquet',
+        className: 'tux-flower-bouquet'
+      },
+        React.createElement('ellipse', { cx: '110', cy: '85', rx: '8', ry: '12', fill: '#ff69b4' }),
+        React.createElement('ellipse', { cx: '118', cy: '82', rx: '7', ry: '11', fill: '#ff1493' }),
+        React.createElement('ellipse', { cx: '102', cy: '82', rx: '7', ry: '11', fill: '#ff1493' }),
+        React.createElement('rect', { x: '108', y: '90', width: '4', height: '15', fill: '#228b22', rx: '2' })
+      )
+    );
+    // Heart (kiss effect)
+    animationElements.push(
+      React.createElement('path', {
+        key: 'kiss-heart',
+        className: 'tux-kiss-heart',
+        d: 'M150 50 C150 45 155 40 160 40 C163 40 165 42 166 45 C167 42 169 40 172 40 C177 40 182 45 182 50 C182 58 166 70 166 70 C166 70 150 58 150 50',
+        fill: '#ff69b4'
+      })
+    );
+  }
+
+  if (animation === 'diamond') {
+    // Diamond ring
+    animationElements.push(
+      React.createElement('g', {
+        key: 'diamond-ring',
+        className: 'tux-diamond-ring'
+      },
+        React.createElement('ellipse', { cx: '110', cy: '85', rx: '6', ry: '3', fill: '#ffd700' }),
+        React.createElement('path', { d: 'M110 75 L105 82 L115 82 Z', fill: '#b9f2ff' }),
+        React.createElement('circle', { cx: '110', cy: '78', r: '2', fill: '#ffffff', opacity: '0.8' })
+      )
+    );
+    // Wedding dress decoration
+    animationElements.push(
+      React.createElement('g', {
+        key: 'wedding-dress',
+        className: 'tux-wedding-dress'
+      },
+        React.createElement('path', { d: 'M180 95 C175 85 165 85 160 95 L160 110 C170 110 190 110 200 110 L200 95 C195 85 185 85 180 95', fill: '#ffffff', opacity: '0.9' }),
+        React.createElement('circle', { cx: '180', cy: '60', r: '8', fill: '#ffffff', opacity: '0.7' })
+      )
+    );
+  }
+
+  // Female Tux (rendered when animation is active)
+  const femaleTuxElements = animation ? [
+    React.createElement('g', {
+      key: 'female-tux',
+      className: 'tux-female',
+      transform: 'translate(120, 0)'
+    },
+      React.createElement('ellipse', { key: 'f-shadow', className: 'tux-shadow', cx: '60', cy: '112', rx: '24', ry: '8' }),
+      React.createElement('ellipse', { key: 'f-body', className: 'tux-body', cx: '60', cy: '60', rx: '32', ry: '46' }),
+      React.createElement('ellipse', { key: 'f-belly', className: 'tux-belly', cx: '60', cy: '78', rx: '22', ry: '28' }),
+      React.createElement('ellipse', { key: 'f-head', className: 'tux-head', cx: '60', cy: '38', rx: '26', ry: '24' }),
+      React.createElement('ellipse', { key: 'f-face', className: 'tux-face', cx: '60', cy: '47', rx: '20', ry: '15' }),
+      React.createElement('ellipse', { key: 'f-wing-left', className: 'tux-wing', cx: '33', cy: '70', rx: '11', ry: '24' }),
+      React.createElement('ellipse', { key: 'f-wing-right', className: 'tux-wing', cx: '87', cy: '70', rx: '11', ry: '24' }),
+      React.createElement('path', { key: 'f-foot-left', className: 'tux-foot', d: 'M44 96 C40 104 44 110 52 110 L58 110 C64 110 66 104 62 96 L56 88 Z' }),
+      React.createElement('path', { key: 'f-foot-right', className: 'tux-foot', d: 'M76 96 C72 104 76 110 84 110 L90 110 C96 110 98 104 94 96 L88 88 Z' }),
+      React.createElement('polygon', { key: 'f-beak-upper', className: 'tux-beak-upper', points: '60,50 48,56 72,56' }),
+      React.createElement('ellipse', { key: 'f-beak-lower', className: 'tux-beak-lower', cx: '60', cy: '60', rx: '12', ry: '5' }),
+      React.createElement('circle', { key: 'f-eye-left', className: 'tux-eye', cx: '50', cy: '44', r: '7' }),
+      React.createElement('circle', { key: 'f-eye-right', className: 'tux-eye', cx: '70', cy: '44', r: '7' }),
+      React.createElement('circle', { key: 'f-pupil-left', className: 'tux-pupil', cx: '52', cy: '46', r: '3' }),
+      React.createElement('circle', { key: 'f-pupil-right', className: 'tux-pupil', cx: '68', cy: '46', r: '3' }),
+      // Bow on head for female
+      React.createElement('path', { key: 'f-bow', d: 'M50 25 L45 30 L50 28 L55 30 Z M65 25 L70 30 L65 28 L60 30 Z', fill: '#ff69b4', className: 'tux-female-bow' })
+    )
+  ] : [];
+
+  const containerClass = animation ? `tux-mascot tux-animation-${animation}` : 'tux-mascot';
+  const viewBoxWidth = animation ? '240' : '120';
+
+  return React.createElement(
+    'div',
+    {
+      className: containerClass,
+      role: 'img',
+      'aria-label': t.mascot.ariaLabel
+    },
+    React.createElement(
+      'svg',
+      {
+        className: 'tux-svg',
+        viewBox: `0 0 ${viewBoxWidth} 120`,
+        xmlns: 'http://www.w3.org/2000/svg',
+        'aria-hidden': 'true',
+        focusable: 'false'
+      },
+      [...svgChildren, ...femaleTuxElements, ...animationElements]
+    )
+  );
+}
+
+/**
+ * Morpheus T-shirt of the Day data
+ */
+const MORPHEUS_TSHIRTS = [
+  {
+    id: 'tshirt-001',
+    description: 'Classic black hoodie with tech-inspired design',
+    color: 'black',
+    design: 'Minimalist tech logo',
+    videoRef: 'Placeholder - awaiting community contribution'
+  },
+  {
+    id: 'tshirt-002',
+    description: 'Navy blue coding-themed T-shirt',
+    color: 'navy blue',
+    design: 'Programming syntax print',
+    videoRef: 'Placeholder - awaiting community contribution'
+  },
+  {
+    id: 'tshirt-003',
+    description: 'Dark grey jumper with subtle pattern',
+    color: 'dark grey',
+    design: 'Geometric pattern',
+    videoRef: 'Placeholder - awaiting community contribution'
+  },
+  {
+    id: 'tshirt-004',
+    description: 'Black T-shirt with Matrix-inspired green code',
+    color: 'black',
+    design: 'Green matrix code',
+    videoRef: 'Placeholder - awaiting community contribution'
+  },
+  {
+    id: 'tshirt-005',
+    description: 'Charcoal hoodie with developer motto',
+    color: 'charcoal',
+    design: 'Developer quote print',
+    videoRef: 'Placeholder - awaiting community contribution'
+  },
+  {
+    id: 'tshirt-006',
+    description: 'Wine red sweater, casual style',
+    color: 'wine red',
+    design: 'Solid color',
+    videoRef: 'Placeholder - awaiting community contribution'
+  },
+  {
+    id: 'tshirt-007',
+    description: 'Forest green T-shirt with Linux penguin',
+    color: 'forest green',
+    design: 'Linux Tux mascot',
+    videoRef: 'Placeholder - awaiting community contribution'
+  },
+  {
+    id: 'tshirt-008',
+    description: 'Black zip-up hoodie with cybersecurity theme',
+    color: 'black',
+    design: 'Cybersecurity graphics',
+    videoRef: 'Placeholder - awaiting community contribution'
+  },
+  {
+    id: 'tshirt-009',
+    description: 'Steel blue T-shirt with binary code pattern',
+    color: 'steel blue',
+    design: 'Binary code pattern',
+    videoRef: 'Placeholder - awaiting community contribution'
+  },
+  {
+    id: 'tshirt-010',
+    description: 'Dark purple jumper with abstract design',
+    color: 'dark purple',
+    design: 'Abstract tech pattern',
+    videoRef: 'Placeholder - awaiting community contribution'
+  },
+  {
+    id: 'tshirt-011',
+    description: 'Olive green military-style jacket',
+    color: 'olive green',
+    design: 'Military utility style',
+    videoRef: 'Placeholder - awaiting community contribution'
+  },
+  {
+    id: 'tshirt-012',
+    description: 'Burgundy sweater with retro computing graphics',
+    color: 'burgundy',
+    design: 'Retro computer graphics',
+    videoRef: 'Placeholder - awaiting community contribution'
+  }
+];
+
+/**
+ * Get T-shirt of the day using deterministic selection based on date
+ * @returns {Object} T-shirt data object
+ */
+function getTshirtOfTheDay() {
+  const today = new Date().toDateString();
+  const stored = localStorage.getItem('morpheus-tshirt-of-day');
+
+  if (stored) {
     try {
-      window.localStorage.setItem(FRANCONIA_INTRO_SEEN_KEY, 'true');
-    } catch (error) {
-      console.warn('Franconia intro preference could not be saved.', error);
+      const parsed = JSON.parse(stored);
+      if (parsed.date === today && parsed.tshirt) {
+        return parsed.tshirt;
+      }
+    } catch (e) {
+      // Invalid stored data, continue to select new one
     }
   }
 
-  /**
-   * Gets the saved AI provider preference from localStorage.
-   * @returns {string} The saved provider or default (OpenAI)
-   */
-  function getSavedAiProvider() {
-    if (typeof window === 'undefined') {
-      return AI_PROVIDERS.OPENAI;
-    }
-    try {
-      const savedProvider = window.localStorage.getItem(AI_PROVIDER_STORAGE_KEY);
-      const validProviders = Object.values(AI_PROVIDERS);
-      if (validProviders.includes(savedProvider)) {
-        return savedProvider;
+  // Select new T-shirt for today using date as seed
+  const dateNumber = new Date().setHours(0, 0, 0, 0);
+  const index = dateNumber % MORPHEUS_TSHIRTS.length;
+  const tshirt = MORPHEUS_TSHIRTS[index];
+
+  // Store for the day
+  localStorage.setItem('morpheus-tshirt-of-day', JSON.stringify({
+    date: today,
+    tshirt: tshirt
+  }));
+
+  return tshirt;
+}
+
+/**
+ * Morpheus T-shirt of the Day component
+ * Displays a different T-shirt each day from the curated collection
+ * @param {Object} props
+ * @param {Object} props.t - Translation object
+ * @returns {React.ReactElement}
+ */
+function MorpheusTshirt({ t }) {
+  const tshirt = getTshirtOfTheDay();
+
+  // Generate color hex from color name
+  const getColorHex = (colorName) => {
+    const colorMap = {
+      'black': '#1a1a1a',
+      'navy blue': '#001f3f',
+      'dark grey': '#4a4a4a',
+      'charcoal': '#36454f',
+      'wine red': '#722f37',
+      'forest green': '#228b22',
+      'steel blue': '#4682b4',
+      'dark purple': '#4b0082',
+      'olive green': '#808000',
+      'burgundy': '#800020'
+    };
+    return colorMap[colorName?.toLowerCase()] || '#333333';
+  };
+
+  const colorHex = getColorHex(tshirt.color);
+
+  // Create a simple T-shirt SVG placeholder
+  const renderPlaceholder = () => {
+    return React.createElement(
+      'svg',
+      {
+        className: 'morpheus-tshirt-placeholder',
+        viewBox: '0 0 200 240',
+        xmlns: 'http://www.w3.org/2000/svg',
+        'aria-hidden': 'true'
+      },
+      [
+        // T-shirt body
+        React.createElement('path', {
+          key: 'body',
+          d: 'M60 40 L40 60 L40 240 L160 240 L160 60 L140 40 L120 50 L100 45 L80 50 Z',
+          fill: colorHex,
+          stroke: '#666',
+          strokeWidth: '2'
+        }),
+        // Collar
+        React.createElement('path', {
+          key: 'collar',
+          d: 'M80 40 L90 50 L100 45 L110 50 L120 40 L110 60 L90 60 Z',
+          fill: colorHex,
+          stroke: '#666',
+          strokeWidth: '2'
+        }),
+        // Left sleeve
+        React.createElement('path', {
+          key: 'sleeve-left',
+          d: 'M60 40 L20 80 L30 100 L40 60 Z',
+          fill: colorHex,
+          stroke: '#666',
+          strokeWidth: '2'
+        }),
+        // Right sleeve
+        React.createElement('path', {
+          key: 'sleeve-right',
+          d: 'M140 40 L180 80 L170 100 L160 60 Z',
+          fill: colorHex,
+          stroke: '#666',
+          strokeWidth: '2'
+        }),
+        // Design element
+        tshirt.design && React.createElement('text', {
+          key: 'design',
+          x: '100',
+          y: '140',
+          textAnchor: 'middle',
+          fill: '#888',
+          fontSize: '12',
+          fontFamily: 'monospace'
+        }, '{ }')
+      ]
+    );
+  };
+
+  return React.createElement(
+    'div',
+    {
+      className: 'morpheus-tshirt-container',
+      role: 'article',
+      'aria-label': t?.morpheusTshirt?.ariaLabel || 'Morpheus T-shirt of the day'
+    },
+    [
+      React.createElement(
+        'h3',
+        { key: 'title', className: 'morpheus-tshirt-title' },
+        t?.morpheusTshirt?.title || 'Morpheus T-shirt of the Day'
+      ),
+      React.createElement(
+        'div',
+        { key: 'image-wrapper', className: 'morpheus-tshirt-image-wrapper' },
+        renderPlaceholder()
+      ),
+      React.createElement(
+        'div',
+        { key: 'details', className: 'morpheus-tshirt-details' },
+        [
+          React.createElement(
+            'p',
+            { key: 'description', className: 'morpheus-tshirt-description' },
+            tshirt.description
+          ),
+          tshirt.color && React.createElement(
+            'p',
+            { key: 'color', className: 'morpheus-tshirt-meta' },
+            [
+              React.createElement('strong', { key: 'color-label' }, t?.morpheusTshirt?.color || 'Color: '),
+              tshirt.color
+            ]
+          ),
+          tshirt.design && React.createElement(
+            'p',
+            { key: 'design', className: 'morpheus-tshirt-meta' },
+            [
+              React.createElement('strong', { key: 'design-label' }, t?.morpheusTshirt?.design || 'Design: '),
+              tshirt.design
+            ]
+          ),
+          React.createElement(
+            'p',
+            { key: 'contribute', className: 'morpheus-tshirt-contribute' },
+            t?.morpheusTshirt?.contribute ||
+            'Want to contribute real images? Submit a PR to replace placeholders with actual screenshots from Morpheus\'s videos!'
+          )
+        ]
+      )
+    ]
+  );
+}
+
+/**
+ * Determines the initial theme, preferring stored settings, then system preference.
+ * @returns {{theme: 'light'|'dark'|'rgb', isStored: boolean}}
+ */
+function resolveInitialTheme() {
+  if (typeof window === 'undefined') {
+    return { theme: THEME_OPTIONS.DARK, isStored: false };
+  }
+  try {
+    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (storedTheme === THEME_OPTIONS.LIGHT || storedTheme === THEME_OPTIONS.DARK || storedTheme === THEME_OPTIONS.RGB || storedTheme === THEME_OPTIONS.CAT) {
+      if (typeof document !== 'undefined') {
+        document.documentElement.dataset.theme = storedTheme;
       }
-    } catch (error) {
-      console.warn('AI provider preference could not be read from storage.', error);
+      return { theme: storedTheme, isStored: true };
     }
+  } catch (error) {
+    console.warn('Theme preference could not be read from storage.', error);
+  }
+  const prefersDark = typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const detectedTheme = prefersDark ? THEME_OPTIONS.DARK : THEME_OPTIONS.LIGHT;
+  if (typeof document !== 'undefined') {
+    document.documentElement.dataset.theme = detectedTheme;
+  }
+  return { theme: detectedTheme, isStored: false };
+}
+
+/**
+ * Checks if the AI modal should be shown based on stored user preference.
+ * @returns {boolean} true if modal should be shown, false if user previously dismissed it
+ */
+function shouldShowAiModal() {
+  if (typeof window === 'undefined') {
+    return true;
+  }
+  try {
+    const aiPreference = window.localStorage.getItem(AI_PREFERENCE_STORAGE_KEY);
+    // Don't show modal if user previously dismissed it
+    return aiPreference !== 'dismissed';
+  } catch (error) {
+    console.warn('AI preference could not be read from storage.', error);
+    // On error, show modal (fail-safe to allow user to interact)
+    return true;
+  }
+}
+
+/**
+ * Checks if the Franconia intro video has been seen.
+ * @returns {boolean} true if intro has been seen, false otherwise
+ */
+function hasFranconiaIntroBeenSeen() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  try {
+    return window.localStorage.getItem(FRANCONIA_INTRO_SEEN_KEY) === 'true';
+  } catch (error) {
+    console.warn('Franconia intro preference could not be read from storage.', error);
+    return false;
+  }
+}
+
+/**
+ * Marks the Franconia intro video as seen.
+ */
+function markFranconiaIntroAsSeen() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  try {
+    window.localStorage.setItem(FRANCONIA_INTRO_SEEN_KEY, 'true');
+  } catch (error) {
+    console.warn('Franconia intro preference could not be saved.', error);
+  }
+}
+
+/**
+ * Gets the saved AI provider preference from localStorage.
+ * @returns {string} The saved provider or default (OpenAI)
+ */
+function getSavedAiProvider() {
+  if (typeof window === 'undefined') {
     return AI_PROVIDERS.OPENAI;
   }
+  try {
+    const savedProvider = window.localStorage.getItem(AI_PROVIDER_STORAGE_KEY);
+    const validProviders = Object.values(AI_PROVIDERS);
+    if (validProviders.includes(savedProvider)) {
+      return savedProvider;
+    }
+  } catch (error) {
+    console.warn('AI provider preference could not be read from storage.', error);
+  }
+  return AI_PROVIDERS.OPENAI;
+}
 
-  /**
-   * Renders message content with support for Mermaid diagrams
-   * Detects ```mermaid code blocks and renders them as diagrams
-   * @param {string} text - Message text to render
-   * @param {number} messageId - Unique message ID for diagram rendering
-   * @returns {React.ReactElement|React.ReactElement[]} Rendered content
-   */
-  function renderMessageContent(text, messageId) {
-    // Pattern to detect mermaid code blocks (supports both \n and \r\n line endings)
-    const mermaidPattern = /```mermaid[\r\n]+([\s\S]*?)```/g;
-    const parts = [];
-    let lastIndex = 0;
-    let match;
-    let diagramIndex = 0;
+/**
+ * Renders message content with support for Mermaid diagrams
+ * Detects ```mermaid code blocks and renders them as diagrams
+ * @param {string} text - Message text to render
+ * @param {number} messageId - Unique message ID for diagram rendering
+ * @returns {React.ReactElement|React.ReactElement[]} Rendered content
+ */
+function renderMessageContent(text, messageId) {
+  // Pattern to detect mermaid code blocks (supports both \n and \r\n line endings)
+  const mermaidPattern = /```mermaid[\r\n]+([\s\S]*?)```/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  let diagramIndex = 0;
 
-    while ((match = mermaidPattern.exec(text)) !== null) {
-      // Add text before the mermaid block
-      if (match.index > lastIndex) {
-        const textBefore = text.substring(lastIndex, match.index);
-        parts.push(React.createElement('span', { key: `text-${lastIndex}` }, textBefore));
-      }
-
-      // Add mermaid diagram
-      const mermaidCode = match[1].trim();
-      const diagramId = `mermaid-${messageId}-${diagramIndex}`;
-      diagramIndex++;
-
-      parts.push(
-        React.createElement(MermaidDiagram, {
-          key: diagramId,
-          id: diagramId,
-          code: mermaidCode
-        })
-      );
-
-      lastIndex = match.index + match[0].length;
+  while ((match = mermaidPattern.exec(text)) !== null) {
+    // Add text before the mermaid block
+    if (match.index > lastIndex) {
+      const textBefore = text.substring(lastIndex, match.index);
+      parts.push(React.createElement('span', { key: `text-${lastIndex}` }, textBefore));
     }
 
-    // Add remaining text after last mermaid block
-    if (lastIndex < text.length) {
-      const textAfter = text.substring(lastIndex);
-      parts.push(React.createElement('span', { key: `text-${lastIndex}` }, textAfter));
-    }
+    // Add mermaid diagram
+    const mermaidCode = match[1].trim();
+    const diagramId = `mermaid-${messageId}-${diagramIndex}`;
+    diagramIndex++;
 
-    // If no mermaid blocks were found, return simple span
-    if (parts.length === 0) {
-      return React.createElement('span', null, text);
-    }
+    parts.push(
+      React.createElement(MermaidDiagram, {
+        key: diagramId,
+        id: diagramId,
+        code: mermaidCode
+      })
+    );
 
-    return parts;
+    lastIndex = match.index + match[0].length;
   }
 
-  /**
-   * Root React component that coordinates WebRTC setup and the user interface.
-   * @returns {React.ReactElement}
-   */
-  function App() {
+  // Add remaining text after last mermaid block
+  if (lastIndex < text.length) {
+    const textAfter = text.substring(lastIndex);
+    parts.push(React.createElement('span', { key: `text-${lastIndex}` }, textAfter));
+  }
+
+  // If no mermaid blocks were found, return simple span
+  if (parts.length === 0) {
+    return React.createElement('span', null, text);
+  }
+
+  return parts;
+}
+
+/**
+ * Root React component that coordinates WebRTC setup and the user interface.
+ * @returns {React.ReactElement}
+ */
+function App() {
     const initialThemeRef = useRef(null);
     if (!initialThemeRef.current) {
       initialThemeRef.current = resolveInitialTheme();
