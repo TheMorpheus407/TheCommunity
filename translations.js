@@ -332,7 +332,15 @@ const baseTranslation = Object.freeze({
     messages: {
       stopped: 'Bildschirmfreigabe beendet.',
       notSupported: 'Bildschirmfreigabe wird in diesem Browser nicht unterstützt.',
-      started: 'Bildschirmfreigabe aktiv. Achte auf sensible Inhalte.'
+      started: 'Bildschirmfreigabe aktiv. Achte auf sensible Inhalte.',
+      codecSelected: (codec) => `Verwende Codec: ${codec}`
+    },
+    quality: {
+      label: 'Videoqualität',
+      auto: 'Auto (Empfohlen)',
+      low: 'Niedrig (500 kbps)',
+      medium: 'Mittel (1.5 Mbps)',
+      high: 'Hoch (4 Mbps)'
     },
     errors: {
       peerNotReady: 'Peer-Verbindung ist noch nicht bereit.',
@@ -404,6 +412,7 @@ const baseTranslation = Object.freeze({
     statusDisabledByPeer: 'Fernsteuerung vom Peer beendet',
     statusChannelClosed: 'Fernsteuerungskanal geschlossen',
     statusDisabledInputLimit: 'Fernsteuerung deaktiviert (Eingabelimit erreicht)',
+    statusDisabledBurst: 'Fernsteuerung deaktiviert (Burst erkannt)',
     statusEnabled: 'Fernsteuerung aktiv – Peer darf steuern',
     statusUnavailable: 'Fernsteuerungskanal nicht verfügbar',
     hints: {
@@ -423,8 +432,13 @@ const baseTranslation = Object.freeze({
       requiresScreenShare: 'Starte zuerst die Bildschirmfreigabe, um Fernsteuerung zu aktivieren.',
       updateFailed: 'Fernsteuerungsstatus konnte nicht aktualisiert werden. Bitte erneut versuchen.',
       peerCanControl: 'Dein Peer kann nun deinen Bildschirm steuern. Behalte die Aktivitäten im Blick.',
-      controlRevokedLocal: 'Fernsteuerung für deinen Bildschirm wurde beendet.'
+      controlRevokedLocal: 'Fernsteuerung für deinen Bildschirm wurde beendet.',
+      burstDetected: 'Schnelle Tastatureingabe erkannt – Fernsteuerung aus Sicherheitsgründen deaktiviert'
     }
+  },
+  videoQuality: {
+    manualApplied: (preset) => `Videoqualität auf ${preset} gesetzt`,
+    autoApplied: (bitrate) => `Videoqualität automatisch optimiert (${bitrate} kbps)`
   },
   imageShare: {
     selectImage: 'Bild auswählen',
