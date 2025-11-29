@@ -22,6 +22,7 @@ import {
 } from './src/managers/CookieConsentManager.js';
 
 import { createFileTransferManager } from './src/managers/FileTransferManager.js';
+import { createVideoCodecManager, QUALITY_PRESETS } from './src/managers/VideoCodecManager.js';
 
 import { MermaidDiagram } from './src/components/MermaidDiagram.js';
 import { BrainsPlan } from './src/components/BrainsPlan.js';
@@ -865,6 +866,9 @@ const { useState, useRef, useCallback, useEffect } = React;
     const [ollamaEndpoint, setOllamaEndpoint] = useState('');
     const [isScreenSharing, setIsScreenSharing] = useState(false);
     const [shareSystemAudio, setShareSystemAudio] = useState(false);
+    const [videoQuality, setVideoQuality] = useState('auto');
+    const [currentCodec, setCurrentCodec] = useState('');
+    const [currentBitrate, setCurrentBitrate] = useState(0);
     const [isRemoteScreenActive, setIsRemoteScreenActive] = useState(false);
     const [controlChannelReady, setControlChannelReady] = useState(false);
     const [isRemoteControlAllowed, setIsRemoteControlAllowed] = useState(false);
@@ -1541,6 +1545,16 @@ const { useState, useRef, useCallback, useEffect } = React;
     }, [appendMessage, t]);
 
     /**
+     * Create video codec manager instance
+     */
+    const videoCodecManager = React.useMemo(() => {
+      return createVideoCodecManager({
+        appendSystemMessage: appendSystemMessageRef.current,
+        t
+      });
+    }, [t]);
+
+    /**
      * Configures event handlers for the file data channel.
      * @param {RTCDataChannel} channel - File channel instance
      */
@@ -2121,6 +2135,21 @@ const { useState, useRef, useCallback, useEffect } = React;
         if (localScreenVideoRef.current) {
           localScreenVideoRef.current.srcObject = stream;
         }
+
+        // Apply video quality optimization
+        if (screenSenderRef.current && videoCodecManager) {
+          const qualitySettings = videoQuality === 'auto' ? null : QUALITY_PRESETS[videoQuality.toUpperCase()];
+          const appliedSettings = await videoCodecManager.optimizeVideoQuality(screenSenderRef.current, pc, qualitySettings);
+          setCurrentBitrate(Math.round((appliedSettings.maxBitrate || 0) / 1000));
+        }
+
+        // Display codec information
+        if (videoCodecManager) {
+          const codecDesc = await videoCodecManager.getCodecDescription();
+          setCurrentCodec(codecDesc);
+          appendSystemMessage(t.screenShare?.messages?.codecSelected?.(codecDesc) || `Using ${codecDesc}`);
+        }
+
         setIsScreenSharing(true);
         appendSystemMessage(t.screenShare.messages.started);
         videoTrack.onended = () => {
@@ -2141,7 +2170,7 @@ const { useState, useRef, useCallback, useEffect } = React;
         appendSystemMessage(t.screenShare.errors.failed(reason));
         setIsScreenSharing(false);
       }
-    }, [appendSystemMessage, ensurePeerConnection, handleStopScreenShare, isScreenSharing, shareSystemAudio, t]);
+    }, [appendSystemMessage, ensurePeerConnection, handleStopScreenShare, isScreenSharing, shareSystemAudio, videoCodecManager, videoQuality, t]);
 
     const hideRemotePointer = useCallback(() => {
       if (remotePointerTimeoutRef.current) {
@@ -5146,6 +5175,25 @@ const { useState, useRef, useCallback, useEffect } = React;
                 onChange: (event) => setShareSystemAudio(event.target.checked)
               }),
               React.createElement('span', null, t.screenShare.includeAudio)
+            ),
+            React.createElement('label', { className: 'video-quality-selector' },
+              React.createElement('span', null, 'Video Quality: '),
+              React.createElement('select', {
+                value: videoQuality,
+                disabled: isScreenSharing,
+                onChange: (event) => setVideoQuality(event.target.value),
+                'aria-label': 'Select video quality preset'
+              },
+                React.createElement('option', { value: 'auto' }, 'AUTO'),
+                React.createElement('option', { value: 'low' }, 'LOW (500 kbps)'),
+                React.createElement('option', { value: 'medium' }, 'MEDIUM (1.5 Mbps)'),
+                React.createElement('option', { value: 'high' }, 'HIGH (4 Mbps)')
+              )
+            ),
+            currentCodec && React.createElement('div', { className: 'video-status' },
+              React.createElement('strong', null, 'Codec: '),
+              React.createElement('span', null, currentCodec),
+              currentBitrate > 0 && React.createElement('span', null, ` | ${currentBitrate} kbps`)
             ),
             React.createElement('button', {
               type: 'button',

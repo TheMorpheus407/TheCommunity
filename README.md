@@ -27,6 +27,10 @@ TheCommunity is a community-driven project that demonstrates true peer-to-peer c
 
 ### 🖥️ Screen Collaboration
 - **Screen Sharing** - Stream your screen peer-to-peer with zero servers involved
+- **Intelligent Video Optimization** - Automatic codec selection (AV1/VP9/VP8/H.264) and adaptive bitrate control
+- **Quality Presets** - Choose from AUTO, LOW, MEDIUM, or HIGH quality settings for screen sharing
+- **Real-time Quality Monitoring** - Live display of active codec and bitrate during screen sharing
+- **Bandwidth Adaptation** - Automatically adjusts video quality based on available network bandwidth
 - **Permissioned Remote Control** - Allow your peer to drive your mouse and keyboard within the app, with explicit opt-in and instant revocation
 
 ### 🎨 User Interface
@@ -198,6 +202,8 @@ TheCommunity/
 - ✅ Validates data channel names
 - ✅ Limits message sizes
 - ✅ Warns users about network address exposure
+- ✅ Minimizes SDP metadata to reduce browser fingerprinting
+- ✅ Sanitizes identifying information in WebRTC signaling
 
 ### What This Application Doesn't Do
 - ❌ Encrypt messages (WebRTC DataChannels use DTLS, but content is not end-to-end encrypted)

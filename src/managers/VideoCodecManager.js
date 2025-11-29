@@ -115,6 +115,57 @@ export function createVideoCodecManager(deps) {
   }
 
   /**
+   * Applies codec preferences to a transceiver
+   * @param {RTCRtpTransceiver} transceiver - Video transceiver
+   * @param {string} preferredCodec - Preferred codec name (e.g., 'VP9', 'AV1')
+   * @returns {boolean} Success status
+   */
+  function applyCodecPreference(transceiver, preferredCodec) {
+    if (!transceiver || !preferredCodec) {
+      return false;
+    }
+
+    try {
+      // Check if setCodecPreferences is supported
+      if (typeof transceiver.setCodecPreferences !== 'function') {
+        console.warn('setCodecPreferences not supported in this browser');
+        return false;
+      }
+
+      // Get available codecs for video
+      const capabilities = RTCRtpReceiver.getCapabilities('video');
+      if (!capabilities || !capabilities.codecs) {
+        return false;
+      }
+
+      // Filter codecs to get the preferred one and its variations
+      const preferredMimeType = `video/${preferredCodec.toLowerCase()}`;
+      const preferredCodecs = capabilities.codecs.filter(codec =>
+        codec.mimeType.toLowerCase() === preferredMimeType
+      );
+
+      if (preferredCodecs.length === 0) {
+        console.warn(`Preferred codec ${preferredCodec} not found in capabilities`);
+        return false;
+      }
+
+      // Get all other codecs
+      const otherCodecs = capabilities.codecs.filter(codec =>
+        codec.mimeType.toLowerCase() !== preferredMimeType
+      );
+
+      // Set codec preferences with preferred codec first
+      const orderedCodecs = [...preferredCodecs, ...otherCodecs];
+      transceiver.setCodecPreferences(orderedCodecs);
+
+      return true;
+    } catch (error) {
+      console.warn('Failed to apply codec preference', error);
+      return false;
+    }
+  }
+
+  /**
    * Estimates bandwidth based on connection quality
    * @param {RTCPeerConnection} pc - Peer connection instance
    * @returns {Promise<number>} Estimated bandwidth in bps (returns default if stats unavailable)
@@ -128,13 +179,12 @@ export function createVideoCodecManager(deps) {
       const stats = await pc.getStats();
       let totalBytesSent = 0;
       let totalBytesReceived = 0;
-      let candidatePairFound = false;
+      let availableBitrate = null;
 
       stats.forEach((report) => {
         if (report.type === 'candidate-pair' && report.state === 'succeeded') {
-          candidatePairFound = true;
           if (report.availableOutgoingBitrate) {
-            return report.availableOutgoingBitrate;
+            availableBitrate = report.availableOutgoingBitrate;
           }
         }
         if (report.type === 'outbound-rtp' && report.mediaType === 'video') {
@@ -144,6 +194,11 @@ export function createVideoCodecManager(deps) {
           totalBytesReceived += report.bytesReceived || 0;
         }
       });
+
+      // If we have direct bandwidth estimate, use it
+      if (availableBitrate) {
+        return availableBitrate;
+      }
 
       // Rough estimate: if we have data transfer, estimate based on that
       if (totalBytesSent > 0 || totalBytesReceived > 0) {
@@ -277,13 +332,27 @@ export function createVideoCodecManager(deps) {
 
       // Remove or sanitize potentially identifying lines
       if (line.startsWith('a=ssrc:')) {
-        // Keep SSRC but remove identifying labels like cname, msid, mslabel, label
-        // Only keep SSRC definitions needed for the stream to work
-        if (line.includes('cname:') || line.includes('msid:') || line.includes('mslabel:') || line.includes('label:')) {
-          // Skip these identifying attributes
+        // Keep essential SSRC lines but sanitize identifying information
+        // We need to keep the SSRC structure for WebRTC to work, but we can sanitize the values
+        if (line.includes('cname:')) {
+          // Sanitize cname to generic value but keep the line structure
+          const ssrcMatch = line.match(/^a=ssrc:(\d+)\s+cname:/);
+          if (ssrcMatch) {
+            filteredLines.push(`a=ssrc:${ssrcMatch[1]} cname:stream`);
+          }
+        } else if (line.includes('msid:')) {
+          // Sanitize msid to generic value
+          const ssrcMatch = line.match(/^a=ssrc:(\d+)\s+msid:/);
+          if (ssrcMatch) {
+            filteredLines.push(`a=ssrc:${ssrcMatch[1]} msid:- screen`);
+          }
+        } else if (line.includes('mslabel:') || line.includes('label:')) {
+          // Skip mslabel and label as they're redundant with msid
           continue;
+        } else {
+          // Keep other SSRC lines as they're essential
+          filteredLines.push(line);
         }
-        filteredLines.push(line);
       } else if (line.startsWith('a=msid:')) {
         // Sanitize media stream IDs to remove identifying information
         filteredLines.push('a=msid:- screen');
@@ -326,6 +395,18 @@ export function createVideoCodecManager(deps) {
       qualitySettings = calculateOptimalQuality(bandwidth);
     }
 
+    // Apply codec preference to transceiver if available
+    const codecSupport = await detectCodecSupport();
+    const bestCodec = getBestCodec(codecSupport);
+    if (bestCodec && sender.track) {
+      // Get the transceiver for this sender
+      const transceivers = pc.getTransceivers();
+      const transceiver = transceivers.find(t => t.sender === sender);
+      if (transceiver) {
+        applyCodecPreference(transceiver, bestCodec);
+      }
+    }
+
     const success = await applyEncodingParameters(sender, qualitySettings);
 
     if (success && appendSystemMessage && t) {
@@ -365,6 +446,7 @@ export function createVideoCodecManager(deps) {
   return {
     detectCodecSupport,
     getBestCodec,
+    applyCodecPreference,
     estimateBandwidth,
     calculateOptimalQuality,
     applyEncodingParameters,
