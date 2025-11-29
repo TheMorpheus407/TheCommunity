@@ -5,6 +5,7 @@
 
 import {
   DOOM_CHANNEL_LABEL,
+  FILE_CHANNEL_LABEL,
   COOKIE_CONSENT_STORAGE_KEY,
   WHISPER_MODEL_STORAGE_KEY,
   FRANCONIA_INTRO_SEEN_KEY,
@@ -19,6 +20,8 @@ import {
   hasConsentFor,
   createConsentObject
 } from './src/managers/CookieConsentManager.js';
+
+import { createFileTransferManager } from './src/managers/FileTransferManager.js';
 
 import { MermaidDiagram } from './src/components/MermaidDiagram.js';
 import { BrainsPlan } from './src/components/BrainsPlan.js';
@@ -48,6 +51,9 @@ const { useState, useRef, useCallback, useEffect } = React;
   const IMAGE_INTERVAL_MS = 60000;
   const IMAGE_MAX_CONCURRENT = 3;
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
+  const ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'text/plain', 'text/markdown'];
+  const ALLOWED_FILE_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES, ...ALLOWED_DOCUMENT_TYPES];
   const OPENAI_MODEL = 'gpt-4o-mini';
   const OLLAMA_MODEL = 'llama3.2';
   const MISTRAL_MODEL = 'mistral-small-latest';
@@ -924,6 +930,7 @@ const { useState, useRef, useCallback, useEffect } = React;
     const channelRef = useRef(null);
     const controlChannelRef = useRef(null);
     const imageChannelRef = useRef(null);
+    const fileChannelRef = useRef(null);
     const pongChannelRef = useRef(null);
     const triviaChannelRef = useRef(null);
     const chessChannelRef = useRef(null);
@@ -967,6 +974,10 @@ const { useState, useRef, useCallback, useEffect } = React;
     const imageSendTimestampsRef = useRef([]);
     const imageReceiveTimestampsRef = useRef([]);
     const imageFileInputRef = useRef(null);
+    const fileTransfersRef = useRef(new Map());
+    const fileSendTimestampsRef = useRef([]);
+    const fileReceiveTimestampsRef = useRef([]);
+    const fileInputRef = useRef(null);
     const tuxAnimationTimeoutRef = useRef(null);
     const pongCanvasRef = useRef(null);
     const pongGameStateRef = useRef(null);
@@ -1514,6 +1525,32 @@ const { useState, useRef, useCallback, useEffect } = React;
     }, [handleIncomingImageMessage, t]);
 
     /**
+     * Create file transfer manager instance
+     */
+    const fileTransferManager = React.useMemo(() => {
+      return createFileTransferManager({
+        fileChannelRef,
+        fileTransfersRef,
+        fileSendTimestampsRef,
+        fileReceiveTimestampsRef,
+        fileInputRef,
+        appendMessage,
+        appendSystemMessage: appendSystemMessageRef.current,
+        t
+      });
+    }, [appendMessage, t]);
+
+    /**
+     * Configures event handlers for the file data channel.
+     * @param {RTCDataChannel} channel - File channel instance
+     */
+    const setupFileChannel = useCallback((channel) => {
+      if (fileTransferManager) {
+        fileTransferManager.setupFileChannel(channel);
+      }
+    }, [fileTransferManager]);
+
+    /**
      * Configures event handlers for the Pong data channel.
      * @param {RTCDataChannel} channel - The Pong data channel
      */
@@ -1740,6 +1777,10 @@ const { useState, useRef, useCallback, useEffect } = React;
           setupImageChannel(incomingChannel);
           return;
         }
+        if (incomingChannel.label === FILE_CHANNEL_LABEL) {
+          setupFileChannel(incomingChannel);
+          return;
+        }
         if (incomingChannel.label === PONG_CHANNEL_LABEL) {
           pongChannelRef.current = incomingChannel;
           setupPongChannel(incomingChannel);
@@ -1843,6 +1884,10 @@ const { useState, useRef, useCallback, useEffect } = React;
       const imageChannel = pc.createDataChannel(IMAGE_CHANNEL_LABEL);
       imageChannelRef.current = imageChannel;
       setupImageChannel(imageChannel);
+
+      const fileChannel = pc.createDataChannel(FILE_CHANNEL_LABEL);
+      fileChannelRef.current = fileChannel;
+      setupFileChannel(fileChannel);
 
       const pongChannel = pc.createDataChannel(PONG_CHANNEL_LABEL);
       pongChannelRef.current = pongChannel;
@@ -2338,6 +2383,24 @@ const { useState, useRef, useCallback, useEffect } = React;
         imageFileInputRef.current.click();
       }
     }, []);
+
+    /**
+     * Handles file button click to open file picker
+     */
+    const handleFileButtonClick = useCallback(() => {
+      if (fileTransferManager) {
+        fileTransferManager.openFilePicker();
+      }
+    }, [fileTransferManager]);
+
+    /**
+     * Handles file selection
+     */
+    const handleFileSelect = useCallback(async (event) => {
+      if (fileTransferManager) {
+        await fileTransferManager.handleFileSelect(event);
+      }
+    }, [fileTransferManager]);
 
     /**
      * Toggles the soundboard dropdown visibility.
@@ -5221,7 +5284,27 @@ const { useState, useRef, useCallback, useEffect } = React;
                       alt: message.fileName || 'Shared image',
                       className: 'chat-image',
                       loading: 'lazy'
-                    }))
+                    }),
+                    message.fileUrl && message.fileCategory === 'image' && React.createElement('img', {
+                      src: message.fileUrl,
+                      alt: message.fileName || 'Shared image',
+                      className: 'chat-image',
+                      loading: 'lazy'
+                    }),
+                    message.fileUrl && message.fileCategory === 'video' && React.createElement('video', {
+                      src: message.fileUrl,
+                      controls: true,
+                      className: 'chat-video',
+                      style: { maxWidth: '100%', maxHeight: '400px' }
+                    }),
+                    message.fileUrl && message.fileCategory === 'document' && React.createElement('a', {
+                      href: message.fileUrl,
+                      download: message.fileName || 'document',
+                      className: 'chat-document-link',
+                      target: '_blank',
+                      rel: 'noopener noreferrer'
+                    }, `📄 ${message.fileName || 'Download document'}`)
+                    )
                   ))
             ),
             React.createElement('div', { className: 'chat-input' },
@@ -5241,6 +5324,22 @@ const { useState, useRef, useCallback, useEffect } = React;
                 'aria-label': t.imageShare.sendImage,
                 title: t.imageShare.sendImageTitle
               }, '📷'),
+              React.createElement('input', {
+                type: 'file',
+                ref: fileInputRef,
+                onChange: handleFileSelect,
+                accept: ALLOWED_FILE_TYPES.join(','),
+                style: { display: 'none' },
+                'aria-label': t.fileShare?.selectFile || 'Select file'
+              }),
+              React.createElement('button', {
+                type: 'button',
+                className: 'file-button',
+                onClick: handleFileButtonClick,
+                disabled: !channelReady,
+                'aria-label': t.fileShare?.sendFile || 'Send file',
+                title: t.fileShare?.sendFileTitle || 'Select file to send'
+              }, '📎'),
               React.createElement('div', { className: 'soundboard-container' },
                 React.createElement('button', {
                   type: 'button',

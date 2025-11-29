@@ -456,6 +456,24 @@ const baseTranslation = Object.freeze({
     sentImage: (fileName) => `Bild gesendet: ${fileName}`,
     receivedImage: (fileName) => `Bild empfangen: ${fileName}`
   },
+  fileShare: {
+    selectFile: 'Datei auswählen',
+    sendFile: 'Datei senden',
+    sendFileTitle: 'Datei zum Senden auswählen',
+    channelReady: 'Dateifreigabe bereit.',
+    channelNotReady: 'Dateifreigabe noch nicht bereit. Warte auf Verbindung.',
+    invalidType: 'Ungültiger Dateityp. Erlaubt sind: Bilder (JPEG, PNG, GIF, WebP), Videos (MP4, WebM, OGG), Dokumente (PDF, TXT, MD).',
+    tooLarge: 'Datei ist zu groß. Maximale Größe ist 50 MB.',
+    rateLimitSend: 'Zu viele Dateien gesendet. Bitte warte eine Minute.',
+    rateLimitReceive: 'Zu viele Dateien empfangen. Peer sendet zu schnell.',
+    tooManyConcurrent: 'Zu viele gleichzeitige Dateiübertragungen.',
+    sendFailed: 'Datei konnte nicht gesendet werden.',
+    receiveFailed: 'Datei konnte nicht empfangen werden.',
+    sentFile: 'Datei gesendet',
+    receivedFile: 'Datei empfangen',
+    videoMetadataWarning: 'Hinweis: Metadaten-Entfernung für Videos wird nicht unterstützt (zu rechenintensiv). Video wird ohne Änderung gesendet.',
+    documentMetadataWarning: 'Hinweis: Metadaten-Entfernung für Dokumente wird nicht unterstützt. Dokument wird ohne Änderung gesendet.'
+  },
   soundboard: {
     button: 'Soundboard',
     buttonTitle: 'Sound aus Soundboard senden',
@@ -1793,6 +1811,24 @@ const dialectConfigs = {
         sentImage: (fileName) => `Bild gschickt: ${fileName}`,
         receivedImage: (fileName) => `Bild empfange: ${fileName}`
       },
+      fileShare: {
+        selectFile: 'Datei uuswähle',
+        sendFile: 'Datei schicke',
+        sendFileTitle: 'Datei zum Schicke uuswähle',
+        channelReady: 'Dateifriigab bereit.',
+        channelNotReady: 'Dateifriigab no nit bereit. Warte uf Verbindig.',
+        invalidType: 'Ungültige Dateityp. Erlaubt sind: Bilder (JPEG, PNG, GIF, WebP), Videos (MP4, WebM, OGG), Dokumänt (PDF, TXT, MD).',
+        tooLarge: 'Datei isch z\'gross. Maximali Gröss isch 50 MB.',
+        rateLimitSend: 'Z\'vieli Dateie gschickt. Bitte wart e Minute.',
+        rateLimitReceive: 'Z\'vieli Dateie empfange. Gsell schickt z\'schnäll.',
+        tooManyConcurrent: 'Z\'vieli glychziitigi Dateiübertraigunge.',
+        sendFailed: 'Datei het nit chönne gschickt werde.',
+        receiveFailed: 'Datei het nit chönne empfange werde.',
+        sentFile: 'Datei gschickt',
+        receivedFile: 'Datei empfange',
+        videoMetadataWarning: 'Hiiwis: Metadate-Entfernig für Videos wird nit unterstützt (z\'recheintensiv). Video wird ohni Änderig gschickt.',
+        documentMetadataWarning: 'Hiiwis: Metadate-Entfernig für Dokumänt wird nit unterstützt. Dokumänt wird ohni Änderig gschickt.'
+      },
       soundboard: {
         button: 'Soundboard',
         buttonTitle: 'Sound us em Soundboard schicke',
@@ -2160,6 +2196,24 @@ const dialectConfigs = {
         receiveFailed: 'Bild konnt ned emfpangd werdn.',
         sentImage: (fileName) => `Bild gschickd: ${fileName}`,
         receivedImage: (fileName) => `Bild kriagt: ${fileName}`
+      },
+      fileShare: {
+        selectFile: 'Datei aussuchn',
+        sendFile: 'Datei schickn',
+        sendFileTitle: 'Datei zum Schickn aussuchn',
+        channelReady: 'Dateifreigebm bereit.',
+        channelNotReady: 'Dateifreigebm no ned soweit.',
+        invalidType: 'Falscha Datei-Typ. Erlaubt: Bildla (JPEG, PNG, GIF, WebP), Videos (MP4, WebM, OGG), Dokumente (PDF, TXT, MD).',
+        tooLarge: 'Datei z\'groß. Max 50 MB.',
+        rateLimitSend: 'Z\'vui Dateien gschickd. Wart a Minud.',
+        rateLimitReceive: 'Peer schickd z\'vui Dateien.',
+        tooManyConcurrent: 'Z\'vui gleichzeidige Übertragungen.',
+        sendFailed: 'Datei konnt ned gschickd werdn.',
+        receiveFailed: 'Datei konnt ned emfpangd werdn.',
+        sentFile: 'Datei gschickd',
+        receivedFile: 'Datei kriagt',
+        videoMetadataWarning: 'Hinweis: Metadatn-Entfernung bei Videos gehd ned (z\'rechninddensiv). Video werd ohne Änderung gschickd.',
+        documentMetadataWarning: 'Hinweis: Metadatn-Entfernung bei Dokumentn gehd ned. Dokument werd ohne Änderung gschickd.'
       },
       soundboard: {
         button: 'Soundboard',
