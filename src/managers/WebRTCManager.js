@@ -20,6 +20,7 @@ import {
   EXPECTED_CHANNEL_LABEL,
   CONTROL_CHANNEL_LABEL,
   IMAGE_CHANNEL_LABEL,
+  FILE_CHANNEL_LABEL,
   PONG_CHANNEL_LABEL,
   TRIVIA_CHANNEL_LABEL,
   CHESS_CHANNEL_LABEL
@@ -38,6 +39,7 @@ import { createVideoCodecManager } from './VideoCodecManager.js';
  * @param {React.MutableRefObject} deps.channelRef - Chat channel reference
  * @param {React.MutableRefObject} deps.controlChannelRef - Control channel reference
  * @param {React.MutableRefObject} deps.imageChannelRef - Image channel reference
+ * @param {React.MutableRefObject} deps.fileChannelRef - File channel reference
  * @param {React.MutableRefObject} deps.pongChannelRef - Pong channel reference
  * @param {React.MutableRefObject} deps.triviaChannelRef - Trivia channel reference
  * @param {React.MutableRefObject} deps.chessChannelRef - Chess channel reference
@@ -55,6 +57,7 @@ import { createVideoCodecManager } from './VideoCodecManager.js';
  * @param {Function} deps.setupChatChannel - Chat channel setup function
  * @param {Function} deps.setupControlChannel - Control channel setup function
  * @param {Function} deps.setupImageChannel - Image channel setup function
+ * @param {Function} deps.setupFileChannel - File channel setup function
  * @param {Function} deps.setupPongChannel - Pong channel setup function
  * @param {Function} deps.setupTriviaChannel - Trivia channel setup function
  * @param {Function} deps.setupChessChannel - Chess channel setup function
@@ -73,6 +76,7 @@ export function createWebRTCManager(deps) {
     channelRef,
     controlChannelRef,
     imageChannelRef,
+    fileChannelRef,
     pongChannelRef,
     triviaChannelRef,
     chessChannelRef,
@@ -90,6 +94,7 @@ export function createWebRTCManager(deps) {
     setupChatChannel,
     setupControlChannel,
     setupImageChannel,
+    setupFileChannel,
     setupPongChannel,
     setupTriviaChannel,
     setupChessChannel,
@@ -208,6 +213,10 @@ export function createWebRTCManager(deps) {
         setupImageChannel(incomingChannel);
         return;
       }
+      if (incomingChannel.label === FILE_CHANNEL_LABEL) {
+        setupFileChannel(incomingChannel);
+        return;
+      }
       if (incomingChannel.label === PONG_CHANNEL_LABEL) {
         setupPongChannel(incomingChannel);
         return;
@@ -313,6 +322,10 @@ export function createWebRTCManager(deps) {
     const imageChannel = pc.createDataChannel(IMAGE_CHANNEL_LABEL);
     imageChannelRef.current = imageChannel;
     setupImageChannel(imageChannel);
+
+    const fileChannel = pc.createDataChannel(FILE_CHANNEL_LABEL);
+    fileChannelRef.current = fileChannel;
+    setupFileChannel(fileChannel);
 
     const pongChannel = pc.createDataChannel(PONG_CHANNEL_LABEL);
     pongChannelRef.current = pongChannel;
@@ -477,6 +490,10 @@ export function createWebRTCManager(deps) {
     if (imageChannelRef.current) {
       imageChannelRef.current.close();
       imageChannelRef.current = null;
+    }
+    if (fileChannelRef.current) {
+      fileChannelRef.current.close();
+      fileChannelRef.current = null;
     }
     if (pongChannelRef.current) {
       pongChannelRef.current.close();

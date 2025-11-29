@@ -136,6 +136,64 @@ export const IMAGE_MAX_CONCURRENT = 3;
 export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
 /**
+ * Label for the general file transfer data channel.
+ * @constant {string}
+ */
+export const FILE_CHANNEL_LABEL = 'file';
+
+/**
+ * Maximum allowed file size in bytes (50 MB for videos, 10 MB for documents).
+ * @constant {number}
+ */
+export const FILE_MAX_SIZE_BYTES = 50 * 1024 * 1024;
+
+/**
+ * Size of each chunk when transferring files in bytes (32 KB for larger files).
+ * @constant {number}
+ */
+export const FILE_CHUNK_SIZE = 32 * 1024;
+
+/**
+ * Maximum number of files that can be sent per interval.
+ * @constant {number}
+ */
+export const FILE_MAX_PER_INTERVAL = 5;
+
+/**
+ * Time window in milliseconds for file rate limiting (1 minute).
+ * @constant {number}
+ */
+export const FILE_INTERVAL_MS = 60000;
+
+/**
+ * Maximum number of concurrent file transfers allowed.
+ * @constant {number}
+ */
+export const FILE_MAX_CONCURRENT = 2;
+
+/**
+ * List of allowed MIME types for video transfers.
+ * @constant {string[]}
+ */
+export const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'];
+
+/**
+ * List of allowed MIME types for document transfers.
+ * @constant {string[]}
+ */
+export const ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'text/plain', 'text/markdown'];
+
+/**
+ * Combined list of all allowed file types for file transfers.
+ * @constant {string[]}
+ */
+export const ALLOWED_FILE_TYPES = [
+  ...ALLOWED_IMAGE_TYPES,
+  ...ALLOWED_VIDEO_TYPES,
+  ...ALLOWED_DOCUMENT_TYPES
+];
+
+/**
  * OpenAI model to use for AI message rewriting.
  * @constant {string}
  */
