@@ -155,7 +155,10 @@ export function createFileTransferManager(deps) {
         totalChunks: message.totalChunks || 0,
         totalSize: message.totalSize,
         receivedChunks: 0,
-        category: getFileCategory(message.mimeType)
+        category: getFileCategory(message.mimeType),
+        direction: 'receive',
+        aborted: false,
+        progress: 0
       });
       return;
     }
@@ -170,9 +173,30 @@ export function createFileTransferManager(deps) {
         return;
       }
 
+      // Security Fix 0.1: Validate chunk index to prevent memory exhaustion via sparse arrays
+      if (message.chunkIndex < 0 || message.chunkIndex >= transfer.totalChunks) {
+        console.warn('Invalid chunk index received:', message.chunkIndex);
+        return;
+      }
+
+      // Security Fix 0.1: Prevent duplicate chunks (memory exhaustion attack)
+      if (transfer.chunks[message.chunkIndex] !== undefined) {
+        console.warn('Duplicate chunk received:', message.chunkIndex);
+        return;
+      }
+
+      // Check if transfer was aborted
+      if (transfer.aborted) {
+        fileTransfersRef.current.delete(message.fileId);
+        return;
+      }
+
       // Store chunk
       transfer.chunks[message.chunkIndex] = message.data;
       transfer.receivedChunks++;
+
+      // Performance Fix 1.2: Update progress
+      transfer.progress = Math.round((transfer.receivedChunks / transfer.totalChunks) * 100);
 
       // Check if transfer is complete
       if (transfer.receivedChunks === transfer.totalChunks) {
@@ -294,16 +318,35 @@ export function createFileTransferManager(deps) {
       const arrayBuffer = await strippedFile.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
 
-      // Convert to base64
-      let binaryString = '';
+      // Performance Fix 1.3: Use efficient string concatenation (join instead of +=)
+      const binaryChunks = [];
       for (let i = 0; i < bytes.length; i++) {
-        binaryString += String.fromCharCode(bytes[i]);
+        binaryChunks.push(String.fromCharCode(bytes[i]));
       }
+      const binaryString = binaryChunks.join('');
       const base64 = btoa(binaryString);
+
+      // Security Fix 0.2: Validate Base64 size to prevent memory spikes
+      const base64SizeBytes = base64.length;
+      if (base64SizeBytes > FILE_MAX_SIZE_BYTES * 1.5) {
+        appendSystemMessage(t.fileShare?.tooLarge || 'File too large after encoding');
+        return;
+      }
 
       // Generate unique ID for this transfer
       const fileId = `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       const totalChunks = Math.ceil(base64.length / FILE_CHUNK_SIZE);
+
+      // Track outgoing transfer for progress and abort capability
+      fileTransfersRef.current.set(fileId, {
+        direction: 'send',
+        fileName: file.name,
+        mimeType: file.type,
+        totalChunks,
+        sentChunks: 0,
+        aborted: false,
+        progress: 0
+      });
 
       // Send start message
       channel.send(JSON.stringify({
@@ -315,20 +358,49 @@ export function createFileTransferManager(deps) {
         totalChunks
       }));
 
-      // Send chunks
-      for (let i = 0; i < totalChunks; i++) {
-        const start = i * FILE_CHUNK_SIZE;
-        const end = Math.min(start + FILE_CHUNK_SIZE, base64.length);
-        const chunk = base64.substring(start, end);
+      // Performance Fix 1.1: Asynchronous chunk transfer to prevent UI blocking
+      const sendChunksAsync = async () => {
+        for (let i = 0; i < totalChunks; i++) {
+          const transfer = fileTransfersRef.current.get(fileId);
 
-        channel.send(JSON.stringify({
-          type: 'file-chunk',
-          fileId,
-          chunkIndex: i,
-          totalChunks,
-          data: chunk
-        }));
-      }
+          // Check if transfer was aborted
+          if (!transfer || transfer.aborted) {
+            fileTransfersRef.current.delete(fileId);
+            appendSystemMessage(t.fileShare?.sendAborted || 'File transfer cancelled');
+            return;
+          }
+
+          const start = i * FILE_CHUNK_SIZE;
+          const end = Math.min(start + FILE_CHUNK_SIZE, base64.length);
+          const chunk = base64.substring(start, end);
+
+          channel.send(JSON.stringify({
+            type: 'file-chunk',
+            fileId,
+            chunkIndex: i,
+            totalChunks,
+            data: chunk
+          }));
+
+          // Update progress
+          transfer.sentChunks = i + 1;
+          transfer.progress = Math.round((transfer.sentChunks / totalChunks) * 100);
+
+          // Yield control to UI thread every few chunks
+          if (i % 5 === 0) {
+            await new Promise(resolve => setTimeout(resolve, 0));
+          }
+        }
+
+        // Clean up transfer tracking after completion
+        fileTransfersRef.current.delete(fileId);
+      };
+
+      // Start async sending
+      sendChunksAsync().catch(error => {
+        console.error('Error during async chunk send:', error);
+        fileTransfersRef.current.delete(fileId);
+      });
 
       // Add to local chat with preview
       const fileUrl = URL.createObjectURL(strippedFile);
@@ -358,10 +430,45 @@ export function createFileTransferManager(deps) {
     }
   }
 
+  /**
+   * Performance Fix 1.4: Abort an ongoing file transfer
+   * @param {string} fileId - ID of the transfer to abort
+   * @returns {boolean} True if transfer was aborted, false if not found
+   */
+  function abortTransfer(fileId) {
+    const transfer = fileTransfersRef.current.get(fileId);
+    if (transfer) {
+      transfer.aborted = true;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Performance Fix 1.2: Get progress of all active transfers
+   * @returns {Array} Array of transfer progress objects
+   */
+  function getActiveTransfers() {
+    const transfers = [];
+    fileTransfersRef.current.forEach((transfer, fileId) => {
+      transfers.push({
+        fileId,
+        fileName: transfer.fileName,
+        direction: transfer.direction,
+        progress: transfer.progress,
+        totalChunks: transfer.totalChunks,
+        category: transfer.category || getFileCategory(transfer.mimeType)
+      });
+    });
+    return transfers;
+  }
+
   return {
     setupFileChannel,
     handleIncomingFileMessage,
     handleFileSelect,
-    openFilePicker
+    openFilePicker,
+    abortTransfer,
+    getActiveTransfers
   };
 }
