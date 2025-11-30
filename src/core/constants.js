@@ -344,6 +344,18 @@ export const CONTROL_MESSAGE_TYPES = {
 };
 
 /**
+ * SDP attribute name for E2EE public key exchange.
+ * @constant {string}
+ */
+export const E2EE_SDP_ATTRIBUTE = 'x-e2ee-pubkey';
+
+/**
+ * E2EE message envelope type identifier.
+ * @constant {string}
+ */
+export const E2EE_MESSAGE_TYPE = 'e2ee';
+
+/**
  * Gets the next theme value in the rotation sequence.
  * @param {string} currentTheme - The current theme value
  * @returns {string} The next theme in the sequence

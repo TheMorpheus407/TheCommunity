@@ -26,6 +26,8 @@ import {
   CHESS_CHANNEL_LABEL
 } from '../core/constants.js';
 import { createVideoCodecManager } from './VideoCodecManager.js';
+import { createE2EEIntegration } from './E2EEIntegration.js';
+import { wrapChannelWithE2EE } from './E2EEChannelWrapper.js';
 
 /**
  * Creates a factory for WebRTC operations that integrates with React state
@@ -104,6 +106,19 @@ export function createWebRTCManager(deps) {
   // Create codec manager for SDP processing
   const codecManager = createVideoCodecManager({ appendSystemMessage, t });
 
+  // Create E2EE integration for end-to-end encryption
+  const e2eeIntegration = createE2EEIntegration(appendSystemMessage, t);
+
+  /**
+   * Handles E2EE security errors
+   * @param {string} errorType - Type of security error
+   * @param {Error} error - Error object
+   */
+  function handleE2EEError(errorType, error) {
+    console.error(`E2EE error (${errorType}):`, error);
+    appendSystemMessage(t.systemMessages?.e2eeError || `E2EE error: ${errorType}`);
+  }
+
   /**
    * Creates or returns existing RTCPeerConnection with event handlers
    * @returns {RTCPeerConnection}
@@ -131,7 +146,7 @@ export function createWebRTCManager(deps) {
     }
 
     // ICE candidate gathering completion handler
-    pc.onicecandidate = (event) => {
+    pc.onicecandidate = async (event) => {
       if (!event.candidate && pc.localDescription) {
         iceDoneRef.current = true;
 
@@ -139,9 +154,12 @@ export function createWebRTCManager(deps) {
         const originalSdp = pc.localDescription.sdp;
         const sanitizedSdp = codecManager.minimizeSdpMetadata(originalSdp);
 
+        // Embed E2EE public key in SDP
+        const e2eeSdp = await e2eeIntegration.embedPublicKeyInSDP(sanitizedSdp);
+
         const sanitizedDescription = {
           type: pc.localDescription.type,
-          sdp: sanitizedSdp
+          sdp: e2eeSdp
         };
 
         setLocalSignal(JSON.stringify(sanitizedDescription));
@@ -198,6 +216,9 @@ export function createWebRTCManager(deps) {
     // Data channel negotiation with whitelisting
     pc.ondatachannel = (event) => {
       const incomingChannel = event.channel;
+
+      // Wrap channel with E2EE before setting up handlers
+      wrapChannelWithE2EE(incomingChannel, e2eeIntegration.getSecurityManager(), handleE2EEError);
 
       // Route to appropriate channel handler based on label
       if (incomingChannel.label === EXPECTED_CHANNEL_LABEL) {
@@ -310,32 +331,39 @@ export function createWebRTCManager(deps) {
     canControlPeerRef.current = false;
     setRemoteControlStatus(t.remoteControl.statusDisabled);
 
-    // Create data channels
+    // Create data channels and wrap with E2EE
     const channel = pc.createDataChannel(EXPECTED_CHANNEL_LABEL);
+    wrapChannelWithE2EE(channel, e2eeIntegration.getSecurityManager(), handleE2EEError);
     channelRef.current = channel;
     setupChatChannel(channel);
 
     const controlChannel = pc.createDataChannel(CONTROL_CHANNEL_LABEL);
+    wrapChannelWithE2EE(controlChannel, e2eeIntegration.getSecurityManager(), handleE2EEError);
     controlChannelRef.current = controlChannel;
     setupControlChannel(controlChannel);
 
     const imageChannel = pc.createDataChannel(IMAGE_CHANNEL_LABEL);
+    wrapChannelWithE2EE(imageChannel, e2eeIntegration.getSecurityManager(), handleE2EEError);
     imageChannelRef.current = imageChannel;
     setupImageChannel(imageChannel);
 
     const fileChannel = pc.createDataChannel(FILE_CHANNEL_LABEL);
+    wrapChannelWithE2EE(fileChannel, e2eeIntegration.getSecurityManager(), handleE2EEError);
     fileChannelRef.current = fileChannel;
     setupFileChannel(fileChannel);
 
     const pongChannel = pc.createDataChannel(PONG_CHANNEL_LABEL);
+    wrapChannelWithE2EE(pongChannel, e2eeIntegration.getSecurityManager(), handleE2EEError);
     pongChannelRef.current = pongChannel;
     setupPongChannel(pongChannel);
 
     const triviaChannel = pc.createDataChannel(TRIVIA_CHANNEL_LABEL);
+    wrapChannelWithE2EE(triviaChannel, e2eeIntegration.getSecurityManager(), handleE2EEError);
     triviaChannelRef.current = triviaChannel;
     setupTriviaChannel(triviaChannel);
 
     const chessChannel = pc.createDataChannel(CHESS_CHANNEL_LABEL);
+    wrapChannelWithE2EE(chessChannel, e2eeIntegration.getSecurityManager(), handleE2EEError);
     chessChannelRef.current = chessChannel;
     setupChessChannel(chessChannel);
 
@@ -368,6 +396,10 @@ export function createWebRTCManager(deps) {
     try {
       const desc = parseRemoteDescription(remoteSignal, t);
       await pc.setRemoteDescription(desc);
+
+      // Complete E2EE key exchange with remote SDP
+      await e2eeIntegration.completeKeyExchange(desc.sdp);
+
       setStatus(t.status.remoteApplied(desc.type));
       if (desc.type === 'answer') {
         setChannelStatus(t.status.answerApplied);
@@ -528,6 +560,10 @@ export function createWebRTCManager(deps) {
     setRemoteControlStatus(t.remoteControl.statusDisabled);
     setStatus(t.status.disconnected);
     setChannelStatus(t.status.channelClosed);
+
+    // Reset E2EE
+    e2eeIntegration.reset();
+
     appendSystemMessage(t.systemMessages.connectionClosed);
   }
 
