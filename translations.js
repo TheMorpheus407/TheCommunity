@@ -826,6 +826,52 @@ const baseTranslation = Object.freeze({
       inviteCopied: 'Kopiert!',
       inviteCopyFailed: 'Fehler beim Kopieren'
     }
+  },
+  accessibility: {
+    skipToMain: 'Zum Hauptinhalt springen',
+    tts: {
+      title: 'Text-zu-Sprache',
+      enable: 'TTS aktivieren',
+      disable: 'TTS deaktivieren',
+      enabled: 'Text-zu-Sprache aktiviert',
+      disabled: 'Text-zu-Sprache deaktiviert',
+      notSupported: 'Text-zu-Sprache wird von Ihrem Browser nicht unterstützt',
+      controls: {
+        play: 'Vorlesen',
+        pause: 'Pause',
+        resume: 'Fortsetzen',
+        stop: 'Stopp',
+        playAriaLabel: 'Text vorlesen',
+        pauseAriaLabel: 'Vorlesung pausieren',
+        resumeAriaLabel: 'Vorlesung fortsetzen',
+        stopAriaLabel: 'Vorlesung stoppen'
+      },
+      settings: {
+        voice: 'Stimme',
+        voiceLabel: 'Stimme auswählen',
+        rate: 'Geschwindigkeit',
+        rateLabel: 'Sprechgeschwindigkeit',
+        pitch: 'Tonhöhe',
+        pitchLabel: 'Tonhöhe der Stimme',
+        volume: 'Lautstärke',
+        volumeLabel: 'Lautstärke',
+        autoAnnounce: 'Auto-Ansage',
+        autoAnnounceLabel: 'Wichtige Änderungen automatisch ansagen'
+      },
+      minimize: 'Minimieren',
+      maximize: 'Maximieren',
+      minimizeAriaLabel: 'TTS-Steuerung minimieren',
+      maximizeAriaLabel: 'TTS-Steuerung maximieren'
+    },
+    announcements: {
+      connectionEstablished: 'Verbindung hergestellt',
+      connectionLost: 'Verbindung verloren',
+      messageReceived: 'Neue Nachricht erhalten',
+      imageReceived: 'Bild erhalten',
+      fileReceived: 'Datei erhalten',
+      modalOpened: (name) => `${name}-Dialog geöffnet`,
+      modalClosed: (name) => `${name}-Dialog geschlossen`
+    }
   }
 });
 
