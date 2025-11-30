@@ -280,7 +280,12 @@ const baseTranslation = Object.freeze({
     cannotRestartNoRemote: 'ICE-Neustart nicht möglich: Keine entfernte Beschreibung vorhanden.',
     iceRestartStarted: 'ICE-Neustart gestartet...',
     iceRestartComplete: 'ICE-Neustart abgeschlossen. Teile das neue Signal mit deinem Peer.',
-    iceRestartFailed: 'ICE-Neustart fehlgeschlagen.'
+    iceRestartFailed: 'ICE-Neustart fehlgeschlagen.',
+    e2eeInitFailed: 'Ende-zu-Ende-Verschlüsselung konnte nicht initialisiert werden.',
+    e2eeEnabled: 'Ende-zu-Ende-Verschlüsselung aktiviert 🔒',
+    e2eeNotSupported: 'Remote-Peer unterstützt keine E2EE - Verbindung wird nicht verschlüsselt',
+    e2eeKeyExchangeFailed: 'E2EE-Schlüsselaustausch fehlgeschlagen',
+    e2eeError: (type) => `E2EE-Fehler: ${type}`
   },
   aiErrors: {
     emptyKey: 'Gib einen OpenAI-API-Schlüssel ein, um die KI-Umschreibung zu aktivieren.',
