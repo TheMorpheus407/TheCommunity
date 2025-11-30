@@ -194,30 +194,66 @@ TheCommunity/
     └── workflows/      # GitHub Actions for deployment
 ```
 
-## Security Considerations
+## Privacy and Security
+
+### Privacy Guarantee: No Backend, No Tracking
+
+TheCommunity is designed with privacy as a core principle:
+- **Zero backend servers** - Your messages never touch our servers (because we don't have any)
+- **No logging** - We can't log what we can't see (direct P2P connections)
+- **No accounts** - No registration, no passwords, no identity tracking
+- **No analytics** - We don't track your usage, behavior, or anything else
+- **Open source** - All code is public and auditable
 
 ### What This Application Does
 - ✅ Establishes direct peer-to-peer connections
-- ✅ Protects against message flooding
-- ✅ Validates data channel names
-- ✅ Limits message sizes
+- ✅ Protects against message flooding (rate limiting)
+- ✅ Validates data channel names (blocks unexpected channels)
+- ✅ Limits message sizes (prevents abuse)
 - ✅ Warns users about network address exposure
 - ✅ Minimizes SDP metadata to reduce browser fingerprinting
 - ✅ Sanitizes identifying information in WebRTC signaling
+- ✅ Encrypts data in transit (WebRTC DTLS)
 
 ### What This Application Doesn't Do
-- ❌ Encrypt messages (WebRTC DataChannels use DTLS, but content is not end-to-end encrypted)
-- ❌ Authenticate users
-- ❌ Persist message history
-- ❌ Hide your IP address from peers
-- ❌ Proxy OpenAI requests on your behalf (your browser talks to api.openai.com directly with your key)
+- ❌ **Hide your IP address from peers** - WebRTC requires IP sharing for P2P connections
+- ❌ End-to-end encrypt messages (DTLS only, no additional E2E layer)
+- ❌ Authenticate users (no identity system)
+- ❌ Persist message history (messages are ephemeral)
+- ❌ Prevent browser fingerprinting (inherent WebRTC limitation)
 
-### Recommendations
-- Only connect with people you trust
-- Don't share sensitive information
-- Be aware that your IP address is visible to peers
-- Consider using a VPN if privacy is a concern
-- Treat your OpenAI API key like a password and only enter it on devices you control
+### Privacy Recommendations
+
+**For Casual Use**:
+- ✅ Only connect with people you trust
+- ✅ Be aware that your IP address is visible to peers
+- ✅ Don't share highly sensitive information
+
+**For Enhanced Privacy**:
+- 🛡️ **Use a VPN** to hide your real IP address from peers
+- 🛡️ **Exchange signals via Tor** to hide signaling metadata from network observers
+- 🛡️ **Combine VPN + Tor** for maximum privacy (both signaling and connection)
+
+**For High-Security Needs**:
+- ⚠️ TheCommunity is **not designed for high-risk scenarios** (activism, journalism, etc.)
+- ⚠️ Use purpose-built tools instead: **Signal**, **Briar**, **Matrix**
+
+### Understanding IP Address Disclosure
+
+**Important**: WebRTC connections **reveal your IP address to your peer**. This is by design—WebRTC prioritizes low latency (direct connections) over anonymity.
+
+**Why?** WebRTC discovers your IP addresses (local and public) and shares them with your peer to establish the fastest possible connection. There is **no way to prevent this** in a pure P2P architecture without using a relay server (which would violate our "no backend" principle).
+
+**Solutions**:
+- Use a **VPN** to show your peer a VPN IP instead of your real IP
+- Only connect with **trusted peers** whose network you're comfortable revealing your IP to
+- Read our [Privacy Guide](docs/PRIVACY_GUIDE.md) for detailed recommendations
+
+### Learn More
+
+- 📖 **[Privacy Guide](docs/PRIVACY_GUIDE.md)** - Detailed guide on protecting your privacy
+- 📖 **[Tor Integration Feasibility](docs/TOR_INTEGRATION_FEASIBILITY.md)** - Technical analysis of Tor integration options
+- 🔒 **Treat your OpenAI API key like a password** - Only enter it on devices you control
 
 ## Development
 
