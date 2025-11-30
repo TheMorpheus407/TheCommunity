@@ -471,6 +471,7 @@ const baseTranslation = Object.freeze({
     receiveFailed: 'Datei konnte nicht empfangen werden.',
     sentFile: 'Datei gesendet',
     receivedFile: 'Datei empfangen',
+    sendAborted: 'Dateiübertragung abgebrochen.',
     videoMetadataWarning: 'Hinweis: Metadaten-Entfernung für Videos wird nicht unterstützt (zu rechenintensiv). Video wird ohne Änderung gesendet.',
     documentMetadataWarning: 'Hinweis: Metadaten-Entfernung für Dokumente wird nicht unterstützt. Dokument wird ohne Änderung gesendet.'
   },
@@ -1826,6 +1827,7 @@ const dialectConfigs = {
         receiveFailed: 'Datei het nit chönne empfange werde.',
         sentFile: 'Datei gschickt',
         receivedFile: 'Datei empfange',
+        sendAborted: 'Dateiübertraigig abbroche.',
         videoMetadataWarning: 'Hiiwis: Metadate-Entfernig für Videos wird nit unterstützt (z\'recheintensiv). Video wird ohni Änderig gschickt.',
         documentMetadataWarning: 'Hiiwis: Metadate-Entfernig für Dokumänt wird nit unterstützt. Dokumänt wird ohni Änderig gschickt.'
       },
@@ -2212,6 +2214,7 @@ const dialectConfigs = {
         receiveFailed: 'Datei konnt ned emfpangd werdn.',
         sentFile: 'Datei gschickd',
         receivedFile: 'Datei kriagt',
+        sendAborted: 'Dateiübertragung abbrocha.',
         videoMetadataWarning: 'Hinweis: Metadatn-Entfernung bei Videos gehd ned (z\'rechninddensiv). Video werd ohne Änderung gschickd.',
         documentMetadataWarning: 'Hinweis: Metadatn-Entfernung bei Dokumentn gehd ned. Dokument werd ohne Änderung gschickd.'
       },

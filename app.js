@@ -5301,14 +5301,8 @@ function App() {
                     },
                     React.createElement('strong', null, t.chat.roleLabels[message.role] || t.chat.roleLabels.system),
                     renderMessageContent(message.text, message.id),
-                    message.imageUrl && React.createElement('img', {
-                      src: message.imageUrl,
-                      alt: message.fileName || 'Shared image',
-                      className: 'chat-image',
-                      loading: 'lazy'
-                    }),
-                    message.fileUrl && message.fileCategory === 'image' && React.createElement('img', {
-                      src: message.fileUrl,
+                    (message.imageUrl || (message.fileUrl && message.fileCategory === 'image')) && React.createElement('img', {
+                      src: message.imageUrl || message.fileUrl,
                       alt: message.fileName || 'Shared image',
                       className: 'chat-image',
                       loading: 'lazy'
