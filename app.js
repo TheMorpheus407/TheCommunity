@@ -62,6 +62,7 @@ import {
 
 import { createFileTransferManager } from './src/managers/FileTransferManager.js';
 import { createVideoCodecManager, QUALITY_PRESETS } from './src/managers/VideoCodecManager.js';
+import { createAccessibilityManager } from './src/managers/AccessibilityManager.js';
 
 import { MermaidDiagram } from './src/components/MermaidDiagram.js';
 import { BrainsPlan } from './src/components/BrainsPlan.js';
@@ -903,6 +904,8 @@ function App() {
     });
     const [userIp, setUserIp] = useState(null);
     const [hasRemoteDescription, setHasRemoteDescription] = useState(false);
+    const [isTtsEnabled, setIsTtsEnabled] = useState(false);
+    const [isTtsMinimized, setIsTtsMinimized] = useState(false);
 
     const pcRef = useRef(null);
     const channelRef = useRef(null);
@@ -1213,6 +1216,10 @@ function App() {
         setChannelReady(true);
         setIsSignalingCollapsed(true);
         incomingTimestampsRef.current = [];
+        // Announce connection established for accessibility
+        if (accessibilityManager && accessibilityManager.isSupported) {
+          accessibilityManager.announce(t.accessibility.announcements.connectionEstablished, 'assertive');
+        }
       };
       channel.onclose = () => {
         setChannelStatus(t.status.channelClosed);
@@ -1220,6 +1227,10 @@ function App() {
         setIsSignalingCollapsed(false);
         incomingTimestampsRef.current = [];
         channelRef.current = null;
+        // Announce connection lost for accessibility
+        if (accessibilityManager && accessibilityManager.isSupported) {
+          accessibilityManager.announce(t.accessibility.announcements.connectionLost, 'assertive');
+        }
       };
       channel.onmessage = (event) => {
         if (typeof event.data !== 'string') {
@@ -1241,6 +1252,10 @@ function App() {
           return;
         }
         appendMessage(payload, 'remote');
+        // Announce new message for accessibility
+        if (accessibilityManager && accessibilityManager.isSupported) {
+          accessibilityManager.announce(t.accessibility.announcements.messageReceived, 'polite');
+        }
       };
     }, [appendMessage, appendSystemMessage, t]);
 
@@ -1527,6 +1542,15 @@ function App() {
         t
       });
     }, [t]);
+
+    /**
+     * Create accessibility manager instance for TTS and accessibility features
+     */
+    const accessibilityManager = React.useMemo(() => {
+      return createAccessibilityManager({
+        defaultLang: language === 'de' ? 'de-DE' : 'en-US'
+      });
+    }, [language]);
 
     /**
      * Configures event handlers for the file data channel.
@@ -4192,6 +4216,12 @@ function App() {
 
     return (
       React.createElement(React.Fragment, null,
+        // Skip to main content link for keyboard navigation
+        React.createElement('a', {
+          href: '#main-content',
+          className: 'skip-to-main'
+        }, t.accessibility.skipToMain),
+
         isApiKeyModalOpen && React.createElement('div', { className: 'modal-overlay', role: 'presentation' },
           React.createElement('div', {
             className: 'modal-content',
@@ -4614,7 +4644,7 @@ function App() {
             )
           )
         ),
-        React.createElement('main', null,
+        React.createElement('main', { id: 'main-content', role: 'main' },
           userIp && React.createElement('div', { className: 'ip-display' },
             'I know where your house lives: ' + userIp
           ),
@@ -5712,6 +5742,97 @@ function App() {
                     type: 'button',
                     onClick: handleCloseDangerZoneModal
                   }, t.dangerZone.confirmModal.cancelButton)
+                )
+              )
+            )
+          )
+        ),
+
+        // TTS (Text-to-Speech) Controls
+        accessibilityManager.isSupported && React.createElement('div', {
+          className: isTtsMinimized ? 'tts-controls tts-controls-minimized' : 'tts-controls',
+          role: 'region',
+          'aria-label': t.accessibility.tts.title
+        },
+          React.createElement('div', { className: 'tts-controls-header' },
+            React.createElement('span', { className: 'tts-controls-title' }, t.accessibility.tts.title),
+            React.createElement('button', {
+              className: 'tts-minimize-button',
+              onClick: () => setIsTtsMinimized(!isTtsMinimized),
+              'aria-label': isTtsMinimized ? t.accessibility.tts.maximizeAriaLabel : t.accessibility.tts.minimizeAriaLabel,
+              'aria-expanded': !isTtsMinimized
+            }, isTtsMinimized ? '▲' : '▼')
+          ),
+          !isTtsMinimized && React.createElement('div', { className: 'tts-controls-body' },
+            React.createElement('div', { className: 'tts-control-group' },
+              React.createElement('button', {
+                className: 'tts-controls-toggle',
+                onClick: () => {
+                  const newState = accessibilityManager.toggle();
+                  setIsTtsEnabled(newState);
+                },
+                'aria-pressed': isTtsEnabled
+              }, isTtsEnabled ? t.accessibility.tts.disable : t.accessibility.tts.enable)
+            ),
+            isTtsEnabled && React.createElement(React.Fragment, null,
+              React.createElement('div', { className: 'tts-control-group' },
+                React.createElement('label', {
+                  className: 'tts-control-label',
+                  htmlFor: 'tts-voice-select'
+                }, t.accessibility.tts.settings.voice),
+                React.createElement('select', {
+                  id: 'tts-voice-select',
+                  className: 'tts-select',
+                  onChange: (e) => accessibilityManager.setVoice(parseInt(e.target.value)),
+                  'aria-label': t.accessibility.tts.settings.voiceLabel
+                },
+                  accessibilityManager.getVoices().map((voice, index) =>
+                    React.createElement('option', {
+                      key: index,
+                      value: index
+                    }, `${voice.name} (${voice.lang})`)
+                  )
+                )
+              ),
+              React.createElement('div', { className: 'tts-control-group' },
+                React.createElement('label', {
+                  className: 'tts-control-label',
+                  htmlFor: 'tts-rate-range'
+                }, t.accessibility.tts.settings.rate),
+                React.createElement('input', {
+                  id: 'tts-rate-range',
+                  type: 'range',
+                  className: 'tts-range',
+                  min: '0.5',
+                  max: '2',
+                  step: '0.1',
+                  defaultValue: '1',
+                  onChange: (e) => accessibilityManager.setRate(parseFloat(e.target.value)),
+                  'aria-label': t.accessibility.tts.settings.rateLabel
+                })
+              ),
+              React.createElement('div', { className: 'tts-control-group' },
+                React.createElement('label', { className: 'tts-control-label' }, t.accessibility.tts.controls.play),
+                React.createElement('div', { className: 'tts-control-buttons' },
+                  React.createElement('button', {
+                    className: 'tts-button',
+                    onClick: () => {
+                      const state = accessibilityManager.getState();
+                      if (state.isSpeaking && !state.isPaused) {
+                        accessibilityManager.pause();
+                      } else if (state.isPaused) {
+                        accessibilityManager.resume();
+                      }
+                    },
+                    disabled: !accessibilityManager.getState().isSpeaking,
+                    'aria-label': accessibilityManager.getState().isPaused ? t.accessibility.tts.controls.resumeAriaLabel : t.accessibility.tts.controls.pauseAriaLabel
+                  }, accessibilityManager.getState().isPaused ? t.accessibility.tts.controls.resume : t.accessibility.tts.controls.pause),
+                  React.createElement('button', {
+                    className: 'tts-button',
+                    onClick: () => accessibilityManager.stop(),
+                    disabled: !accessibilityManager.getState().isSpeaking,
+                    'aria-label': t.accessibility.tts.controls.stopAriaLabel
+                  }, t.accessibility.tts.controls.stop)
                 )
               )
             )
